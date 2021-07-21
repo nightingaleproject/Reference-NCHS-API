@@ -3,11 +3,10 @@ using System.Text.Json.Serialization;
 
 namespace NVSSMessaging.Models
 {
-    public class FHIRMessageItem
+    public class OutgoingMessageItem : BaseEntity
     {
         public long Id { get; set; }
-        [JsonIgnore]
         public string Message { get; set; }
-        public DateTime CreatedTimestamp { get; set; }
+        public string MessageId { get; set; }
     }
 }

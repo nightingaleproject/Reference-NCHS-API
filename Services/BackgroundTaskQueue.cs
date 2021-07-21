@@ -3,6 +3,12 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
+// Background tasks in dotnet core MVC are quite difficult to implement due to the amount of
+// boilerplate required along with very poor examples. This implementation is derived
+// from the following sources:
+// https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services?view=aspnetcore-3.0&tabs=visual-studio#queued-background-tasks
+// https://github.com/dotnet/AspNetCore.Docs/issues/22702
+// https://github.com/dotnet/extensions/issues/805#issuecomment-410539073
 namespace NVSSMessaging.Services
 {
     public interface IBackgroundTaskQueue

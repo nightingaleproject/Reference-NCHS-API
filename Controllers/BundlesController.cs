@@ -9,6 +9,8 @@ using NVSSMessaging.Models;
 using NVSSMessaging.Services;
 using VRDR;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
+using Microsoft.VisualStudio.Web.CodeGeneration;
 
 namespace NVSSMessaging.Controllers
 {
@@ -27,42 +29,44 @@ namespace NVSSMessaging.Controllers
 
         // GET: Bundles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<FHIRMessageItem>>> GetFHIRMessageItems()
+        public async Task<ActionResult<IEnumerable<OutgoingMessageItem>>> GetOutgoingMessageItems(DateTime lastUpdated = default(DateTime))
         {
-            return await _context.FHIRMessageItems.ToListAsync();
+            return await _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated).ToListAsync();
         }
 
         // GET: Bundles/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<FHIRMessageItem>> GetFHIRMessageItem(long id)
+        public async Task<ActionResult<IncomingMessageItem>> GetIncomingMessageItem(long id)
         {
-            var fHIRMessageItem = await _context.FHIRMessageItems.FindAsync(id);
+            var IncomingMessageItem = await _context.IncomingMessageItems.FindAsync(id);
 
-            if (fHIRMessageItem == null)
+            if (IncomingMessageItem == null)
             {
                 return NotFound();
             }
 
-            return fHIRMessageItem;
+            return IncomingMessageItem;
         }
 
         // POST: Bundles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult PostFHIRMessageItem([FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
+        public ActionResult PostIncomingMessageItem([FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
-            // TODO: If extraction fails create 'extraction error' for message, and send extraction error message
-            BaseMessage message = BaseMessage.Parse(text.ToString(), true);
-            FHIRMessageItem item = new FHIRMessageItem();
-            item.Message = text.ToString();
-            // TODO: Ignore message if it is one we have seen before
-            _context.FHIRMessageItems.Add(item);
-            _context.SaveChanges();
-            ValueTask<long> valueTask = new ValueTask<long>(item.Id);
+            try {
+                BaseMessage message = BaseMessage.Parse(text.ToString(), true);
+                IncomingMessageItem item = new IncomingMessageItem();
+                item.Message = text.ToString();
+                item.MessageId = message.MessageId;
+                _context.IncomingMessageItems.Add(item);
+                _context.SaveChanges();
 
-            _ = queue.QueueBackgroundWorkItemAsync(token => ConvertToIJE(token, valueTask));
+                _ = queue.QueueBackgroundWorkItemAsync(token => ConvertToIJE(token, new ValueTask<long>(item.Id)));
+            } catch {
+                return BadRequest();
+            }
 
             // return HTTP status code 204 (No Content)
             return NoContent();
@@ -70,21 +74,78 @@ namespace NVSSMessaging.Controllers
 
         public async ValueTask<long> ConvertToIJE(CancellationToken token, ValueTask<long> id)
         {
+            // TODO: Something this throws a "Cannot access a disposed object" exception
+            // Potentially need to move this into it's own Service to deal with this.
             using(var scope = Services.CreateScope()) {
                 var _database = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                FHIRMessageItem item = _database.FHIRMessageItems.Find(id.Result);
-                DeathRecordSubmission message = BaseMessage.Parse<DeathRecordSubmission>(item.Message.ToString(), true);
+                IncomingMessageItem item = _database.IncomingMessageItems.Find(id.Result);
+                BaseMessage message = BaseMessage.Parse(item.Message.ToString(), true);
                 IJEItem ijeItem = new IJEItem();
-                ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
-                _database.Update(ijeItem);
+                OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
+                try {
+                    switch(message) {
+                        case DeathRecordUpdate update:
+                            HandleUpdateMessage(_database, update);
+                        break;
+                        case DeathRecordSubmission submission:
+                            HandleSubmissionMessage(_database, submission);
+                        break;
+                    }
+                } catch {
+                    ExtractionErrorMessage errorMessage = new ExtractionErrorMessage(message);
+                    outgoingMessageItem.Message = errorMessage.ToJSON();
+                    _database.OutgoingMessageItems.Add(outgoingMessageItem);
+                }
                 await _database.SaveChangesAsync();
+
                 return id.Result;
             }
         }
 
-        private bool FHIRMessageItemExists(long id)
+        private void HandleSubmissionMessage(ApplicationDbContext _database, DeathRecordSubmission message) {
+            if(!IncomingMessageLogItemExists(_database, message.MessageId)) {
+                IJEItem ijeItem = new IJEItem();
+                ijeItem.MessageId = message.MessageId;
+                ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
+                // Log and ack message right after it is successfully extracted
+                CreateAckMessage(_database, message);
+                LogMessage(_database, message);
+                _database.IJEItems.Add(ijeItem);
+                _database.SaveChanges();
+            }
+        }
+
+        private void HandleUpdateMessage(ApplicationDbContext _database, DeathRecordUpdate message) {
+
+        }
+
+        private void LogMessage(ApplicationDbContext _database, DeathRecordSubmission message) {
+                IncomingMessageLog entry = new IncomingMessageLog();
+                entry.MessageTimestamp = message.MessageTimestamp;
+                entry.MessageId = message.MessageId;
+                entry.CertificateNumber = message.CertificateNumber;
+                entry.StateAuxiliaryIdentifier = message.StateAuxiliaryIdentifier;
+                _database.IncomingMessageLogs.Add(entry);
+                _database.SaveChanges();
+        }
+
+        private void CreateAckMessage(ApplicationDbContext _database, BaseMessage message) {
+            OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
+            AckMessage ackMessage = new AckMessage(message);
+            outgoingMessageItem.Message = ackMessage.ToJSON();
+            outgoingMessageItem.MessageId = ackMessage.MessageId;
+            _database.OutgoingMessageItems.Add(outgoingMessageItem);
+            _database.SaveChanges();
+        }
+
+        private bool IncomingMessageLogItemExists(ApplicationDbContext context, string messageId)
         {
-            return _context.FHIRMessageItems.Any(e => e.Id == id);
+            return context.IncomingMessageLogs.Any(l => l.MessageId == messageId);
+        }
+
+        private bool IncomingMessageItemExists(long id)
+        {
+            return _context.IncomingMessageItems.Any(e => e.Id == id);
         }
     }
 }
