@@ -9,8 +9,6 @@ using NVSSMessaging.Models;
 using NVSSMessaging.Services;
 using VRDR;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
-using Microsoft.VisualStudio.Web.CodeGeneration;
 
 namespace NVSSMessaging.Controllers
 {
@@ -31,6 +29,7 @@ namespace NVSSMessaging.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OutgoingMessageItem>>> GetOutgoingMessageItems(DateTime lastUpdated = default(DateTime))
         {
+            // TODO: Return a FHIR bundle of messages instead of an array of FHIR messages
             return await _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated).ToListAsync();
         }
 
@@ -51,7 +50,7 @@ namespace NVSSMessaging.Controllers
         // POST: Bundles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult PostIncomingMessageItem([FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
+        public async Task<ActionResult> PostIncomingMessageItem([FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
@@ -63,7 +62,7 @@ namespace NVSSMessaging.Controllers
                 _context.IncomingMessageItems.Add(item);
                 _context.SaveChanges();
 
-                _ = queue.QueueBackgroundWorkItemAsync(token => ConvertToIJE(token, new ValueTask<long>(item.Id)));
+                await ConvertToIJE(item.Id);
             } catch {
                 return BadRequest();
             }
@@ -72,13 +71,13 @@ namespace NVSSMessaging.Controllers
             return NoContent();
         }
 
-        public async ValueTask<long> ConvertToIJE(CancellationToken token, ValueTask<long> id)
+        public async Task<long> ConvertToIJE(long id)
         {
             // TODO: Something this throws a "Cannot access a disposed object" exception
             // Potentially need to move this into it's own Service to deal with this.
             using(var scope = Services.CreateScope()) {
                 var _database = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                IncomingMessageItem item = _database.IncomingMessageItems.Find(id.Result);
+                IncomingMessageItem item = _database.IncomingMessageItems.Find(id);
                 BaseMessage message = BaseMessage.Parse(item.Message.ToString(), true);
                 IJEItem ijeItem = new IJEItem();
                 OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
@@ -98,7 +97,7 @@ namespace NVSSMessaging.Controllers
                 }
                 await _database.SaveChangesAsync();
 
-                return id.Result;
+                return id;
             }
         }
 
