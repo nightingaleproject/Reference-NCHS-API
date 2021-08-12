@@ -11,17 +11,35 @@ using System.Threading.Tasks;
 // https://github.com/dotnet/extensions/issues/805#issuecomment-410539073
 namespace NVSSMessaging.Services
 {
+    public interface IBackgroundWorkOrder { }
+
+    public interface IBackgroundWorkOrder<TWorkItem, TWorker> : IBackgroundWorkOrder
+        where TWorker : IBackgroundWorker<TWorkItem, TWorker>
+        where TWorkItem : IBackgroundWorkOrder<TWorkItem, TWorker>
+    {
+    }
+
+    public interface IBackgroundWorker { }
+
+    public interface IBackgroundWorker<TWorkItem, TWorker> : IBackgroundWorker
+        where TWorker : IBackgroundWorker<TWorkItem, TWorker>
+        where TWorkItem : IBackgroundWorkOrder<TWorkItem, TWorker>
+    {
+        Task DoWork(TWorkItem item, CancellationToken cancellationToken);
+    }
+
     public interface IBackgroundTaskQueue
     {
-        ValueTask QueueBackgroundWorkItemAsync(Func<CancellationToken, ValueTask<long>> workItem);
+        void QueueBackgroundWorkItemAsync<TWorkItem, TWorker>(IBackgroundWorkOrder<TWorkItem, TWorker> message)
+        where TWorker : IBackgroundWorker<TWorkItem, TWorker>
+        where TWorkItem : IBackgroundWorkOrder<TWorkItem, TWorker>;
 
-        ValueTask<Func<CancellationToken, ValueTask<long>>> DequeueAsync(
-            CancellationToken cancellationToken);
+        Task<IBackgroundWorkOrder> DequeueAsync(CancellationToken cancellationToken);
     }
 
     public class BackgroundTaskQueue : IBackgroundTaskQueue
     {
-        private readonly Channel<Func<CancellationToken, ValueTask<long>>> _queue;
+        private readonly Channel<IBackgroundWorkOrder> _queue;
 
         public BackgroundTaskQueue(int capacity)
         {
@@ -34,11 +52,12 @@ namespace NVSSMessaging.Services
             {
                 FullMode = BoundedChannelFullMode.Wait
             };
-            _queue = Channel.CreateBounded<Func<CancellationToken, ValueTask<long>>>(options);
+            _queue = Channel.CreateBounded<IBackgroundWorkOrder>(options);
         }
 
-        public async ValueTask QueueBackgroundWorkItemAsync(
-            Func<CancellationToken, ValueTask<long>> workItem)
+        public async void QueueBackgroundWorkItemAsync<TWorkItem, TWorker>(IBackgroundWorkOrder<TWorkItem, TWorker> workItem)
+            where TWorkItem : IBackgroundWorkOrder<TWorkItem, TWorker>
+            where TWorker : IBackgroundWorker<TWorkItem, TWorker>
         {
             if (workItem == null)
             {
@@ -48,8 +67,7 @@ namespace NVSSMessaging.Services
             await _queue.Writer.WriteAsync(workItem);
         }
 
-        public async ValueTask<Func<CancellationToken, ValueTask<long>>> DequeueAsync(
-            CancellationToken cancellationToken)
+        public async Task<IBackgroundWorkOrder> DequeueAsync(CancellationToken cancellationToken)
         {
             var workItem = await _queue.Reader.ReadAsync(cancellationToken);
 

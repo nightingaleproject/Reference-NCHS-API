@@ -5,13 +5,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using NVSSMessaging.Models;
+using System.Linq;
 
 namespace NVSSMessaging.Services
 {
     public class QueuedHostedService : BackgroundService
     {
         private readonly ILogger<QueuedHostedService> _logger;
-        private readonly IServiceProvider Services;
+        private readonly IServiceProvider _services;
 
         public QueuedHostedService(
           IBackgroundTaskQueue taskQueue,
@@ -21,30 +22,46 @@ namespace NVSSMessaging.Services
         {
             TaskQueue = taskQueue;
             _logger = logger;
-            Services = services;
+            _services = services;
         }
 
         public IBackgroundTaskQueue TaskQueue { get; }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation(
                 $"Background job processing has started {Environment.NewLine}"
             );
 
-            await BackgroundProcessing(stoppingToken);
+            await BackgroundProcessing(cancellationToken);
         }
 
-        private async Task BackgroundProcessing(CancellationToken stoppingToken)
+        private async Task BackgroundProcessing(CancellationToken cancellationToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
-              var workItem = await TaskQueue.DequeueAsync(stoppingToken);
+              var workItem = await TaskQueue.DequeueAsync(cancellationToken);
 
-              try
-              {
-                  await workItem(stoppingToken);
-              }
+            try
+            {
+                using (var scope = this._services.CreateScope())
+                {
+                    var workerType = workItem
+                        .GetType()
+                        .GetInterfaces()
+                        .First(t => t.IsConstructedGenericType && t.GetGenericTypeDefinition() == typeof(IBackgroundWorkOrder<,>))
+                        .GetGenericArguments()
+                        .Last();
+
+                    var worker = scope.ServiceProvider
+                        .GetRequiredService(workerType);
+
+                    var task = (Task)workerType
+                        .GetMethod("DoWork")
+                        .Invoke(worker, new object[] { workItem, cancellationToken });
+                    await task;
+                }
+            }
               catch (Exception ex)
               {
                   _logger.LogError(ex,
@@ -53,11 +70,11 @@ namespace NVSSMessaging.Services
             }
         }
 
-        public override async Task StopAsync(CancellationToken stoppingToken)
+        public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Background job processing is stopping.");
 
-            await base.StopAsync(stoppingToken);
+            await base.StopAsync(cancellationToken);
         }
     }
 }

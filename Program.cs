@@ -26,6 +26,7 @@ namespace NVSSMessaging
                             queueCapacity = 100;
                         return new BackgroundTaskQueue(queueCapacity);
                     });
+                    services.AddScoped<ConvertToIJEBackgroundWork.Worker>();
                 });
     }
 }

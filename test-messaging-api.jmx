@@ -22,7 +22,7 @@
         <longProp name="ThreadGroup.start_time">1373789594000</longProp>
         <longProp name="ThreadGroup.end_time">1373789594000</longProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
-        <stringProp name="ThreadGroup.duration">60</stringProp>
+        <stringProp name="ThreadGroup.duration">600</stringProp>
         <stringProp name="ThreadGroup.delay">5</stringProp>
         <stringProp name="TestPlan.comments">Virtual Users Running Scenario 1. 
 Make test last 1 minute (see Scheduler)</stringProp>
@@ -93,7 +93,7 @@ Connect to 5s</stringProp>
       &quot;fullUrl&quot;: &quot;urn:uuid:e92258b0-b96e-4386-9ddb-1031117ee1c7&quot;,&#xd;
       &quot;resource&quot;: {&#xd;
         &quot;resourceType&quot;: &quot;MessageHeader&quot;,&#xd;
-        &quot;id&quot;: &quot;e92258b0-b96e-4386-9ddb-1031117ee1c7&quot;,&#xd;
+        &quot;id&quot;: &quot;${__UUID}&quot;,&#xd;
         &quot;eventUri&quot;: &quot;http://nchs.cdc.gov/vrdr_submission&quot;,&#xd;
         &quot;destination&quot;: [&#xd;
           {&#xd;
@@ -1579,7 +1579,7 @@ Connect to 5s</stringProp>
         <hashTree>
           <ResponseAssertion guiclass="AssertionGui" testclass="ResponseAssertion" testname="Assertion" enabled="true">
             <collectionProp name="Asserion.test_strings">
-              <stringProp name="49586">200</stringProp>
+              <stringProp name="49590">204</stringProp>
             </collectionProp>
             <stringProp name="Assertion.test_field">Assertion.response_code</stringProp>
             <boolProp name="Assertion.assume_success">false</boolProp>
