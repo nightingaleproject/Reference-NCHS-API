@@ -2,3 +2,4 @@ obj/
 bin/
 results*
 jmeter.log
+appsettings.json

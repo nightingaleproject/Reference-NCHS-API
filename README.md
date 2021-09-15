@@ -11,3 +11,8 @@ This is a C# implementation of the NCHS Messaging Infrastructure described in se
 1. Run MSSQL server: `docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 -d mcr.microsoft.com/mssql/server`
 2. Migrate your local database to match the current migration: `dotnet run database update`
 3. Run the server using `dotnet run`
+
+# Deploying in Production
+
+1. Rename `appsettings.json.sample` to `appsettings.json`
+2. Update database configuration in `appsettings.json` to match your environment.

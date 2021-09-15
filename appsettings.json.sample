@@ -6,5 +6,8 @@
       "Microsoft.Hosting.Lifetime": "Information"
     }
   },
-  "AllowedHosts": "*"
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "NVSSMessagingDatabase": "Server=localhost;Database=nvssmessaging;User=sa;Password=yourStrong(!)Password;"
+  }
 }

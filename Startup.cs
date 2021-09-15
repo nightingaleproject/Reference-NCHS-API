@@ -24,7 +24,7 @@ namespace NVSSMessaging
             services.AddMemoryCache();
             services.AddMiniProfiler(options => options.RouteBasePath = "/profiler").AddEntityFramework();
             services.AddDbContext<ApplicationDbContext>(opt =>
-                                               opt.UseSqlServer(@"Server=localhost;Database=nvssmessaging;User=sa;Password=yourStrong(!)Password;"));
+                                               opt.UseSqlServer(Configuration.GetConnectionString("NVSSMessagingDatabase")));
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
