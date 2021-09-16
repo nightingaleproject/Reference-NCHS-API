@@ -24,8 +24,11 @@ namespace NVSSMessaging
             services.AddMemoryCache();
             services.AddMiniProfiler(options => options.RouteBasePath = "/profiler").AddEntityFramework();
             services.AddDbContext<ApplicationDbContext>(opt =>
-                                               opt.UseSqlServer(Configuration.GetConnectionString("NVSSMessagingDatabase")));
-            services.AddControllers();
+                opt.UseSqlServer(Configuration.GetConnectionString("NVSSMessagingDatabase"))
+            );
+            services.AddControllers().AddNewtonsoftJson(
+                options => options.SerializerSettings.Converters.Add(new BundleConverter())
+            );
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1" });

@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NVSSMessaging.Models;
 using NVSSMessaging.Services;
+using Hl7.Fhir.Model;
 using VRDR;
 
 namespace NVSSMessaging.Controllers
@@ -25,10 +25,15 @@ namespace NVSSMessaging.Controllers
 
         // GET: Bundles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OutgoingMessageItem>>> GetOutgoingMessageItems(DateTime lastUpdated = default(DateTime))
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(DateTime lastUpdated = default(DateTime))
         {
             // TODO: Return a FHIR bundle of messages instead of an array of FHIR messages
-            return await _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated).ToListAsync();
+            var messages = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated).Select(message => BaseMessage.Parse(message.Message, true));
+            Bundle responseBundle = new Bundle();
+            responseBundle.Type = Bundle.BundleType.Searchset;
+            responseBundle.Timestamp = DateTime.Now;
+            await messages.ForEachAsync(message => responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId));
+            return responseBundle;
         }
 
         // GET: Bundles/5
