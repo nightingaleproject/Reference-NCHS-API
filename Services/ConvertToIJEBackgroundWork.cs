@@ -60,30 +60,48 @@ namespace NVSSMessaging.Services
           }
 
         private void HandleSubmissionMessage(DeathRecordSubmission message) {
-            if(!IncomingMessageLogItemExists(message.MessageId)) {
-                IJEItem ijeItem = new IJEItem();
-                ijeItem.MessageId = message.MessageId;
-                ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
-                // Log and ack message right after it is successfully extracted
-                CreateAckMessage(message);
-                LogMessage(message);
+            IJEItem ijeItem = new IJEItem();
+            ijeItem.MessageId = message.MessageId;
+            ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
+            // Log and ack message right after it is successfully extracted
+            CreateAckMessage(message);
+            bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
+            // Log the message whether or not it is a duplicate
+            LogMessage(message);
+            // Only save non-duplicate submission messages
+            if(!duplicateMessage) {
                 this._context.IJEItems.Add(ijeItem);
                 this._context.SaveChanges();
             }
         }
 
         private void HandleUpdateMessage(DeathRecordUpdate message) {
-
+            IJEItem ijeItem = new IJEItem();
+            ijeItem.MessageId = message.MessageId;
+            ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
+            CreateAckMessage(message);
+            bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
+            IncomingMessageLog previousMessage = LatestMessageByCertAndStateId(message.CertificateNumber, message.StateAuxiliaryIdentifier);
+            if(!duplicateMessage) {
+                // Only log messages that are not duplicates
+                LogMessage(message);
+                // Only save if this is not a message with a duplicate ID and the previousMessage either does not exist or
+                // has an older timestamp than the message we are currently dealing with
+                if(previousMessage == null || message.MessageTimestamp > previousMessage.MessageTimestamp) {
+                    this._context.IJEItems.Add(ijeItem);
+                    this._context.SaveChanges();
+                }
+            }
         }
 
         private void LogMessage(DeathRecordSubmission message) {
-                IncomingMessageLog entry = new IncomingMessageLog();
-                entry.MessageTimestamp = message.MessageTimestamp;
-                entry.MessageId = message.MessageId;
-                entry.CertificateNumber = message.CertificateNumber;
-                entry.StateAuxiliaryIdentifier = message.StateAuxiliaryIdentifier;
-                this._context.IncomingMessageLogs.Add(entry);
-                this._context.SaveChanges();
+            IncomingMessageLog entry = new IncomingMessageLog();
+            entry.MessageTimestamp = message.MessageTimestamp;
+            entry.MessageId = message.MessageId;
+            entry.CertificateNumber = message.CertificateNumber;
+            entry.StateAuxiliaryIdentifier = message.StateAuxiliaryIdentifier;
+            this._context.IncomingMessageLogs.Add(entry);
+            this._context.SaveChanges();
         }
 
         private void CreateAckMessage(BaseMessage message) {
@@ -98,6 +116,11 @@ namespace NVSSMessaging.Services
         private bool IncomingMessageLogItemExists(string messageId)
         {
             return this._context.IncomingMessageLogs.Any(l => l.MessageId == messageId);
+        }
+
+        private IncomingMessageLog LatestMessageByCertAndStateId(uint? certNumber, string stateId)
+        {
+            return this._context.IncomingMessageLogs.Where(l => l.CertificateNumber == certNumber && l.StateAuxiliaryIdentifier == stateId).OrderBy(l => l.MessageTimestamp).LastOrDefault();
         }
 
         private bool IncomingMessageItemExists(long id)
