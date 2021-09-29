@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services?view=aspnetcore-3.0&tabs=visual-studio#queued-background-tasks
 // https://github.com/dotnet/AspNetCore.Docs/issues/22702
 // https://github.com/dotnet/extensions/issues/805#issuecomment-410539073
-namespace NVSSMessaging.Services
+namespace messaging.Services
 {
     public interface IBackgroundWorkOrder { }
 

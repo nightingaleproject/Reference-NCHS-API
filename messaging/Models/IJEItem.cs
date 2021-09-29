@@ -1,7 +1,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace NVSSMessaging.Models
+namespace messaging.Models
 {
     public class IJEItem
     {

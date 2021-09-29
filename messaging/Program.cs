@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using NVSSMessaging.Services;
+using messaging.Services;
 
-namespace NVSSMessaging
+namespace messaging
 {
     public class Program
     {
@@ -20,7 +20,7 @@ namespace NVSSMessaging
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHostedService<QueuedHostedService>();
+                services.AddHostedService<QueuedHostedService>();
                     services.AddSingleton<IBackgroundTaskQueue>(ctx => {
                         if (!int.TryParse(hostContext.Configuration["QueueCapacity"], out var queueCapacity))
                             queueCapacity = 100;
