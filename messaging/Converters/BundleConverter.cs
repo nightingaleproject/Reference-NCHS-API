@@ -3,7 +3,7 @@ using Hl7.Fhir.Serialization;
 using System;
 using Newtonsoft.Json;
 
-namespace NVSSMessaging
+namespace messaging
 {
   public class BundleConverter : JsonConverter<Bundle>
   {

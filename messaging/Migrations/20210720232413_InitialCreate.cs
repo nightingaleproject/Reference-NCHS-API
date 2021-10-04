@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace NVSSMessaging.Migrations
+namespace messaging.Migrations
 {
     public partial class InitialCreate : Migration
     {

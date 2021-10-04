@@ -15,9 +15,9 @@
     <PackageReference Include="MiniProfiler.AspNetCore.Mvc" Version="4.2.22" />
     <PackageReference Include="MiniProfiler.EntityFrameworkCore" Version="4.2.22" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
-    <PackageReference Include="VRDR.Messaging" Version="3.1.1" />
-    <!-- <ProjectReference Include="..\vrdr-dotnet\VRDR\DeathRecord.csproj" />
-    <ProjectReference Include="..\vrdr-dotnet\VRDR.Messaging\VRDRMessaging.csproj" /> -->
+    <PackageReference Include="VRDR.Messaging" Version="3.2.0" />
+    <!-- <ProjectReference Include="..\..\vrdr-dotnet\VRDR\DeathRecord.csproj" />
+    <ProjectReference Include="..\..\vrdr-dotnet\VRDR.Messaging\VRDRMessaging.csproj" /> -->
   </ItemGroup>
 
 </Project>

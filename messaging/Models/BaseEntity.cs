@@ -1,6 +1,6 @@
 using System;
 
-namespace NVSSMessaging.Models
+namespace messaging.Models
 {
   public class BaseEntity{
       public DateTime CreatedDate { get; set; }

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
 
-namespace NVSSMessaging.Models
+namespace messaging.Models
 {
     public class ApplicationDbContext : DbContext
     {

@@ -3,12 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NVSSMessaging.Models;
-using NVSSMessaging.Services;
+using messaging.Models;
+using messaging.Services;
 using Hl7.Fhir.Model;
 using VRDR;
 
-namespace NVSSMessaging.Controllers
+namespace messaging.Controllers
 {
     [Route("[controller]")]
     [ApiController]
@@ -58,7 +58,7 @@ namespace NVSSMessaging.Controllers
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
             try {
-                BaseMessage message = BaseMessage.Parse(text.ToString(), true);
+                BaseMessage message = BaseMessage.Parse(text.ToString());
                 IncomingMessageItem item = new IncomingMessageItem();
                 item.Message = text.ToString();
                 item.MessageId = message.MessageId;
