@@ -6,7 +6,7 @@ namespace messaging.Models
     {
         public long Id { get; set; }
         public string MessageId { get; set; }
-        public uint? CertificateNumber { get; set; }
+        public string NCHSIdentifier { get; set; }
         public string StateAuxiliaryIdentifier { get; set; }
         public DateTimeOffset? MessageTimestamp { get; set; }
     }
