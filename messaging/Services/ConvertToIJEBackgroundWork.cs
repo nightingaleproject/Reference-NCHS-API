@@ -81,7 +81,7 @@ namespace messaging.Services
             ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
             CreateAckMessage(message);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
-            IncomingMessageLog previousMessage = LatestMessageByCertAndStateId(message.CertificateNumber, message.StateAuxiliaryIdentifier);
+            IncomingMessageLog previousMessage = LatestMessageByNCHSAndStateId(message.NCHSIdentifier, message.StateAuxiliaryIdentifier);
             if(!duplicateMessage) {
                 // Only log messages that are not duplicates
                 LogMessage(message);
@@ -98,7 +98,7 @@ namespace messaging.Services
             IncomingMessageLog entry = new IncomingMessageLog();
             entry.MessageTimestamp = message.MessageTimestamp;
             entry.MessageId = message.MessageId;
-            entry.CertificateNumber = message.CertificateNumber;
+            entry.NCHSIdentifier = message.NCHSIdentifier;
             entry.StateAuxiliaryIdentifier = message.StateAuxiliaryIdentifier;
             this._context.IncomingMessageLogs.Add(entry);
             this._context.SaveChanges();
@@ -118,9 +118,9 @@ namespace messaging.Services
             return this._context.IncomingMessageLogs.Any(l => l.MessageId == messageId);
         }
 
-        private IncomingMessageLog LatestMessageByCertAndStateId(uint? certNumber, string stateId)
+        private IncomingMessageLog LatestMessageByNCHSAndStateId(string NCHSIdentifier, string stateId)
         {
-            return this._context.IncomingMessageLogs.Where(l => l.CertificateNumber == certNumber && l.StateAuxiliaryIdentifier == stateId).OrderBy(l => l.MessageTimestamp).LastOrDefault();
+            return this._context.IncomingMessageLogs.Where(l => l.NCHSIdentifier == NCHSIdentifier && l.StateAuxiliaryIdentifier == stateId).OrderBy(l => l.MessageTimestamp).LastOrDefault();
         }
 
         private bool IncomingMessageItemExists(long id)
