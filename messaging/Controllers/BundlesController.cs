@@ -27,7 +27,6 @@ namespace messaging.Controllers
         [HttpGet]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(DateTime lastUpdated = default(DateTime))
         {
-            // TODO: Return a FHIR bundle of messages instead of an array of FHIR messages
             var messages = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated).Select(message => BaseMessage.Parse(message.Message, true));
             Bundle responseBundle = new Bundle();
             responseBundle.Type = Bundle.BundleType.Searchset;
