@@ -18,7 +18,7 @@ This is a C# implementation of the NCHS Messaging Infrastructure described in se
 1. Setup a proper MSSQL instance meeting your organizational requirements, or have the credentials to an existing instance available.
 2. Rename `appsettings.json.sample` to `appsettings.json` inside of the `messaging` folder.
 3. Ensure the `NVSSMessagingDatabase` contains the proper MSSQL connection string for your environment in `messaging/appsettings.json` are set correctly.
-4. Migrate your local database to match the current migration: `dotnet run --project messaging database update`
+4. Migrate your local database to match the current migration: `dotnet ef --project messaging database update`
 5. Run the server using `dotnet run --project messaging`
 
 # Interacting with the API
@@ -36,7 +36,19 @@ curl --location --request POST 'https://localhost:5001/Bundles' \
 3. This will return a 204 no content HTTP response if everything is functioning correctly.
 Example Response:
 ```
-put example response here and include headers
+> POST /Bundles HTTP/1.1
+> Host: localhost:5001
+> User-Agent: curl/7.64.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 46643
+> Expect: 100-continue
+>
+< HTTP/1.1 100 Continue
+* We are completely uploaded and fine
+< HTTP/1.1 204 No Content
+< Date: Wed, 17 Nov 2021 21:56:03 GMT
+< Server: Kestrel
 ```
 
 ### Receiving Messages
@@ -51,5 +63,117 @@ curl "https://localhost:5001/Bundles?lastUpdated=2021-10-21T17:21:41.492893-04:0
 3. These requests return a 200 Response header with a body containing a [FHIR Bundle](https://www.hl7.org/fhir/bundle.html) of type 'searchset' containing a list of FHIR Messages. These messages can be either ACK, Error, or Coding Responses.
 Example Response:
 ```
-put example response here and include headers (make it verbose)
+> GET /Bundles HTTP/1.1
+> Host: localhost:5001
+> User-Agent: curl/7.64.1
+> Accept: */*
+>
+< HTTP/1.1 200 OK
+< Date: Wed, 17 Nov 2021 21:58:21 GMT
+< Content-Type: application/json; charset=utf-8
+< Server: Kestrel
+< Content-Length: 2213
+
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "timestamp": "2021-11-17T16:58:22.091838-05:00",
+  "entry": [{
+    "fullUrl": "urn:uuid:d4d597b3-2634-412f-b41d-0017ad4cfb15",
+    "resource": {
+      "resourceType": "Bundle",
+      "id": "e6752e31-799c-4732-82e7-85ba967a4779",
+      "type": "message",
+      "timestamp": "2021-11-17T16:55:55.090601-05:00",
+      "entry": [{
+        "fullUrl": "urn:uuid:d4d597b3-2634-412f-b41d-0017ad4cfb15",
+        "resource": {
+          "resourceType": "MessageHeader",
+          "id": "d4d597b3-2634-412f-b41d-0017ad4cfb15",
+          "eventUri": "http://nchs.cdc.gov/vrdr_acknowledgement",
+          "destination": [{
+            "endpoint": "https://example.com/jurisdiction/message/endpoint"
+          }],
+          "source": {
+            "endpoint": "http://nchs.cdc.gov/vrdr_submission"
+          },
+          "response": {
+            "identifier": "1eba0dc0-9d5a-48ec-9536-67e56d7fa130",
+            "code": "ok"
+          },
+          "focus": [{
+            "reference": "urn:uuid:f753e87e-5058-47a4-83f7-a1d8375f5e44"
+          }]
+        }
+      }, {
+        "fullUrl": "urn:uuid:f753e87e-5058-47a4-83f7-a1d8375f5e44",
+        "resource": {
+          "resourceType": "Parameters",
+          "id": "f753e87e-5058-47a4-83f7-a1d8375f5e44",
+          "parameter": [{
+            "name": "cert_no",
+            "valueUnsignedInt": 365483
+          }, {
+            "name": "state_auxiliary_id",
+            "valueString": "650014"
+          }, {
+            "name": "jurisdiction_id",
+            "valueString": "MA"
+          }, {
+            "name": "death_year",
+            "valueUnsignedInt": 2021
+          }]
+        }
+      }]
+    }
+  }, {
+    "fullUrl": "urn:uuid:9e553c61-8510-416f-984b-f5b70d9ce4fd",
+    "resource": {
+      "resourceType": "Bundle",
+      "id": "85a7e61d-578a-4e4a-ae84-6b6f402f9048",
+      "type": "message",
+      "timestamp": "2021-11-17T16:56:03.736701-05:00",
+      "entry": [{
+        "fullUrl": "urn:uuid:9e553c61-8510-416f-984b-f5b70d9ce4fd",
+        "resource": {
+          "resourceType": "MessageHeader",
+          "id": "9e553c61-8510-416f-984b-f5b70d9ce4fd",
+          "eventUri": "http://nchs.cdc.gov/vrdr_acknowledgement",
+          "destination": [{
+            "endpoint": "https://example.com/jurisdiction/message/endpoint"
+          }],
+          "source": {
+            "endpoint": "http://nchs.cdc.gov/vrdr_submission"
+          },
+          "response": {
+            "identifier": "1eba0dc0-9d5a-48ec-9536-67e56d7fa130",
+            "code": "ok"
+          },
+          "focus": [{
+            "reference": "urn:uuid:03890087-4891-4802-a2cf-68c1d895f762"
+          }]
+        }
+      }, {
+        "fullUrl": "urn:uuid:03890087-4891-4802-a2cf-68c1d895f762",
+        "resource": {
+          "resourceType": "Parameters",
+          "id": "03890087-4891-4802-a2cf-68c1d895f762",
+          "parameter": [{
+            "name": "cert_no",
+            "valueUnsignedInt": 365483
+          }, {
+            "name": "state_auxiliary_id",
+            "valueString": "650014"
+          }, {
+            "name": "jurisdiction_id",
+            "valueString": "MA"
+          }, {
+            "name": "death_year",
+            "valueUnsignedInt": 2021
+          }]
+        }
+      }]
+    }
+  }]
+}
 ```
