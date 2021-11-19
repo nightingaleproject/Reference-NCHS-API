@@ -30,13 +30,11 @@ namespace messaging.Services
       public class Worker : IBackgroundWorker<Message, Worker>
       {
           private readonly ApplicationDbContext _context;
-          private readonly AppSettings _appSettings;
 
-          public Worker(ApplicationDbContext context, IOptions<AppSettings> settings)
+          public Worker(ApplicationDbContext context)
           {
               // This is where you put your dependencies, services, etc.
               this._context = context;
-              this._appSettings = settings.Value;
           }
 
           public async Task DoWork(Message message, CancellationToken cancellationToken)
@@ -108,14 +106,12 @@ namespace messaging.Services
         }
 
         private void CreateAckMessage(BaseMessage message) {
-            if(this._appSettings.SendACKMessages) {
-                OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
-                AckMessage ackMessage = new AckMessage(message);
-                outgoingMessageItem.Message = ackMessage.ToJSON();
-                outgoingMessageItem.MessageId = ackMessage.MessageId;
-                this._context.OutgoingMessageItems.Add(outgoingMessageItem);
-                this._context.SaveChanges();
-            }
+            OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
+            AckMessage ackMessage = new AckMessage(message);
+            outgoingMessageItem.Message = ackMessage.ToJSON();
+            outgoingMessageItem.MessageId = ackMessage.MessageId;
+            this._context.OutgoingMessageItems.Add(outgoingMessageItem);
+            this._context.SaveChanges();
         }
 
         private bool IncomingMessageLogItemExists(string messageId)

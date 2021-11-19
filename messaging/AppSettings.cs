@@ -2,5 +2,5 @@ using System;
 
 public class AppSettings
 {
-    public Boolean SendACKMessages { get; set; } = false;
+    public Boolean AckAndIJEConversion { get; set; } = false;
 }
