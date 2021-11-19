@@ -1,10 +1,10 @@
-name: Run Test Suite on PR or push to master
+name: Run Test Suite on PR or push to main
 
 on:
   push:
-    branches: [ master, addTests ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   test:
