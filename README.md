@@ -1,11 +1,11 @@
 # Overview
 
 NCHS is working to modernize the national collection and exchange of mortality data by developing
-new Application Programming Interfaces (APIs) for data exchange, implementing modern standards
-health like HL7's Fast Healthcare Interoperability Resources (FHIR), and improving overall systems
-and processes. This repository provides a reference implementation and documentation describing the
-NVSS API, which supports the exchange of mortality data between NCHS and vital records
-jurisdictions.
+and deploying new Application Programming Interfaces (APIs) for data exchange, implementing modern
+standards health like HL7's Fast Healthcare Interoperability Resources (FHIR), and improving overall
+systems and processes. This repository provides a reference implementation and documentation
+describing the NVSS API, which supports the exchange of mortality data between NCHS and vital
+records jurisdictions.
 
 This reference implementation is developed for .NET using C# and implements the NCHS Messaging
 Infrastructure section of the
@@ -14,12 +14,16 @@ documentation. It leverages the
 [VRDR Messaging](https://www.nuget.org/packages/VRDR.Messaging)
 library for parsing and constructing messages.
 
+This implementation describes the NVSS API hosted by NCHS and the compatible implementation hosted
+via the STEVE 2.0 system.
+
 # The NVSS API
 
-The NVSS API can be used to submit mortality data to NCHS and receive acknowledgments, errors, and
-coded data in response. An API is a set of rules that describe how two systems can communicate with
-each other. The NVSS API allows vital records jurisdiction mortality data systems to automate
-communication with NCHS in a robust and repeatable way.
+The NVSS API can be accessed by vital records jurisdictions in order to submit mortality data to
+NCHS and receive acknowledgments, errors, and coded data in response. An API is a set of rules that
+describe how two systems can communicate with each other. The NVSS API allows vital records
+jurisdiction mortality data systems to automate communication with NCHS in a robust and repeatable
+way.
 
 The NVSS API uses a RESTful approach. REST, or
 [Representational State Transfer](http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm),
