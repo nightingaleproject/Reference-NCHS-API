@@ -1,3 +1,6 @@
+This repository provides a description of the NVSS API supporting exchange of mortality data between
+NCHS and vital records jursiditions, along with a reference implementation.
+
 # Overview
 
 NCHS is working to modernize the national collection and exchange of mortality data by developing
@@ -30,7 +33,7 @@ The NVSS API uses a RESTful approach. REST, or
 is an architectural style that is typically implemented using internet technologies like the
 [Hypertext Transfer Protocol (HTTP)](https://datatracker.ietf.org/doc/html/rfc2616) and
 [JavaScript Object Notation (JSON)](https://datatracker.ietf.org/doc/html/rfc8259).
-REST offers a simple stateless request-response pattern that makes building applications straight forward.
+REST offers a simple stateless request-response pattern that makes building applications straightforward.
 
 The NVSS API is built using the [FHIR](htatp://hl7.org/fhir/) standard.  FHIR is a RESTful standard
 for the electronic exchange of healthcare information. FHIR's focus on health data and its basis on
@@ -47,7 +50,8 @@ The API supports several types of interaction:
 
 * POSTing a submission message containing a new death record
 * POSTing an update message containing an updated version of an existing death record
-* POSTing a void message voiding an existing death record
+* POSTing a void message voiding one or more existing death records
+* POSTing an alias message providing alias information for an existing death record
 * POSTing an acknowledgment message acknowledging receipt of a coding response message from NCHS
 * GETting response messages from NCHS, including
     * Acknowledgment messages acknowledging jurisdiction-submitted submission, update, and void messages
@@ -96,8 +100,8 @@ curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/Bundle
 
 ## Sending Messages
 
-1. Create a FHIR Record. The standard that specifies this format can be found [here](https://build.fhir.org/ig/HL7/vrdr/branches/Sep_2021_Connectathon/). There are also two public library implementations available to assist in the creation of FHIR Records, [VRDR-dotnet](https://github.com/nightingaleproject/vrdr-dotnet) and [VRDR_javalib](https://github.com/MortalityReporting/VRDR_javalib)
-2. Create a FHIR VRDR Message. The standard that specifies this format can be found [here](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html). The [VRDR-dotnet Messaging library](https://github.com/nightingaleproject/vrdr-dotnet/blob/master/doc/Messaging.md) also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the [Canary](https://github.com/nightingaleproject/canary) project has a **Creating FHIR VRDR Messages** option in which will create an appropriate synthetic message for POSTing to the API.
+1. Create a FHIR Record. The standard that specifies this format can be found [here](https://build.fhir.org/ig/HL7/vrdr/branches/Sep_2021_Connectathon/). There are also two public library implementations available to assist in the creation of FHIR Records, [VRDR-dotnet](https://github.com/nightingaleproject/vrdr-dotnet) and [VRDR_javalib](https://github.com/MortalityReporting/VRDR_javalib).
+2. Create a FHIR VRDR Message to act as an envelope for the FHIR Record created above. The standard that specifies this format can be found [here](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html). The [VRDR-dotnet Messaging library](https://github.com/nightingaleproject/vrdr-dotnet/blob/master/doc/Messaging.md) also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the [Canary](https://github.com/nightingaleproject/canary) project has a **Creating FHIR VRDR Messages** option in which will create an appropriate synthetic message for POSTing to the API.
 3. Submit the message using a POST request to the `/Bundles` endpoint; the following example demonstrates the request format using [curl](https://curl.se/):
 ```bash
 curl --location --request POST 'https://localhost:5001/Bundles' \
