@@ -1,25 +1,53 @@
-This is a C# implementation of the NCHS Messaging Infrastructure described in section A.2 of the [FHIR Messaging for NVSS](https://github.com/nightingaleproject/vital_records_fhir_messaging/releases/download/v3.1.0/fhir_messaging_for_nvss.pdf) document. It leverages the [VRDR Messaging](https://www.nuget.org/packages/VRDR.Messaging) library for parsing and constructing messages.
+# Overview
 
-# Features
+NCHS is working to modernize the national collection and exchange of mortality data by developing
+new Application Programming Interfaces (APIs) for data exchange, implementing modern standards
+health like HL7's Fast Healthcare Interoperability Resources (FHIR), and improving overall systems
+and processes. This repository provides a reference implementation and documentation describing the
+NVSS API, which supports the exchange of mortality data between NCHS and vital records
+jurisdictions.
 
- - Background message unpacking and conversion to IJE.
- - Sending of ACK messages to jurisdictions on successful message receive.
- - Writes IJE messages to SQL server.
+This reference implementation is developed for .NET using C# and implements the NCHS Messaging
+Infrastructure described in section A.2 of the
+[FHIR Messaging for NVSS](https://github.com/nightingaleproject/vital_records_fhir_messaging/releases/download/v3.1.0/fhir_messaging_for_nvss.pdf)
+document. It leverages the
+[VRDR Messaging](https://www.nuget.org/packages/VRDR.Messaging)
+library for parsing and constructing messages.
 
-# Steps to start the API In Development
+# The NVSS API
 
-1. Run MSSQL server: In development `docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 -d mcr.microsoft.com/mssql/server`, or in production configure a proper MSSQL instance to your organizational requirements.
-2. Ensure the `NVSSMessagingDatabase` contains the proper MSSQL connection string for your environment in `messaging/appsettings.Development.json`
-3. Migrate your local database to match the current migration: `dotnet run --project messaging database update`
-4. Run the server using `dotnet run --project messaging`
+The NVSS API can be used to submit mortality data to NCHS and receive acknowledgments, errors, and
+coded data in response. An API is a set of rules that describe how two systems can communicate with
+each other. The NVSS API allows vital records jurisdiction mortality data systems to automate
+communication with NCHS in a robust and repeatable way.
 
-# Deploying in Production
+The NVSS API uses a RESTful approach. REST, or
+[Representational State Transfer](http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm),
+is an architectural style that is typically implemented using internet technologies like the
+[Hypertext Transfer Protocol (HTTP)](https://datatracker.ietf.org/doc/html/rfc2616) and
+[JavaScript Object Notation (JSON)](https://datatracker.ietf.org/doc/html/rfc8259).
+REST offers a simple stateless request-response pattern that makes building applications straight forward.
 
-1. Setup a proper MSSQL instance meeting your organizational requirements, or have the credentials to an existing instance available.
-2. Rename `appsettings.json.sample` to `appsettings.json` inside of the `messaging` folder.
-3. Ensure the `NVSSMessagingDatabase` contains the proper MSSQL connection string for your environment in `messaging/appsettings.json` are set correctly.
-4. Migrate your local database to match the current migration: `dotnet ef --project messaging database update`
-5. Run the server using `dotnet run --project messaging`
+The NVSS API is built using the [FHIR](htatp://hl7.org/fhir/) standard.  FHIR is a RESTful standard
+for the electronic exchange of healthcare information. FHIR's focus on health data and its basis on
+internet standards make it a good fit for exchanging mortality data.  The fundamental building block
+for organizing data in FHIR is the [Resource](https://www.hl7.org/fhir/resource.html). A FHIR
+Resource is just a well-specified way to represent a single concept, like a Patient or a
+Condition. The NVSS API uses the [Bundle](https://www.hl7.org/fhir/bundle.html) resource to
+represent and share information about mortality data in the form of
+[FHIR Messages](https://www.hl7.org/fhir/messaging.html). Jurisdictions send mortality records to
+NCHS and NCHS responds using
+[Vital Records Death Reporting FHIR Messages](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html).
+
+The API supports several types of interaction:
+
+* POSTing submission of a new death record
+* POSTing update of an existing death record
+* POSTing voiding of an existing death record
+* GETting response messages from NCHS, including
+    * Acknowledgment messages
+    * Error messages
+    * Coding response messages
 
 # Interacting with the API
 
@@ -177,3 +205,18 @@ Example Response:
   }]
 }
 ```
+
+# Steps to start the API In Development
+
+1. Run MSSQL server: In development `docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 -d mcr.microsoft.com/mssql/server`, or in production configure a proper MSSQL instance to your organizational requirements.
+2. Ensure the `NVSSMessagingDatabase` contains the proper MSSQL connection string for your environment in `messaging/appsettings.Development.json`
+3. Migrate your local database to match the current migration: `dotnet run --project messaging database update`
+4. Run the server using `dotnet run --project messaging`
+
+# Deploying in Production
+
+1. Setup a proper MSSQL instance meeting your organizational requirements, or have the credentials to an existing instance available.
+2. Rename `appsettings.json.sample` to `appsettings.json` inside of the `messaging` folder.
+3. Ensure the `NVSSMessagingDatabase` contains the proper MSSQL connection string for your environment in `messaging/appsettings.json` are set correctly.
+4. Migrate your local database to match the current migration: `dotnet ef --project messaging database update`
+5. Run the server using `dotnet run --project messaging`
