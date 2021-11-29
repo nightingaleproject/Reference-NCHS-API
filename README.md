@@ -8,9 +8,9 @@ NVSS API, which supports the exchange of mortality data between NCHS and vital r
 jurisdictions.
 
 This reference implementation is developed for .NET using C# and implements the NCHS Messaging
-Infrastructure described in section A.2 of the
-[FHIR Messaging for NVSS](https://github.com/nightingaleproject/vital_records_fhir_messaging/releases/download/v3.1.0/fhir_messaging_for_nvss.pdf)
-document. It leverages the
+Infrastructure section of the
+[FHIR Messaging for NVSS](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/appendix.html#nchs-fhir-messaging-infrastructure)
+documentation. It leverages the
 [VRDR Messaging](https://www.nuget.org/packages/VRDR.Messaging)
 library for parsing and constructing messages.
 
