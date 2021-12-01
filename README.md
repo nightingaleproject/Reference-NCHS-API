@@ -1,5 +1,7 @@
 This repository provides a description of the NVSS API supporting exchange of mortality data between
-NCHS and vital records jursiditions, along with a reference implementation.
+NCHS and vital records jurisdictions, along with a reference implementation. This implementation and
+documentation describes the server side of the API. For the client side see the
+[Reference NVSS Client API](https://github.com/nightingaleproject/Reference-Client-API).
 
 # Overview
 
@@ -26,7 +28,8 @@ The NVSS API can be accessed by vital records jurisdictions in order to submit m
 NCHS and receive acknowledgments, errors, and coded data in response. An API is a set of rules that
 describe how two systems can communicate with each other. The NVSS API allows vital records
 jurisdiction mortality data systems to automate communication with NCHS in a robust and repeatable
-way.
+way. Automation improves timeliness of data exchange and reduces burden on vital records
+stakeholders.
 
 The NVSS API uses a RESTful approach. REST, or
 [Representational State Transfer](http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm),
@@ -48,15 +51,15 @@ NCHS and NCHS responds using
 
 The API supports several types of interaction:
 
-* POSTing a submission message containing a new death record
-* POSTing an update message containing an updated version of an existing death record
-* POSTing a void message voiding one or more existing death records
-* POSTing an alias message providing alias information for an existing death record
+* POSTing a submission message containing a new death record, which represents the information collected on a death certificate
+* POSTing an update message containing an updated version of an existing death record, suitable for amending previous submissions
+* POSTing a void message voiding one or more existing death records, used to indicate that a previously submitted record is no longer valid
+* POSTing an alias message providing decedent alias information for an existing death record, used to provide additional identifying information about a decedent
 * POSTing an acknowledgment message acknowledging receipt of a coding response message from NCHS
 * GETting response messages from NCHS, including
     * Acknowledgment messages acknowledging jurisdiction-submitted submission, update, and void messages
     * Error messages describing problems with jurisdiction-submitted messages
-    * Coding response messages coding jurisdiction-submitted data
+    * Coding response messages coding jurisdiction-submitted data such as cause of death, race, and ethnicity
 
 Messages flow from NCHS back to jurisdictions by jurisdiction systems polling the API looking for
 new responses. This approach of pulling responses rather than NCHS pushing responses to
@@ -132,7 +135,7 @@ Example Response:
 ```bash
 curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/Bundles
 ```
-2. Time based filtering is also available, and can be done by providing a `lastUpdated` parameter as a filter. The best practice is to use time based filtering whenever retrieving messages. Always keep track of the last time polling was performed and use that timestamp to filter results in order to only retrieve messages that have not previously been processed.
+2. Time based filtering is also available, and can be used by providing a `lastUpdated` parameter as a filter. The best practice is to use time based filtering whenever retrieving messages. Always keep track of the last time polling was performed and use that timestamp to filter results in order to only retrieve messages that have not previously been processed.
 ```bash
 curl --header 'Authorization: Bearer <OAuthToken>' "https://localhost:5001/Bundles?lastUpdated=2021-10-21T17:21:41.492893-04:00"
 ```
@@ -254,9 +257,9 @@ Example Response:
 }
 ```
 
-# Development documentation
+# API Developer Documentation
 
-This section documents information useful for development of the API itself.
+This section documents information useful for developers of the API itself and is not relevant to users of the API or developers of systems that use the API.
 
 ## Steps to start the API In Development
 
