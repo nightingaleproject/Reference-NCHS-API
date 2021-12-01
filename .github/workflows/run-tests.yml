@@ -1,4 +1,4 @@
-name: Run Test Suite on PR or push to master
+name: Run Test Suite on PR or push to main
 
 on:
   push:

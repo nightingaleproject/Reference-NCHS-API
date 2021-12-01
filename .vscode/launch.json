@@ -13,9 +13,10 @@
       "request": "launch",
       "preLaunchTask": "build",
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/bin/Debug/net5.0/NVSSMessaging.dll",
+      "program": "${workspaceFolder}/messaging/bin/Debug/net5.0/messaging.dll",
+      "requireExactSource": false,
       "args": [],
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/messaging",
       "stopAtEntry": false,
       // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
       "serverReadyAction": {

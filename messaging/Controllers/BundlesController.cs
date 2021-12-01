@@ -7,6 +7,7 @@ using messaging.Models;
 using messaging.Services;
 using Hl7.Fhir.Model;
 using VRDR;
+using Microsoft.Extensions.Options;
 
 namespace messaging.Controllers
 {
@@ -16,11 +17,13 @@ namespace messaging.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider Services;
+        private readonly AppSettings _settings;
 
-        public BundlesController(ApplicationDbContext context, IServiceProvider services)
+        public BundlesController(ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
             _context = context;
             Services = services;
+            _settings = settings.Value;
         }
 
         // GET: Bundles
@@ -64,7 +67,9 @@ namespace messaging.Controllers
                 _context.IncomingMessageItems.Add(item);
                 _context.SaveChanges();
 
-                queue.QueueConvertToIJE(item.Id);
+                if(_settings.AckAndIJEConversion) {
+                    queue.QueueConvertToIJE(item.Id);
+                }
             } catch {
                 return BadRequest();
             }
