@@ -39,7 +39,7 @@ is an architectural style that is typically implemented using internet technolog
 REST offers a simple stateless request-response pattern that makes building applications straightforward.
 
 The NVSS API is built using the [FHIR](htatp://hl7.org/fhir/) standard.  FHIR is a RESTful standard
-for the electronic exchange of healthcare information. FHIR's focus on health data and its basis on
+for the electronic exchange of health information. FHIR's focus on health data and its basis on
 internet standards make it a good fit for exchanging mortality data.  The fundamental building block
 for organizing data in FHIR is the [Resource](https://www.hl7.org/fhir/resource.html). A FHIR
 Resource is just a well-specified way to represent a single concept, like a Patient or a
