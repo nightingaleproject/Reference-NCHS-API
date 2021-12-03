@@ -1,5 +1,4 @@
 using messaging.Models;
-using Microsoft.Extensions.Options;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -110,6 +109,7 @@ namespace messaging.Services
             AckMessage ackMessage = new AckMessage(message);
             outgoingMessageItem.Message = ackMessage.ToJSON();
             outgoingMessageItem.MessageId = ackMessage.MessageId;
+            outgoingMessageItem.MessageType = ackMessage.GetType().Name;
             this._context.OutgoingMessageItems.Add(outgoingMessageItem);
             this._context.SaveChanges();
         }

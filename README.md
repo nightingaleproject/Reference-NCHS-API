@@ -265,7 +265,7 @@ This section documents information useful for developers of the API itself and i
 
 1. Run MSSQL server: In development `docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 -d mcr.microsoft.com/mssql/server`, or in production configure a proper MSSQL instance to your organizational requirements.
 2. Ensure the `NVSSMessagingDatabase` contains the proper MSSQL connection string for your environment in `messaging/appsettings.Development.json`
-3. Migrate your local database to match the current migration: `dotnet run --project messaging database update`
+3. Migrate your local database to match the current migration: `dotnet ef --project messaging database update`
 4. Run the server using `dotnet run --project messaging`
 
 ## Deploying in Production
