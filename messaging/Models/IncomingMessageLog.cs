@@ -1,8 +1,11 @@
 using System;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace messaging.Models
 {
+    [Index(nameof(MessageId))]
+    [Index(nameof(NCHSIdentifier))]
     public class IncomingMessageLog : BaseEntity
     {
         public long Id { get; set; }

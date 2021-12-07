@@ -81,7 +81,7 @@ namespace messaging.Services
             ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
             CreateAckMessage(message);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
-            IncomingMessageLog previousMessage = LatestMessageByNCHSAndStateId(message.NCHSIdentifier, message.StateAuxiliaryIdentifier);
+            IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
             if(!duplicateMessage) {
                 // Only log messages that are not duplicates
                 LogMessage(message);
@@ -119,9 +119,9 @@ namespace messaging.Services
             return this._context.IncomingMessageLogs.Any(l => l.MessageId == messageId);
         }
 
-        private IncomingMessageLog LatestMessageByNCHSAndStateId(string NCHSIdentifier, string stateId)
+        private IncomingMessageLog LatestMessageByNCHSId(string NCHSIdentifier)
         {
-            return this._context.IncomingMessageLogs.Where(l => l.NCHSIdentifier == NCHSIdentifier && l.StateAuxiliaryIdentifier == stateId).OrderBy(l => l.MessageTimestamp).LastOrDefault();
+            return this._context.IncomingMessageLogs.Where(l => l.NCHSIdentifier == NCHSIdentifier).OrderBy(l => l.MessageTimestamp).LastOrDefault();
         }
 
         private bool IncomingMessageItemExists(long id)
