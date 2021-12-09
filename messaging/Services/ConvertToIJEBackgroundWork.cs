@@ -39,6 +39,8 @@ namespace messaging.Services
           public async Task DoWork(Message message, CancellationToken cancellationToken)
         {
             IncomingMessageItem item = this._context.IncomingMessageItems.Find(message.Id);
+            item.ProcessedStatus = "PROCESSED";
+            this._context.Update(item);
             BaseMessage parsedMessage = BaseMessage.Parse(item.Message.ToString(), true);
             IJEItem ijeItem = new IJEItem();
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
