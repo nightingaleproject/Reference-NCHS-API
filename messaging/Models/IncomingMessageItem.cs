@@ -18,5 +18,9 @@ namespace messaging.Models
         [MaxLength(10)]
         [Required]
         public string ProcessedStatus { get; set; } = "QUEUED";
+        [Column(TypeName = "CHAR")]
+        [MaxLength(2)]
+        [Required]
+        public string JurisdictionId { get; set; } = "MA";
     }
 }

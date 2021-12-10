@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace messaging.Models
@@ -13,5 +14,9 @@ namespace messaging.Models
         public string MessageType { get; set; }
         [Required]
         public string MessageId { get; set; }
+        [Column(TypeName = "CHAR")]
+        [MaxLength(2)]
+        [Required]
+        public string JurisdictionId { get; set; }
     }
 }

@@ -42,15 +42,15 @@ namespace messaging.Services
             item.ProcessedStatus = "PROCESSED";
             this._context.Update(item);
             BaseMessage parsedMessage = BaseMessage.Parse(item.Message.ToString(), true);
-            IJEItem ijeItem = new IJEItem();
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
+            outgoingMessageItem.JurisdictionId = item.JurisdictionId;
             try {
                 switch(parsedMessage) {
                     case DeathRecordUpdate update:
-                        HandleUpdateMessage(update);
+                        HandleUpdateMessage(update, item);
                     break;
                     case DeathRecordSubmission submission:
-                        HandleSubmissionMessage(submission);
+                        HandleSubmissionMessage(submission, item);
                     break;
                 }
             } catch {
@@ -61,15 +61,15 @@ namespace messaging.Services
             await this._context.SaveChangesAsync();
           }
 
-        private void HandleSubmissionMessage(DeathRecordSubmission message) {
+        private void HandleSubmissionMessage(DeathRecordSubmission message, IncomingMessageItem databaseMessage) {
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
             ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
             // Log and ack message right after it is successfully extracted
-            CreateAckMessage(message);
+            CreateAckMessage(message, databaseMessage);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             // Log the message whether or not it is a duplicate
-            LogMessage(message);
+            LogMessage(message, databaseMessage);
             // Only save non-duplicate submission messages
             if(!duplicateMessage) {
                 this._context.IJEItems.Add(ijeItem);
@@ -77,16 +77,16 @@ namespace messaging.Services
             }
         }
 
-        private void HandleUpdateMessage(DeathRecordUpdate message) {
+        private void HandleUpdateMessage(DeathRecordUpdate message, IncomingMessageItem databaseMessage) {
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
             ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
-            CreateAckMessage(message);
+            CreateAckMessage(message, databaseMessage);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
             if(!duplicateMessage) {
                 // Only log messages that are not duplicates
-                LogMessage(message);
+                LogMessage(message, databaseMessage);
                 // Only save if this is not a message with a duplicate ID and the previousMessage either does not exist or
                 // has an older timestamp than the message we are currently dealing with
                 if(previousMessage == null || message.MessageTimestamp > previousMessage.MessageTimestamp) {
@@ -96,19 +96,21 @@ namespace messaging.Services
             }
         }
 
-        private void LogMessage(DeathRecordSubmission message) {
+        private void LogMessage(DeathRecordSubmission message, IncomingMessageItem databaseMessage) {
             IncomingMessageLog entry = new IncomingMessageLog();
             entry.MessageTimestamp = message.MessageTimestamp;
             entry.MessageId = message.MessageId;
+            entry.JurisdictionId = databaseMessage.JurisdictionId;
             entry.NCHSIdentifier = message.NCHSIdentifier;
             entry.StateAuxiliaryIdentifier = message.StateAuxiliaryIdentifier;
             this._context.IncomingMessageLogs.Add(entry);
             this._context.SaveChanges();
         }
 
-        private void CreateAckMessage(BaseMessage message) {
+        private void CreateAckMessage(BaseMessage message, IncomingMessageItem databaseMessage) {
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
             AckMessage ackMessage = new AckMessage(message);
+            outgoingMessageItem.JurisdictionId = databaseMessage.JurisdictionId;
             outgoingMessageItem.Message = ackMessage.ToJSON();
             outgoingMessageItem.MessageId = ackMessage.MessageId;
             outgoingMessageItem.MessageType = ackMessage.GetType().Name;
