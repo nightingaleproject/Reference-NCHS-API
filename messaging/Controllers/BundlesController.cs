@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using messaging.Models;
 using messaging.Services;
 using Hl7.Fhir.Model;
@@ -30,11 +29,16 @@ namespace messaging.Controllers
         [HttpGet]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(DateTime lastUpdated = default(DateTime))
         {
-            var messages = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated).Select(message => BaseMessage.Parse(message.Message, true));
+            var messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated)
+                                                            .Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.Parse(message.Message, true)));
             Bundle responseBundle = new Bundle();
             responseBundle.Type = Bundle.BundleType.Searchset;
             responseBundle.Timestamp = DateTime.Now;
-            await messages.ForEachAsync(message => responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId));
+            var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
+            foreach (var message in messages)
+            {
+                responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
+            }
             return responseBundle;
         }
 

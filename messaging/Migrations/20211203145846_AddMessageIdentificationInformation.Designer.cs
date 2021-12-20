@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using messaging.Models;
 
 namespace messaging.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211203145846_AddMessageIdentificationInformation")]
+    partial class AddMessageIdentificationInformation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,11 +49,6 @@ namespace messaging.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("JurisdictionId")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
-
                     b.Property<string>("Message")
                         .HasColumnType("nvarchar(max)");
 
@@ -86,20 +83,15 @@ namespace messaging.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("JurisdictionId")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
-
                     b.Property<string>("MessageId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("MessageTimestamp")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("NCHSIdentifier")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("StateAuxiliaryIdentifier")
                         .HasColumnType("nvarchar(max)");
@@ -108,10 +100,6 @@ namespace messaging.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MessageId");
-
-                    b.HasIndex("NCHSIdentifier");
 
                     b.ToTable("IncomingMessageLogs");
                 });
@@ -125,11 +113,6 @@ namespace messaging.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("JurisdictionId")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -147,8 +130,6 @@ namespace messaging.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedDate");
 
                     b.ToTable("OutgoingMessageItems");
                 });

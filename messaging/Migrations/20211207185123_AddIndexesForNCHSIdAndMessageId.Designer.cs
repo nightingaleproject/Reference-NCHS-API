@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using messaging.Models;
 
 namespace messaging.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211207185123_AddIndexesForNCHSIdAndMessageId")]
+    partial class AddIndexesForNCHSIdAndMessageId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,11 +49,6 @@ namespace messaging.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("JurisdictionId")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
-
                     b.Property<string>("Message")
                         .HasColumnType("nvarchar(max)");
 
@@ -85,11 +82,6 @@ namespace messaging.Migrations
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("JurisdictionId")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
 
                     b.Property<string>("MessageId")
                         .IsRequired()
@@ -126,11 +118,6 @@ namespace messaging.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("JurisdictionId")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
-
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -147,8 +134,6 @@ namespace messaging.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CreatedDate");
 
                     b.ToTable("OutgoingMessageItems");
                 });
