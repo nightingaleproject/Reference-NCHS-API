@@ -21,6 +21,6 @@ namespace messaging.Models
         [Column(TypeName = "CHAR")]
         [MaxLength(2)]
         [Required]
-        public string JurisdictionId { get; set; } = "MA";
+        public string JurisdictionId { get; set; }
     }
 }

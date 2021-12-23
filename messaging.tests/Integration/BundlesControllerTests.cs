@@ -3,7 +3,6 @@ using System.Net.Http;
 
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
-using messaging.Controllers;
 using messaging.tests.Helpers;
 using VRDR;
 using System.Net;
@@ -38,14 +37,14 @@ namespace messaging.tests
     {
       // Get the list of outgoing messages currently in the database for
       // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/Bundles");
+      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
       var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
 
       // Create a new empty Death Record
       DeathRecordSubmission recordSubmission = new DeathRecordSubmission(new DeathRecord());
 
       // Submit that Death Record
-      HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/Bundles", recordSubmission.ToJson());
+      HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
       Hl7.Fhir.Model.Bundle updatedBundle = null;
@@ -53,7 +52,7 @@ namespace messaging.tests
       // be done is checking to see if the response is correct and if it is still
       // incorrect after the specified delay then assuming that something is wrong
       for(int x = 0; x < 3; ++x) {
-        HttpResponseMessage oneAck = await _client.GetAsync("/Bundles");
+        HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
         updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
         if(updatedBundle.Entry.Count > baseBundle.Entry.Count) {
           break;
@@ -63,6 +62,11 @@ namespace messaging.tests
       }
       Assert.Equal(baseBundle.Entry.Count + 1, updatedBundle.Entry.Count);
 
+      // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
+      HttpResponseMessage noMessages = await _client.GetAsync("/XX/Bundles");
+      var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
+      Assert.Empty(noMessagesBundle.Entry);
+
       // Extract the message from the bundle and ensure it is an ACK for the appropritae message
       var lastMessageInBundle = updatedBundle.Entry.Last();
       AckMessage parsedMessage = BaseMessage.Parse<AckMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
@@ -71,7 +75,7 @@ namespace messaging.tests
 
     [Fact]
       public async Task UnparsableMessagesCauseAnError() {
-      HttpResponseMessage createBrokenSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/Bundles", "{}");
+      HttpResponseMessage createBrokenSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", "{}");
       Assert.Equal(HttpStatusCode.BadRequest, createBrokenSubmissionMessage.StatusCode);
     }
 
@@ -80,7 +84,7 @@ namespace messaging.tests
     {
       // Get the list of outgoing messages currently in the database for
       // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/Bundles");
+      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
       var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
 
       // Get the current size of the number of IJEItems in the database
@@ -90,18 +94,18 @@ namespace messaging.tests
       DeathRecordSubmission recordSubmission = new DeathRecordSubmission(new DeathRecord());
 
       // Submit that Death Record
-      HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/Bundles", recordSubmission.ToJson());
+      HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
       // Submit Identifical Death Record Again
-      HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/Bundles", recordSubmission.ToJson());
+      HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, duplicateSubmissionMessage.StatusCode);
 
       // Since the background task should ignore duplicate messages if working correctly,
       // provide ample time for it to finish.
       await Task.Delay(4000);
 
-      HttpResponseMessage oneAck = await _client.GetAsync("/Bundles");
+      HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
       Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
 
       // Even though the message is a duplicate, it is still ACK'd
@@ -116,7 +120,7 @@ namespace messaging.tests
     {
       // Get the list of outgoing messages currently in the database for
       // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/Bundles");
+      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
       var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
 
       // Get the current size of the number of IJEItems in the database
@@ -126,13 +130,13 @@ namespace messaging.tests
       DeathRecordSubmission recordSubmission = new DeathRecordSubmission(new DeathRecord());
 
       // Submit that Death Record
-      HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/Bundles", recordSubmission.ToJson());
+      HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
       DeathRecordUpdate recordUpdate = new DeathRecordUpdate(recordSubmission.DeathRecord);
 
       // Submit update message
-      HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/Bundles", recordUpdate.ToJson());
+      HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordUpdate.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
 
       Hl7.Fhir.Model.Bundle updatedBundle = null;
@@ -140,7 +144,7 @@ namespace messaging.tests
       // be done is checking to see if the response is correct and if it is still
       // incorrect after the specified delay then assuming that something is wrong
       for(int x = 0; x < 3; ++x) {
-        HttpResponseMessage getBundle = await _client.GetAsync("/Bundles");
+        HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundles");
         updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
         // Waiting for 2 messages to appear
         if(updatedBundle.Entry.Count > baseBundle.Entry.Count + 1) {
