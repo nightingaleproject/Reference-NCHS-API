@@ -98,16 +98,16 @@ curl --request POST --url 'https://<OAuthHost>/auth/oauth/v2/token' \
 --data password='<Password>'
 
 # Send a request using the retrieved token
-curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/Bundles
+curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundles
 ```
 
 ## Sending Messages
 
 1. Create a FHIR Record. The standard that specifies this format can be found [here](https://build.fhir.org/ig/HL7/vrdr/branches/Sep_2021_Connectathon/). There are also two public library implementations available to assist in the creation of FHIR Records, [VRDR-dotnet](https://github.com/nightingaleproject/vrdr-dotnet) and [VRDR_javalib](https://github.com/MortalityReporting/VRDR_javalib).
 2. Create a FHIR VRDR Message to act as an envelope for the FHIR Record created above. The standard that specifies this format can be found [here](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html). The [VRDR-dotnet Messaging library](https://github.com/nightingaleproject/vrdr-dotnet/blob/master/doc/Messaging.md) also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the [Canary](https://github.com/nightingaleproject/canary) project has a **Creating FHIR VRDR Messages** option in which will create an appropriate synthetic message for POSTing to the API.
-3. Submit the message using a POST request to the `/Bundles` endpoint; the following example demonstrates the request format using [curl](https://curl.se/):
+3. Submit the message using a POST request to the `/<JurisdictionID>/Bundles` endpoint; the following example demonstrates the request format using [curl](https://curl.se/):
 ```bash
-curl --location --request POST 'https://localhost:5001/Bundles' \
+curl --location --request POST 'https://localhost:5001/MA/Bundles' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer <OAuthToken>' \
 --data "@path/to/file.json"
@@ -115,7 +115,7 @@ curl --location --request POST 'https://localhost:5001/Bundles' \
 3. The API will return a 204 No Content HTTP response if everything is functioning correctly.
 Example Response:
 ```
-> POST /Bundles HTTP/1.1
+> POST /MA/Bundles HTTP/1.1
 > Host: localhost:5001
 > User-Agent: curl/7.64.1
 > Accept: */*
@@ -131,18 +131,18 @@ Example Response:
 ```
 
 ## Receiving Messages
-1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the `/Bundles` endpoint. The following example demonstrates the request format using [curl](https://curl.se/):
+1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the `/<JurisdictionID>/Bundles` endpoint. The following example demonstrates the request format using [curl](https://curl.se/):
 ```bash
-curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/Bundles
+curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundles
 ```
 2. Time based filtering is also available, and can be used by providing a `lastUpdated` parameter as a filter. The best practice is to use time based filtering whenever retrieving messages. Always keep track of the last time polling was performed and use that timestamp to filter results in order to only retrieve messages that have not previously been processed.
 ```bash
-curl --header 'Authorization: Bearer <OAuthToken>' "https://localhost:5001/Bundles?lastUpdated=2021-10-21T17:21:41.492893-04:00"
+curl --header 'Authorization: Bearer <OAuthToken>' "https://localhost:5001/MA/Bundles?lastUpdated=2021-10-21T17:21:41.492893-04:00"
 ```
 3. These requests return a 200 Response header with a body containing a [FHIR Bundle](https://www.hl7.org/fhir/bundle.html) of type 'searchset' containing a list of FHIR Messages. These messages can be either ACK, Error, or Coding Responses.
 Example Response:
 ```
-> GET /Bundles HTTP/1.1
+> GET /MA/Bundles HTTP/1.1
 > Host: localhost:5001
 > User-Agent: curl/7.64.1
 > Accept: */*

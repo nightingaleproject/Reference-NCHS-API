@@ -7,10 +7,11 @@ using messaging.Services;
 using Hl7.Fhir.Model;
 using VRDR;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 
 namespace messaging.Controllers
 {
-    [Route("[controller]")]
+    [Route("{jurisdictionId}/[controller]")]
     [ApiController]
     public class BundlesController : ControllerBase
     {
@@ -27,9 +28,9 @@ namespace messaging.Controllers
 
         // GET: Bundles
         [HttpGet]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(DateTime lastUpdated = default(DateTime))
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime lastUpdated = default(DateTime))
         {
-            var messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated)
+            var messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated && message.JurisdictionId == jurisdictionId)
                                                             .Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.Parse(message.Message, true)));
             Bundle responseBundle = new Bundle();
             responseBundle.Type = Bundle.BundleType.Searchset;
@@ -44,9 +45,9 @@ namespace messaging.Controllers
 
         // GET: Bundles/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<IncomingMessageItem>> GetIncomingMessageItem(long id)
+        public async Task<ActionResult<IncomingMessageItem>> GetIncomingMessageItem(string jurisdictionId, long id)
         {
-            var IncomingMessageItem = await _context.IncomingMessageItems.FindAsync(id);
+            var IncomingMessageItem = await _context.IncomingMessageItems.Where(x => x.Id == id && x.JurisdictionId == jurisdictionId).FirstAsync();
 
             if (IncomingMessageItem == null)
             {
@@ -59,7 +60,7 @@ namespace messaging.Controllers
         // POST: Bundles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult PostIncomingMessageItem([FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
+        public ActionResult PostIncomingMessageItem(string jurisdictionId, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
@@ -68,6 +69,7 @@ namespace messaging.Controllers
                 IncomingMessageItem item = new IncomingMessageItem();
                 item.Message = text.ToString();
                 item.MessageId = message.MessageId;
+                item.JurisdictionId = jurisdictionId;
                 _context.IncomingMessageItems.Add(item);
                 _context.SaveChanges();
 
