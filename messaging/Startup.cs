@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using messaging.Models;
+using Microsoft.Extensions.Logging;
 
 namespace messaging
 {
@@ -34,14 +35,10 @@ namespace messaging
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1" });
             });
-            // Uncomment to log all parameters of every request and response, useful for debugging
-            // services.AddHttpLogging(logging => {
-            //     logging.LoggingFields = Microsoft.AspNetCore.HttpLogging.HttpLoggingFields.All;
-            // });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             app.UseHttpLogging();
 
@@ -62,6 +59,10 @@ namespace messaging
             {
                 endpoints.MapControllers();
             });
+
+            // Uncomment the following line to enable logging when running under IIS
+            // Serilog.Extensions.Logging.File must also be enabled in messaging.csproj
+            // loggerFactory.AddFile("logs/nvssmessaging-{Date}.txt");
         }
     }
 }
