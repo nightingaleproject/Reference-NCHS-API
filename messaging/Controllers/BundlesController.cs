@@ -30,7 +30,7 @@ namespace messaging.Controllers
         [HttpGet]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime lastUpdated = default(DateTime))
         {
-            var messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated && message.JurisdictionId == jurisdictionId)
+            var messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated && message.JurisdictionId == jurisdictionId).ToList()
                                                             .Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.Parse(message.Message, true)));
             Bundle responseBundle = new Bundle();
             responseBundle.Type = Bundle.BundleType.Searchset;
