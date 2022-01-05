@@ -13,7 +13,8 @@ namespace messaging.Models
         public string MessageId { get; set; }
         [Column(TypeName = "CHAR")]
         [MaxLength(3)]
-        public string Source { get; set; }
+        [Required]
+        public string Source { get; set; } = "SAM";
         [Column(TypeName = "CHAR")]
         [MaxLength(10)]
         [Required]
