@@ -11,6 +11,8 @@ namespace messaging.Models
         public string Message { get; set; }
         [Required]
         public string MessageId { get; set; }
+        [Required]
+        public string MessageType { get; set; }
         [Column(TypeName = "CHAR")]
         [MaxLength(3)]
         [Required]

@@ -69,6 +69,7 @@ namespace messaging.Controllers
                 IncomingMessageItem item = new IncomingMessageItem();
                 item.Message = text.ToString();
                 item.MessageId = message.MessageId;
+                item.MessageType = message.GetType().Name;
                 item.JurisdictionId = jurisdictionId;
                 _context.IncomingMessageItems.Add(item);
                 _context.SaveChanges();
