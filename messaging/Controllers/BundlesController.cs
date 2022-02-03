@@ -71,6 +71,9 @@ namespace messaging.Controllers
                 item.MessageId = message.MessageId;
                 item.MessageType = message.GetType().Name;
                 item.JurisdictionId = jurisdictionId;
+                item.EventYear = message.DeathYear;
+                item.CertificateNumber = message.CertificateNumber;
+                item.EventType = getEventType(message);
                 _context.IncomingMessageItems.Add(item);
                 _context.SaveChanges();
 
@@ -83,6 +86,39 @@ namespace messaging.Controllers
 
             // return HTTP status code 204 (No Content)
             return NoContent();
+        }
+
+        // getEventType generates an EventType string "MOR", "NAT", or "FET"
+        // for debugging and tracking records in the db
+        // For now we only have "MOR" records but we could add "NAT" and "FET" here later
+        private string getEventType(BaseMessage message)
+        {
+            switch (message.MessageType)
+            {
+                case "http://nchs.cdc.gov/vrdr_submission":
+                    return "MOR";
+                    break;
+                case "http://nchs.cdc.gov/vrdr_submission_update":
+                    return "MOR";
+                    break;
+                case "http://nchs.cdc.gov/vrdr_acknowledgement":
+                    return "MOR";
+                    break;
+                case "http://nchs.cdc.gov/vrdr_submission_void":
+                    return "MOR";
+                    break;
+                case "http://nchs.cdc.gov/vrdr_coding":
+                    return "MOR";
+                    break;
+                case "http://nchs.cdc.gov/vrdr_coding_update":
+                    return "MOR";
+                    break;
+                case "http://nchs.cdc.gov/vrdr_extraction_error":
+                    return "MOR";
+                    break;
+                default:
+                    return "UNK";
+            }
         }
     }
 }
