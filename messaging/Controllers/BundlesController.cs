@@ -72,7 +72,9 @@ namespace messaging.Controllers
                 item.MessageType = message.GetType().Name;
                 item.JurisdictionId = jurisdictionId;
                 item.EventYear = message.DeathYear;
-                item.CertificateNumber = message.CertificateNumber;
+                uint certNo = (uint)message.CertificateNumber;
+                string certNoFmt = certNo.ToString("D6");
+                item.CertificateNumber = certNoFmt;
                 item.EventType = getEventType(message);
                 _context.IncomingMessageItems.Add(item);
                 _context.SaveChanges();
