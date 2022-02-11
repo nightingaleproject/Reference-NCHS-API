@@ -74,7 +74,7 @@ namespace messaging.Controllers
                 item.EventYear = message.DeathYear;
                 if (message.CertificateNumber == null)
                 {
-                    item.CertificateNumber = "000000";
+                    item.CertificateNumber = null;
                 }
                 else
                 {
