@@ -26,7 +26,11 @@ namespace messaging.Models
         [Required]
         public string JurisdictionId { get; set; }
         public uint? EventYear { get; set;}
-        public uint? CertificateNumber {get; set;}
+        [Column(TypeName = "CHAR")]
+        [MaxLength(6)]
+        public string CertificateNumber {get; set;}
+        [Column(TypeName = "CHAR")]
+        [MaxLength(3)]
         public string EventType {get; set;}
     }
 }
