@@ -66,6 +66,7 @@ The API supports several types of POST interaction:
 ```
 GET https://localhost:5001/<jurisdiction-id>/Bundles
 ```
+or
 ```
 GET https://localhost:5001/<jurisdiction-id>/Bundles/lastUpdated=yyyy-MM-ddTHH:mm:ss.fffffff
 ```
@@ -74,6 +75,8 @@ The API supports GET requests to retrieve responses from NCHS, including:
  * Acknowledgment messages acknowledging jurisdiction-submitted submission, update, and void messages
  * Error messages describing problems with jurisdiction-submitted messages
  * Coding response messages coding jurisdiction-submitted data such as cause of death, race, and ethnicity
+
+The API supports a `lastUpdated` parameter that will limit the messages returned to only message responses created since the provided timestamp.
 
 Messages flow from NCHS back to jurisdictions by jurisdiction systems polling the API looking for
 new responses. This approach of pulling responses rather than NCHS pushing responses to
