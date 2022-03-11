@@ -79,6 +79,9 @@ following manner:
 * Jurisdiction vital records system uses credentials to retrieve an access token
 * Jurisdiction vital records system includes the appropriate access token for subsequent API requests
 
+# Open API Documentation
+To view the swagger generated Open API documentation, run the service using the instructions in [Steps to start the API In Development](https://github.com/nightingaleproject/Reference-NCHS-API#steps-to-start-the-api-in-development) below and navigate to https://localhost:5001/swagger/index.html 
+
 # Interacting with the API
 
 ## Requesting an OAuth Token
