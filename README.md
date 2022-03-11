@@ -49,21 +49,40 @@ represent and share information about mortality data in the form of
 NCHS and NCHS responds using
 [Vital Records Death Reporting FHIR Messages](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html).
 
-The API supports several types of interaction:
+## Endpoints
+### Submit Death Records
+```
+POST https://localhost:5001/<jurisdiction-id>/Bundles
+```
+The API supports several types of POST interaction:
 
 * POSTing a submission message containing a new death record, which represents the information collected on a death certificate
 * POSTing an update message containing an updated version of an existing death record, suitable for amending previous submissions
 * POSTing a void message voiding one or more existing death records, used to indicate that a previously submitted record is no longer valid
 * POSTing an alias message providing decedent alias information for an existing death record, used to provide additional identifying information about a decedent
 * POSTing an acknowledgment message acknowledging receipt of a coding response message from NCHS
-* GETting response messages from NCHS, including
-    * Acknowledgment messages acknowledging jurisdiction-submitted submission, update, and void messages
-    * Error messages describing problems with jurisdiction-submitted messages
-    * Coding response messages coding jurisdiction-submitted data such as cause of death, race, and ethnicity
+
+### Receive Responses
+```
+GET https://localhost:5001/<jurisdiction-id>/Bundles
+```
+```
+GET https://localhost:5001/<jurisdiction-id>/Bundles/lastUpdated=yyyy-MM-ddTHH:mm:ss.fffffff
+```
+The API supports GET requests to retrieve responses from NCHS, including:
+
+ * Acknowledgment messages acknowledging jurisdiction-submitted submission, update, and void messages
+ * Error messages describing problems with jurisdiction-submitted messages
+ * Coding response messages coding jurisdiction-submitted data such as cause of death, race, and ethnicity
 
 Messages flow from NCHS back to jurisdictions by jurisdiction systems polling the API looking for
 new responses. This approach of pulling responses rather than NCHS pushing responses to
 jurisdictions allows return messages without requiring jurisdictions to set up a listening endpoint.
+
+### Authenticate
+```
+POST https://<OAuthHost>/auth/oauth/v2/token
+```
 
 Secure access to the NVSS API is provided using
 
