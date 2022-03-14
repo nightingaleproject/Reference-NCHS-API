@@ -135,9 +135,9 @@ Example Response:
 ```bash
 curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundles
 ```
-2. Time based filtering is also available, and can be used by providing a `lastUpdated` parameter as a filter. The best practice is to use time based filtering whenever retrieving messages. Always keep track of the last time polling was performed and use that timestamp to filter results in order to only retrieve messages that have not previously been processed.
+2. Time based filtering is also available, and can be used by providing the [FHIR parameter](https://www.hl7.org/fhir/http.html) `_since` as a filter. The best practice is to use time based filtering whenever retrieving messages. Always keep track of the last time polling was performed and use that timestamp to filter results in order to only retrieve messages that have not previously been processed.
 ```bash
-curl --header 'Authorization: Bearer <OAuthToken>' "https://localhost:5001/MA/Bundles?lastUpdated=2021-10-21T17:21:41.492893-04:00"
+curl --header 'Authorization: Bearer <OAuthToken>' "https://localhost:5001/MA/Bundles?_since=2021-10-21T17:21:41.492893-04:00"
 ```
 3. These requests return a 200 Response header with a body containing a [FHIR Bundle](https://www.hl7.org/fhir/bundle.html) of type 'searchset' containing a list of FHIR Messages. These messages can be either ACK, Error, or Coding Responses.
 Example Response:

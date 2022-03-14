@@ -28,9 +28,10 @@ namespace messaging.Controllers
 
         // GET: Bundles
         [HttpGet]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime lastUpdated = default(DateTime))
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime _since = default(DateTime))
         {
-            var messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= lastUpdated && message.JurisdictionId == jurisdictionId).ToList()
+            // TODO only allow the since param in development
+            var messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= _since && message.JurisdictionId == jurisdictionId).ToList()
                                                             .Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.Parse(message.Message, true)));
             Bundle responseBundle = new Bundle();
             responseBundle.Type = Bundle.BundleType.Searchset;
@@ -89,7 +90,8 @@ namespace messaging.Controllers
                 if(_settings.AckAndIJEConversion) {
                     queue.QueueConvertToIJE(item.Id);
                 }
-            } catch {
+            } catch (Exception ex){
+                Console.WriteLine(ex);
                 return BadRequest();
             }
 
@@ -105,23 +107,11 @@ namespace messaging.Controllers
             switch (message.MessageType)
             {
                 case "http://nchs.cdc.gov/vrdr_submission":
-                    return "MOR";
-                    break;
                 case "http://nchs.cdc.gov/vrdr_submission_update":
-                    return "MOR";
-                    break;
                 case "http://nchs.cdc.gov/vrdr_acknowledgement":
-                    return "MOR";
-                    break;
                 case "http://nchs.cdc.gov/vrdr_submission_void":
-                    return "MOR";
-                    break;
                 case "http://nchs.cdc.gov/vrdr_coding":
-                    return "MOR";
-                    break;
                 case "http://nchs.cdc.gov/vrdr_coding_update":
-                    return "MOR";
-                    break;
                 case "http://nchs.cdc.gov/vrdr_extraction_error":
                     return "MOR";
                     break;
