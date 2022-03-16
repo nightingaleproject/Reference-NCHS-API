@@ -91,7 +91,6 @@ namespace messaging.Controllers
                     queue.QueueConvertToIJE(item.Id);
                 }
             } catch (Exception ex){
-                Console.WriteLine(ex);
                 return BadRequest();
             }
 
