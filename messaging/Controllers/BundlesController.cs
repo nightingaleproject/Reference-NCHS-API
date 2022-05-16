@@ -73,13 +73,14 @@ namespace messaging.Controllers
                 item.MessageType = message.GetType().Name;
                 item.JurisdictionId = jurisdictionId;
                 item.EventYear = message.DeathYear;
-                if (message.CertificateNumber == null)
+
+                if (message.CertNo == null)
                 {
                     item.CertificateNumber = null;
                 }
                 else
                 {
-                    uint certNo = (uint)message.CertificateNumber;
+                    uint certNo = (uint)message.CertNo;
                     string certNoFmt = certNo.ToString("D6");
                     item.CertificateNumber = certNoFmt;
                 }
@@ -90,7 +91,7 @@ namespace messaging.Controllers
                 if(_settings.AckAndIJEConversion) {
                     queue.QueueConvertToIJE(item.Id);
                 }
-            } catch (Exception ex){
+            } catch {
                 return BadRequest();
             }
 
@@ -113,7 +114,6 @@ namespace messaging.Controllers
                 case "http://nchs.cdc.gov/vrdr_coding_update":
                 case "http://nchs.cdc.gov/vrdr_extraction_error":
                     return "MOR";
-                    break;
                 default:
                     return "UNK";
             }
