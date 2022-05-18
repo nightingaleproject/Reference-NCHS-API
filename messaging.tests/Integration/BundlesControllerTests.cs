@@ -41,7 +41,7 @@ namespace messaging.tests
       var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
 
       // Create a new empty Death Record
-      DeathRecordSubmission recordSubmission = new DeathRecordSubmission(new DeathRecord());
+      DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
       // Submit that Death Record
       HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
@@ -69,7 +69,7 @@ namespace messaging.tests
 
       // Extract the message from the bundle and ensure it is an ACK for the appropritae message
       var lastMessageInBundle = updatedBundle.Entry.Last();
-      AckMessage parsedMessage = BaseMessage.Parse<AckMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
+      AcknowledgementMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
       Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
     }
 
@@ -91,7 +91,7 @@ namespace messaging.tests
       var ijeItems = _context.IJEItems.Count();
 
       // Create a new empty Death Record
-      DeathRecordSubmission recordSubmission = new DeathRecordSubmission(new DeathRecord());
+      DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
       // Submit that Death Record
       HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
@@ -127,13 +127,13 @@ namespace messaging.tests
       var ijeItems = _context.IJEItems.Count();
 
       // Create a new empty Death Record
-      DeathRecordSubmission recordSubmission = new DeathRecordSubmission(new DeathRecord());
+      DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
       // Submit that Death Record
       HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
-      DeathRecordUpdate recordUpdate = new DeathRecordUpdate(recordSubmission.DeathRecord);
+      DeathRecordUpdateMessage recordUpdate = new DeathRecordUpdateMessage(recordSubmission.DeathRecord);
 
       // Submit update message
       HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordUpdate.ToJson());
