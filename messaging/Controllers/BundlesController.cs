@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using messaging.Models;
 using messaging.Services;
@@ -32,15 +33,17 @@ namespace messaging.Controllers
         {
             // TODO only allow the since param in development
             // if _since is the default value, then apply the retrieved at logic
-            System.Collections.Generic.IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks;
+            IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks;
             if (_since == default(DateTime))
             {
+                // Determine if the ToList and Select could lead to duplication if the result is iterated more than once
                 // get all messages that have not yet been retrieved 
                 messageTasks = _context.OutgoingMessageItems.Where(message => message.RetrievedAt == null && message.JurisdictionId == jurisdictionId).ToList()
                                                             .Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.Parse(message.Message, true))); 
             }
             else
             {
+                // Determine if the ToList and Select could lead to duplication if the result is iterated more than once
                 messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= _since && message.JurisdictionId == jurisdictionId).ToList()
                                                             .Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.Parse(message.Message, true)));            
             }
@@ -53,6 +56,9 @@ namespace messaging.Controllers
             {
                 responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
                 // update each outgoing message's RetrievedAt field
+
+                // TODO see if we could keep the reference to the message item selected above so we can make the update there
+                // and avoid another query here
                 OutgoingMessageItem msgItem = _context.OutgoingMessageItems.Where(msg => msg.MessageId == message.MessageId).First();
                 msgItem.RetrievedAt = retrievedTime;
                 _context.SaveChanges();
@@ -107,7 +113,8 @@ namespace messaging.Controllers
                 if(_settings.AckAndIJEConversion) {
                     queue.QueueConvertToIJE(item.Id);
                 }
-            } catch {
+            } catch (Exception ex){
+                Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
                 return BadRequest();
             }
 
