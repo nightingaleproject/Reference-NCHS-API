@@ -5,25 +5,21 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace messaging.Migrations
 {
-    /// <summary>
-    /// Enable tracking retrieval of messages by STEVE separately from jurisdictions.
-    /// </summary>
-    public partial class AddSTEVERetrievedAtColumn : Migration
+    public partial class AddSteveRetrievedAt : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<DateTime>(
-                name: "STEVE_RetrievedAt",
+                name: "SteveRetrievedAt",
                 table: "OutgoingMessageItems",
                 type: "datetime2",
-                nullable: true,
-                defaultValue: null);
+                nullable: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "STEVE_RetrievedAt",
+                name: "SteveRetrievedAt",
                 table: "OutgoingMessageItems");
         }
     }

@@ -12,8 +12,8 @@ using messaging.Models;
 namespace messaging.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20220601120000_Add-STEVE-RetrievedAt-Column")]
-    partial class AddSTEVERetrievedAtColumn
+    [Migration("20220601204108_AddSteveRetrievedAt")]
+    partial class AddSteveRetrievedAt
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -179,7 +179,10 @@ namespace messaging.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("RetrievedAt")
+                    b.Property<DateTime?>("RetrievedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SteveRetrievedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("UpdatedDate")
