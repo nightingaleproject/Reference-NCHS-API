@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using messaging.Models;
 using messaging.Services;
@@ -31,16 +32,38 @@ namespace messaging.Controllers
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime _since = default(DateTime))
         {
             // TODO only allow the since param in development
-            var messageTasks = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= _since && message.JurisdictionId == jurisdictionId).ToList()
-                                                            .Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.Parse(message.Message, true)));
+            // if _since is the default value, then apply the retrieved at logic
+            List<OutgoingMessageItem> outgoingMessages = new List<OutgoingMessageItem>();
+            IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks;
+            if (_since == default(DateTime))
+            {
+                // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
+                // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
+                outgoingMessages = _context.OutgoingMessageItems.Where(message => message.RetrievedAt == null && message.JurisdictionId == jurisdictionId).ToList();
+                messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true))); 
+            }
+            else
+            {
+                outgoingMessages = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= _since && message.JurisdictionId == jurisdictionId).ToList();
+                messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));            
+            }
+
+            // create bundle to hold the response
             Bundle responseBundle = new Bundle();
             responseBundle.Type = Bundle.BundleType.Searchset;
             responseBundle.Timestamp = DateTime.Now;
             var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
+            DateTime retrievedTime = DateTime.UtcNow;
+            
+            // Add messages to the bundle
             foreach (var message in messages)
             {
                 responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
             }
+
+            // update each outgoing message's RetrievedAt field
+            outgoingMessages.ForEach(msgItem => msgItem.RetrievedAt = retrievedTime);
+            _context.SaveChanges();
             return responseBundle;
         }
 
@@ -73,13 +96,14 @@ namespace messaging.Controllers
                 item.MessageType = message.GetType().Name;
                 item.JurisdictionId = jurisdictionId;
                 item.EventYear = message.DeathYear;
-                if (message.CertificateNumber == null)
+
+                if (message.CertNo == null)
                 {
                     item.CertificateNumber = null;
                 }
                 else
                 {
-                    uint certNo = (uint)message.CertificateNumber;
+                    uint certNo = (uint)message.CertNo;
                     string certNoFmt = certNo.ToString("D6");
                     item.CertificateNumber = certNoFmt;
                 }
@@ -91,6 +115,7 @@ namespace messaging.Controllers
                     queue.QueueConvertToIJE(item.Id);
                 }
             } catch (Exception ex){
+                Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
                 return BadRequest();
             }
 
@@ -113,7 +138,6 @@ namespace messaging.Controllers
                 case "http://nchs.cdc.gov/vrdr_coding_update":
                 case "http://nchs.cdc.gov/vrdr_extraction_error":
                     return "MOR";
-                    break;
                 default:
                     return "UNK";
             }
