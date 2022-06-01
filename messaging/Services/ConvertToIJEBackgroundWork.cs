@@ -67,7 +67,8 @@ namespace messaging.Services
         private void HandleSubmissionMessage(DeathRecordSubmissionMessage message, IncomingMessageItem databaseMessage) {
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
-            ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
+            // set validation to false
+            ijeItem.IJE = new IJEMortality(message.DeathRecord, false).ToString();
             // Log and ack message right after it is successfully extracted
             CreateAckMessage(message, databaseMessage);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
@@ -83,7 +84,7 @@ namespace messaging.Services
         private void HandleUpdateMessage(DeathRecordUpdateMessage message, IncomingMessageItem databaseMessage) {
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
-            ijeItem.IJE = new IJEMortality(message.DeathRecord).ToString();
+            ijeItem.IJE = new IJEMortality(message.DeathRecord, false).ToString();
             CreateAckMessage(message, databaseMessage);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);

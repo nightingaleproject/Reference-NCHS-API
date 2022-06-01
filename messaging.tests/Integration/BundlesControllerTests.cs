@@ -54,13 +54,14 @@ namespace messaging.tests
       for(int x = 0; x < 3; ++x) {
         HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
         updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
-        if(updatedBundle.Entry.Count > baseBundle.Entry.Count) {
+        if(updatedBundle.Entry.Count > 0) {
           break;
         } else {
           await Task.Delay(x * 500);
         }
       }
-      Assert.Equal(baseBundle.Entry.Count + 1, updatedBundle.Entry.Count);
+      // with the new retrievedAt column, only one message should be returned
+      Assert.Equal(1, updatedBundle.Entry.Count);
 
       // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
       HttpResponseMessage noMessages = await _client.GetAsync("/XX/Bundles");
@@ -147,7 +148,7 @@ namespace messaging.tests
         HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundles");
         updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
         // Waiting for 2 messages to appear
-        if(updatedBundle.Entry.Count > baseBundle.Entry.Count + 1) {
+        if(updatedBundle.Entry.Count > 1) {
           break;
         } else {
           await Task.Delay(x * 500);
@@ -155,7 +156,7 @@ namespace messaging.tests
       }
 
       // Even though the message is a duplicate, it is still ACK'd
-      Assert.Equal(baseBundle.Entry.Count + 2, updatedBundle.Entry.Count);
+      Assert.Equal(2, updatedBundle.Entry.Count);
 
       // Should receive the initial submission message and then an update messaage
       Assert.Equal(ijeItems + 2, _context.IJEItems.Count());
