@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
@@ -25,5 +26,7 @@ namespace messaging.Models
         [Column(TypeName = "CHAR")]
         [MaxLength(3)]
         public string EventType {get; set;}
+
+        public DateTime? RetrievedAt { get; set; }
     }
 }

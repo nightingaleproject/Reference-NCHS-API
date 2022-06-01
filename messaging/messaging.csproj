@@ -13,7 +13,7 @@
     <PackageReference Include="MiniProfiler.AspNetCore.Mvc" Version="4.2.22"/>
     <PackageReference Include="MiniProfiler.EntityFrameworkCore" Version="4.2.22"/>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3"/>
-    <PackageReference Include="VRDR.Messaging" Version="3.2.1"/>
+    <PackageReference Include="VRDR.Messaging" Version="4.0.0-preview2" />
     <!-- <ProjectReference Include="..\..\vrdr-dotnet\VRDR\DeathRecord.csproj" />
     <ProjectReference Include="..\..\vrdr-dotnet\VRDR.Messaging\VRDRMessaging.csproj" /> -->
     <!-- Uncomment the following line if you want to write logging to a file (also uncomment accompanying line in the Startup.cs) -->
