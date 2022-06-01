@@ -62,9 +62,15 @@ namespace messaging.Controllers
             }
 
             // update each outgoing message's RetrievedAt field
-            outgoingMessages.ForEach(msgItem => msgItem.RetrievedAt = retrievedTime);
+            outgoingMessages.ForEach(msgItem => MarkAsRetrieved(msgItem, retrievedTime));
             _context.SaveChanges();
             return responseBundle;
+        }
+
+        // Allows overriding by STEVE controller to mark different field
+        protected virtual void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
+        {
+            omi.RetrievedAt = retrieved;
         }
 
         // GET: Bundles/5
