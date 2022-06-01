@@ -1,6 +1,6 @@
 ## Changelog
 
-### upcoming release
+### v1.0.0-preview1 - 2022-06-01
 * Add a retrievedAt column to the db and only return messages that have not been retrieved yet
 * Update the API to use the vrdr-dotnet v4.0.0-preview4 version, aligns with IG v1.3 
 * Update tests to permit empty messages for testing purposes
