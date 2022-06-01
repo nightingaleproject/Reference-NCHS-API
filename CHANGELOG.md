@@ -1,6 +1,6 @@
 ## Changelog
 
-### upcoming release
+### v0.1.0-alpha - 2022-06-01
 * Fix time zone bug by updating database to store all timestamps in UTC 
 * Change the `lastUpdated` paramater to `_since` to align with proper FHIR conventions
 
