@@ -71,7 +71,7 @@ namespace messaging.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<IncomingMessageItem>> GetIncomingMessageItem(string jurisdictionId, long id)
         {
-            var IncomingMessageItem = await _context.IncomingMessageItems.Where(x => x.Id == id && x.JurisdictionId == jurisdictionId).FirstAsync();
+            var IncomingMessageItem = await _context.IncomingMessageItems.Where(x => x.Id == id && x.JurisdictionId == jurisdictionId).FirstOrDefaultAsync();
 
             if (IncomingMessageItem == null)
             {
