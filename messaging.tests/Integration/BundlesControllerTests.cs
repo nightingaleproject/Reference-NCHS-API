@@ -1,6 +1,6 @@
 using Xunit;
 using System.Net.Http;
-
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using messaging.tests.Helpers;
@@ -67,7 +67,12 @@ namespace messaging.tests
       HttpResponseMessage noMessages = await _client.GetAsync("/XX/Bundles");
       var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
       Assert.Empty(noMessagesBundle.Entry);
-
+      
+      // Check that the retrievedAt column filters out the ACK message if we place another request
+      HttpResponseMessage noNewMsgs = await _client.GetAsync("/MA/Bundles");
+      Hl7.Fhir.Model.Bundle emptyBundle = await JsonResponseHelpers.ParseBundleAsync(noNewMsgs);
+      Assert.Equal(0, emptyBundle.Entry.Count);
+      
       // Extract the message from the bundle and ensure it is an ACK for the appropritae message
       var lastMessageInBundle = updatedBundle.Entry.Last();
       AcknowledgementMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
@@ -127,6 +132,8 @@ namespace messaging.tests
       // Get the current size of the number of IJEItems in the database
       var ijeItems = _context.IJEItems.Count();
 
+      // Get the current time
+      DateTime currentTime = DateTime.UtcNow;
       // Create a new empty Death Record
       DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
@@ -144,8 +151,10 @@ namespace messaging.tests
       // This code does not have access to the background jobs, the best that can
       // be done is checking to see if the response is correct and if it is still
       // incorrect after the specified delay then assuming that something is wrong
+      // use the since parameter to make sure we get both messages
+      string since = currentTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
       for(int x = 0; x < 3; ++x) {
-        HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundles");
+        HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundles?_since=" + since);
         updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
         // Waiting for 2 messages to appear
         if(updatedBundle.Entry.Count > 1) {
