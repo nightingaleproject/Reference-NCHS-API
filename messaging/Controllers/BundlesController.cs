@@ -94,39 +94,65 @@ namespace messaging.Controllers
         {
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
-            try {
-                BaseMessage message = BaseMessage.Parse(text.ToString());
-                IncomingMessageItem item = new IncomingMessageItem();
-                item.Message = text.ToString();
-                item.MessageId = message.MessageId;
-                item.MessageType = message.GetType().Name;
-                item.JurisdictionId = jurisdictionId;
-                item.EventYear = message.DeathYear;
-
-                if (message.CertNo == null)
-                {
-                    item.CertificateNumber = null;
-                }
-                else
-                {
-                    uint certNo = (uint)message.CertNo;
-                    string certNoFmt = certNo.ToString("D6");
-                    item.CertificateNumber = certNoFmt;
-                }
-                item.EventType = getEventType(message);
-                _context.IncomingMessageItems.Add(item);
-                _context.SaveChanges();
-
-                if(_settings.AckAndIJEConversion) {
-                    queue.QueueConvertToIJE(item.Id);
-                }
-            } catch (Exception ex){
+            IncomingMessageItem item;
+            try
+            {
+                item = ParseIncomingMessageItem(jurisdictionId, text);
+            }
+            catch (Exception ex)
+            {
                 Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
                 return BadRequest();
             }
 
+            try
+            {
+                SaveIncomingMessageItem(item, queue);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An exception occurred while saving the incoming message: {ex}");
+                return StatusCode(500);
+            }
+
             // return HTTP status code 204 (No Content)
             return NoContent();
+        }
+
+        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, [FromBody] object text)
+        {
+            BaseMessage message = BaseMessage.Parse(text.ToString());
+            IncomingMessageItem item = new IncomingMessageItem();
+            item.Message = text.ToString();
+            item.MessageId = message.MessageId;
+            item.MessageType = message.GetType().Name;
+            item.JurisdictionId = jurisdictionId;
+            item.EventYear = message.DeathYear;
+
+            if (message.CertNo == null)
+            {
+                item.CertificateNumber = null;
+            }
+            else
+            {
+                uint certNo = (uint)message.CertNo;
+                string certNoFmt = certNo.ToString("D6");
+                item.CertificateNumber = certNoFmt;
+            }
+            item.EventType = getEventType(message);
+
+            return item;
+        }
+
+        protected void SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
+        {
+            _context.IncomingMessageItems.Add(item);
+            _context.SaveChanges();
+
+            if (_settings.AckAndIJEConversion)
+            {
+                queue.QueueConvertToIJE(item.Id);
+            }
         }
 
         // getEventType generates an EventType string "MOR", "NAT", or "FET"
