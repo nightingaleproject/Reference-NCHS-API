@@ -37,10 +37,34 @@ namespace messaging.Controllers
         [HttpPost]
         public ActionResult PostIncomingMessageItemForSteve(string jurisdictionId, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
-            // TODO: NVSS-365: Mark message as coming from STEVE
-            // Return 501 Not Implemented for now
+            IncomingMessageItem item;
+            try
+            {
+                item = ParseIncomingMessageItem(jurisdictionId, text);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
+                return BadRequest();
+            }
+
+            // TODO: NVSS-365: Mark message as coming from STEVE; what value goes here (currently MaxLength 3)
+            item.Source = "STEVE-via-the-API";
+            Console.WriteLine("STEVE submission not currently supported");
             return StatusCode(501);
-            //return await base.PostIncomingMessageItem(jurisdictionId, text, queue);
+
+            try
+            {
+                SaveIncomingMessageItem(item, queue);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An exception occurred while saving the incoming message: {ex}");
+                return StatusCode(500);
+            }
+
+            // return HTTP status code 204 (No Content)
+            return NoContent();
         }
 
 
