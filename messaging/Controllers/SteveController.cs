@@ -48,10 +48,8 @@ namespace messaging.Controllers
                 return BadRequest();
             }
 
-            // TODO: NVSS-365: Mark message as coming from STEVE; what value goes here (currently MaxLength 3)
-            item.Source = "STEVE-via-the-API";
-            Console.WriteLine("STEVE submission not currently supported");
-            return StatusCode(501);
+            // Mark the item as coming from STEVE rather than directly from the jurisdiction
+            item.Source = "STV";
 
             try
             {
