@@ -4,6 +4,8 @@ using messaging.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace messaging.Controllers
@@ -21,6 +23,11 @@ namespace messaging.Controllers
         {
             return await base.GetOutgoingMessageItems(jurisdictionId, _since);
         }
+        protected override IEnumerable<OutgoingMessageItem> ExcludeRetrieved(IEnumerable<OutgoingMessageItem> source)
+        {
+            return source.Where(message => message.SteveRetrievedAt == null);
+        }
+
         protected override void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
         {
             omi.SteveRetrievedAt = retrieved;
