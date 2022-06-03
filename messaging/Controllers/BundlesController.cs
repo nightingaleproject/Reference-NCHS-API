@@ -33,20 +33,19 @@ namespace messaging.Controllers
         {
             // TODO only allow the since param in development
             // if _since is the default value, then apply the retrieved at logic
-            List<OutgoingMessageItem> outgoingMessages = new List<OutgoingMessageItem>();
-            IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks;
+            List<OutgoingMessageItem> outgoingMessages;
             if (_since == default(DateTime))
             {
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
                 outgoingMessages = _context.OutgoingMessageItems.Where(message => message.RetrievedAt == null && message.JurisdictionId == jurisdictionId).ToList();
-                messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true))); 
             }
             else
             {
                 outgoingMessages = _context.OutgoingMessageItems.Where(message => message.CreatedDate >= _since && message.JurisdictionId == jurisdictionId).ToList();
-                messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));            
             }
+
+            IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));
 
             // create bundle to hold the response
             Bundle responseBundle = new Bundle();
