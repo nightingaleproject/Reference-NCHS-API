@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace messaging.Controllers
 {
-    [Route("{jurisdictionId}/Bundles")]
+    [Route("{Controller=Bundles}/{jurisdictionId}/Bundles")]
     [ApiController]
     public class BundlesController : ControllerBase
     {
