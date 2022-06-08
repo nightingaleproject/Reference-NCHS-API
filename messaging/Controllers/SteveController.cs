@@ -27,38 +27,9 @@ namespace messaging.Controllers
             omi.SteveRetrievedAt = retrieved;
         }
 
-        // POST: /STEVE/{jurisdictionId}/Bundles
-        [HttpPost]
-        public ActionResult PostIncomingMessageItemForSteve(string jurisdictionId, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
+        protected override string GetMessageSource()
         {
-            IncomingMessageItem item;
-            try
-            {
-                item = ParseIncomingMessageItem(jurisdictionId, text);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
-                return BadRequest();
-            }
-
-            // Mark the item as coming from STEVE rather than directly from the jurisdiction
-            item.Source = "STV";
-
-            try
-            {
-                SaveIncomingMessageItem(item, queue);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An exception occurred while saving the incoming message: {ex}");
-                return StatusCode(500);
-            }
-
-            // return HTTP status code 204 (No Content)
-            return NoContent();
+            return "STV";
         }
-
-
     }
 }

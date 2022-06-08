@@ -119,6 +119,8 @@ namespace messaging.Controllers
                 return BadRequest();
             }
 
+            item.Source = GetMessageSource();
+
             try
             {
                 SaveIncomingMessageItem(item, queue);
@@ -131,6 +133,15 @@ namespace messaging.Controllers
 
             // return HTTP status code 204 (No Content)
             return NoContent();
+        }
+
+        /// <summary>
+        /// Get the value to use for the message Source (default is SAM). ALlows override by STEVE endpoint.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual string GetMessageSource()
+        {
+            return "SAM";
         }
 
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, [FromBody] object text)
