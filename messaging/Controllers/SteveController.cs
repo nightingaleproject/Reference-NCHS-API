@@ -10,19 +10,13 @@ using System.Threading.Tasks;
 
 namespace messaging.Controllers
 {
-    [Route("STEVE/{jurisdictionId}/Bundles")]
+    [Route("STEVE/{jurisdictionId:length(2)}/Bundles")]
     [ApiController]
     public class SteveController : BundlesController
     {
 
         public SteveController(ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings) : base(context, services, settings) { }
 
-        // GET: /STEVE/{jurisdictionId}/Bundles
-        [HttpGet]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItemsForSteve(string jurisdictionId, DateTime _since = default(DateTime))
-        {
-            return await base.GetOutgoingMessageItems(jurisdictionId, _since);
-        }
         protected override IEnumerable<OutgoingMessageItem> ExcludeRetrieved(IEnumerable<OutgoingMessageItem> source)
         {
             return source.Where(message => message.SteveRetrievedAt == null);
@@ -31,13 +25,6 @@ namespace messaging.Controllers
         protected override void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
         {
             omi.SteveRetrievedAt = retrieved;
-        }
-
-        // GET: /STEVE/{jurisdictionId}/Bundles/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<IncomingMessageItem>> GetIncomingMessageItemForSteve(string jurisdictionId, long id)
-        {
-            return await base.GetIncomingMessageItem(jurisdictionId, id);
         }
 
         // POST: /STEVE/{jurisdictionId}/Bundles
