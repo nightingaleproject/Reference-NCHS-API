@@ -1,14 +1,13 @@
-using Xunit;
-using System.Net.Http;
-
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Testing;
+using messaging.Models;
 using messaging.tests.Helpers;
-using VRDR;
-using System.Net;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
-using messaging.Models;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using VRDR;
+using Xunit;
 
 namespace messaging.tests
 {
@@ -95,7 +94,7 @@ namespace messaging.tests
             Assert.Equal(2, updatedBundle.Entry.Count);
 
             // Since the message is a duplicate, only 1 message per ID is actually parsed.
-            Assert.Equal(1, _context.IJEItems.Count());
+            Assert.Equal(1, await GetTableCount(_context.IJEItems, 1));
         }
 
         [Fact]
@@ -121,7 +120,7 @@ namespace messaging.tests
             Assert.Equal(2, updatedBundle.Entry.Count);
 
             // Should receive the initial submission message and then an update messaage
-            Assert.Equal(2, _context.IJEItems.Count());
+            Assert.Equal(2, await GetTableCount(_context.IJEItems, 2));
         }
 
         [Fact]
@@ -161,5 +160,18 @@ namespace messaging.tests
             }
             return queued;
         }
+
+        // Gets the number of items in the table; retries with cooldown if the expected number is not yet present
+        protected async Task<int> GetTableCount<T>(IQueryable<T> table, int expectedCount, int retries = 3, int cooldown = 500) where T : class
+        {
+            int count = table.Count();
+            while (count < expectedCount && --retries > 0)
+            {
+                await Task.Delay(cooldown);
+                count = table.Count();
+            }
+            return count;
+        }
     }
+}
 }
