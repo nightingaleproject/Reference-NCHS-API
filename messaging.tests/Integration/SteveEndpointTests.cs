@@ -73,9 +73,6 @@ namespace messaging.tests
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
 
-            // Get the current size of the number of IJEItems in the database
-            var ijeItems = _context.IJEItems.Count();
-
             // Create a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
@@ -98,7 +95,7 @@ namespace messaging.tests
             Assert.Equal(2, updatedBundle.Entry.Count);
 
             // Since the message is a duplicate, only 1 message per ID is actually parsed.
-            Assert.Equal(ijeItems + 1, _context.IJEItems.Count());
+            Assert.Equal(1, _context.IJEItems.Count());
         }
 
         [Fact]
@@ -106,9 +103,6 @@ namespace messaging.tests
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
-
-            // Get the current size of the number of IJEItems in the database
-            var ijeItems = _context.IJEItems.Count();
 
             // Create and submit a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -127,7 +121,7 @@ namespace messaging.tests
             Assert.Equal(2, updatedBundle.Entry.Count);
 
             // Should receive the initial submission message and then an update messaage
-            Assert.Equal(ijeItems + 2, _context.IJEItems.Count());
+            Assert.Equal(2, _context.IJEItems.Count());
         }
 
         [Fact]
