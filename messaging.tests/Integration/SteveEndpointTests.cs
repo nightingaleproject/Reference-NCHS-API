@@ -12,6 +12,7 @@ using messaging.Models;
 
 namespace messaging.tests
 {
+    [Collection("EndpointIntegrationTests")] // Ensure endpoint tests don't run in parallel
     public class SteveEndpointTests : IClassFixture<CustomWebApplicationFactory<messaging.Startup>>
     {
         private readonly HttpClient _client;
