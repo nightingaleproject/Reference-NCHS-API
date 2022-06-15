@@ -38,8 +38,8 @@ namespace messaging.tests
         [Fact]
         public async Task NewSubmissionMessagePostCreatesNewAcknowledgement()
         {
-            // Clear any waiting messages in the queue
-            await _client.GetAsync(STEVE_ENDPOINT);
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
 
             // Create and submit a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -70,8 +70,8 @@ namespace messaging.tests
         [Fact]
         public async Task DuplicateSubmissionMessageIsIgnored()
         {
-            // Clear any waiting messages in the queue
-            await _client.GetAsync(STEVE_ENDPOINT);
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
 
             // Get the current size of the number of IJEItems in the database
             var ijeItems = _context.IJEItems.Count();
@@ -104,8 +104,8 @@ namespace messaging.tests
         [Fact]
         public async Task UpdateMessagesAreSuccessfullyAcknowledged()
         {
-            // Clear any waiting messages in the queue
-            await _client.GetAsync(STEVE_ENDPOINT);
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
 
             // Get the current size of the number of IJEItems in the database
             var ijeItems = _context.IJEItems.Count();
@@ -133,9 +133,8 @@ namespace messaging.tests
         [Fact]
         public async Task SteveAndJurisdictionBothRetrieveSteveSubmission()
         {
-            // Clear any waiting messages in the queue for both STEVE and the jurisdiction
-            await _client.GetAsync(STEVE_ENDPOINT);
-            await _client.GetAsync(MA_ENDPOINT);
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
 
             // Create and submit a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());

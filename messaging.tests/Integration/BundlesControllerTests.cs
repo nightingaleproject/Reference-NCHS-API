@@ -36,10 +36,8 @@ namespace messaging.tests
     [Fact]
     public async Task NewSubmissionMessagePostCreatesNewAcknowledgement()
     {
-      // Get the list of outgoing messages currently in the database for
-      // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
-      var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
+        // Clear any messages in the database for a clean test
+        DatabaseHelper.ResetDatabase(_context);
 
       // Create a new empty Death Record
       DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -62,7 +60,7 @@ namespace messaging.tests
         }
       }
       // with the new retrievedAt column, only one message should be returned
-      Assert.Equal(1, updatedBundle.Entry.Count);
+      Assert.Single(updatedBundle.Entry);
 
       // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
       HttpResponseMessage noMessages = await _client.GetAsync("/XX/Bundles");
@@ -72,7 +70,7 @@ namespace messaging.tests
       // Check that the retrievedAt column filters out the ACK message if we place another request
       HttpResponseMessage noNewMsgs = await _client.GetAsync("/MA/Bundles");
       Hl7.Fhir.Model.Bundle emptyBundle = await JsonResponseHelpers.ParseBundleAsync(noNewMsgs);
-      Assert.Equal(0, emptyBundle.Entry.Count);
+      Assert.Empty(emptyBundle.Entry);
       
       // Extract the message from the bundle and ensure it is an ACK for the appropritae message
       var lastMessageInBundle = updatedBundle.Entry.Last();
@@ -89,13 +87,8 @@ namespace messaging.tests
     [Fact]
     public async Task DuplicateSubmissionMessageIsIgnored()
     {
-      // Get the list of outgoing messages currently in the database for
-      // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
-      var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
-
-      // Get the current size of the number of IJEItems in the database
-      var ijeItems = _context.IJEItems.Count();
+        // Clear any messages in the database for a clean test
+        DatabaseHelper.ResetDatabase(_context);
 
       // Create a new empty Death Record
       DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -116,22 +109,19 @@ namespace messaging.tests
       Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
 
       // Even though the message is a duplicate, it is still ACK'd
-      Assert.Equal(baseBundle.Entry.Count + 2, updatedBundle.Entry.Count);
+      Assert.Equal(2, updatedBundle.Entry.Count);
 
       // Since the message is a duplicate, only 1 message per ID is actually parsed.
-      Assert.Equal(ijeItems + 1, _context.IJEItems.Count());
+      Assert.Equal(1, _context.IJEItems.Count());
     }
 
     [Fact]
     public async Task UpdateMessagesAreSuccessfullyAcknowledged()
     {
-      // Get the list of outgoing messages currently in the database for
-      // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
-      var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
 
-      // Get the current size of the number of IJEItems in the database
-      var ijeItems = _context.IJEItems.Count();
+        // Clear any messages in the database for a clean test
+        DatabaseHelper.ResetDatabase(_context);
+
 
       // Get the current time
       DateTime currentTime = DateTime.UtcNow;
@@ -169,7 +159,7 @@ namespace messaging.tests
       Assert.Equal(2, updatedBundle.Entry.Count);
 
       // Should receive the initial submission message and then an update messaage
-      Assert.Equal(ijeItems + 2, _context.IJEItems.Count());
+      Assert.Equal(2, _context.IJEItems.Count());
     }
   }
 }
