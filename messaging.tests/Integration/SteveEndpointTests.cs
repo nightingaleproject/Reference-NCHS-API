@@ -83,9 +83,8 @@ namespace messaging.tests
             HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, duplicateSubmissionMessage.StatusCode);
 
-            // Since the background task should ignore duplicate messages if working correctly,
-            // provide ample time for it to finish.
-            await Task.Delay(4000);
+            // Make sure the ACKs made it into the queue before querying the endpoint
+            Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
             HttpResponseMessage oneAck = await _client.GetAsync(STEVE_ENDPOINT);
             Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
@@ -113,6 +112,9 @@ namespace messaging.tests
             // Submit update message
             HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordUpdate.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
+
+            // Make sure the ACKs made it into the queue before querying the endpoint
+            Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
             Hl7.Fhir.Model.Bundle updatedBundle = await GetQueuedMessages(STEVE_ENDPOINT);
 
