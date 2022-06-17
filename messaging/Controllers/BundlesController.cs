@@ -2,11 +2,12 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
 using messaging.Models;
 using messaging.Services;
+using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Model;
 using VRDR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 
@@ -104,22 +105,91 @@ namespace messaging.Controllers
         // POST: Bundles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public ActionResult PostIncomingMessageItem(string jurisdictionId, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
+        public async Task<ActionResult<Bundle>> PostIncomingMessageItem(string jurisdictionId, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
-            IncomingMessageItem item;
-            try
-            {
-                item = ParseIncomingMessageItem(jurisdictionId, text);
-            }
-            catch (Exception ex)
-            {
+            Bundle responseBundle = new Bundle();
+            try {
+
+                // check whether the bundle is a message or a batch
+                Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
+                if (bundle?.Type == Bundle.BundleType.Batch)
+                {   
+                    responseBundle = new Bundle();
+                    responseBundle.Type = Bundle.BundleType.BatchResponse;
+                    responseBundle.Timestamp = DateTime.Now;
+
+                    // For Batch Processing: 
+                    // Process each entry as an individual BaseMessage.
+                    // One invalid message should not prevent the successful submission 
+                    // of a separate, valid message in the bundle.
+                    // Capture the each messsage's result in an entry and add to the response bundle.
+                    foreach (var entry in bundle.Entry)
+                    {
+                        Bundle.EntryComponent respEntry = InsertBatchMessages(entry, jurisdictionId, queue);
+                        responseBundle.Entry.Add(respEntry);
+                    }
+                    return responseBundle;
+                } 
+                else
+                {
+
+                    IncomingMessageItem item;
+                    try
+                    {
+                        item = ParseIncomingMessageItem(jurisdictionId, text);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
+                        return BadRequest();
+                    }
+
+                    item.Source = GetMessageSource();
+
+                    try
+                    {
+                        SaveIncomingMessageItem(item, queue);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"An exception occurred while saving the incoming message: {ex}");
+                        return StatusCode(500);
+                    }
+                }
+
+                // return HTTP status code 204 (No Content)
+                return NoContent();
+            } catch (Exception ex){
                 Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
                 return BadRequest();
             }
+        }
 
-            item.Source = GetMessageSource();
+        // InsertBatchMessages handles a single message in a batch upload submission
+        // Each message is handled independent of the other messages. A status code is generated for
+        // each message and is returned in the response bundle
+        private Bundle.EntryComponent InsertBatchMessages( Bundle.EntryComponent msgBundle, string jurisdictionId, [FromServices] IBackgroundTaskQueue queue)
+        {
+            Bundle.EntryComponent entry = new Bundle.EntryComponent();
+            entry.Resource = msgBundle.Resource;
+            IncomingMessageItem item;
+
+            try
+            {
+                BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
+                item = ParseIncomingMessageItem(jurisdictionId, message.ToJSON());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"An exception occurred while parsing the incoming message: {msgBundle.Resource.Id} {e}");
+                entry.Response = new Bundle.ResponseComponent();
+                entry.Response.Status = "400";
+                entry.Response.Etag = "W/1";
+                entry.Response.LastModified = DateTime.UtcNow;      
+                return entry;
+            }
 
             try
             {
@@ -127,12 +197,20 @@ namespace messaging.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An exception occurred while saving the incoming message: {ex}");
-                return StatusCode(500);
+                Console.WriteLine($"An exception occurred while saving the incoming message: {msgBundle.Resource.Id} {ex}");
+                entry.Response = new Bundle.ResponseComponent();
+                entry.Response.Status = "500";
+                entry.Response.Etag = "W/1";
+                entry.Response.LastModified = DateTime.UtcNow;   
+                return entry;
             }
 
-            // return HTTP status code 204 (No Content)
-            return NoContent();
+            entry.Response = new Bundle.ResponseComponent();
+            entry.Response.Status = "201";
+            entry.Response.Etag = "W/1";
+            entry.Response.LastModified = DateTime.UtcNow;       
+            return entry;
+
         }
 
         /// <summary>
