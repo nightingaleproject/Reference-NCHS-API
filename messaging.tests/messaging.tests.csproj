@@ -14,4 +14,10 @@
   <ItemGroup>
     <ProjectReference Include="..\messaging\messaging.csproj"/>
   </ItemGroup>
+  <ItemGroup>
+    <None Update="fixtures/json/BatchInvalidJsonError.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="fixtures/json/BatchMessages.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="fixtures/json/BatchSingleMessage.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="fixtures/json/BatchWithOneErrorMessage.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>  
 </Project>
