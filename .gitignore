@@ -3,3 +3,5 @@ bin/
 results*
 jmeter.log
 appsettings.json
+.vs
+**.csproj.user

@@ -1,17 +1,18 @@
-using Xunit;
-using System.Net.Http;
-using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Testing;
-using messaging.tests.Helpers;
-using VRDR;
-using System.Net;
-using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
 using messaging.Models;
+using messaging.tests.Helpers;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using VRDR;
+using Xunit;
 
 namespace messaging.tests
 {
+    [Collection("EndpointIntegrationTests")] // Ensure endpoint tests don't run in parallel
   public class BundlesControllerTests : IClassFixture<CustomWebApplicationFactory<messaging.Startup>>
   {
     private readonly HttpClient _client;
@@ -35,10 +36,8 @@ namespace messaging.tests
     [Fact]
     public async Task NewSubmissionMessagePostCreatesNewAcknowledgement()
     {
-      // Get the list of outgoing messages currently in the database for
-      // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
-      var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
+        // Clear any messages in the database for a clean test
+        DatabaseHelper.ResetDatabase(_context);
 
       // Create a new empty Death Record
       DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -61,7 +60,7 @@ namespace messaging.tests
         }
       }
       // with the new retrievedAt column, only one message should be returned
-      Assert.Equal(1, updatedBundle.Entry.Count);
+      Assert.Single(updatedBundle.Entry);
 
       // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
       HttpResponseMessage noMessages = await _client.GetAsync("/XX/Bundles");
@@ -71,7 +70,7 @@ namespace messaging.tests
       // Check that the retrievedAt column filters out the ACK message if we place another request
       HttpResponseMessage noNewMsgs = await _client.GetAsync("/MA/Bundles");
       Hl7.Fhir.Model.Bundle emptyBundle = await JsonResponseHelpers.ParseBundleAsync(noNewMsgs);
-      Assert.Equal(0, emptyBundle.Entry.Count);
+      Assert.Empty(emptyBundle.Entry);
       
       // Extract the message from the bundle and ensure it is an ACK for the appropritae message
       var lastMessageInBundle = updatedBundle.Entry.Last();
@@ -88,13 +87,8 @@ namespace messaging.tests
     [Fact]
     public async Task DuplicateSubmissionMessageIsIgnored()
     {
-      // Get the list of outgoing messages currently in the database for
-      // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
-      var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
-
-      // Get the current size of the number of IJEItems in the database
-      var ijeItems = _context.IJEItems.Count();
+        // Clear any messages in the database for a clean test
+        DatabaseHelper.ResetDatabase(_context);
 
       // Create a new empty Death Record
       DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -107,30 +101,27 @@ namespace messaging.tests
       HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, duplicateSubmissionMessage.StatusCode);
 
-      // Since the background task should ignore duplicate messages if working correctly,
-      // provide ample time for it to finish.
-      await Task.Delay(4000);
+
+            // Make sure the ACKs made it into the queue before querying the endpoint
+            Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
       HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
       Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
 
       // Even though the message is a duplicate, it is still ACK'd
-      Assert.Equal(baseBundle.Entry.Count + 2, updatedBundle.Entry.Count);
+      Assert.Equal(2, updatedBundle.Entry.Count);
 
-      // Since the message is a duplicate, only 1 message per ID is actually parsed.
-      Assert.Equal(ijeItems + 1, _context.IJEItems.Count());
-    }
+            // Since the message is a duplicate, only 1 message per ID is actually parsed.
+            Assert.Equal(1, await GetTableCount(_context.IJEItems, 1));
+        }
 
     [Fact]
     public async Task UpdateMessagesAreSuccessfullyAcknowledged()
     {
-      // Get the list of outgoing messages currently in the database for
-      // reference later
-      HttpResponseMessage bundles = await _client.GetAsync("/MA/Bundles");
-      var baseBundle = await JsonResponseHelpers.ParseBundleAsync(bundles);
 
-      // Get the current size of the number of IJEItems in the database
-      var ijeItems = _context.IJEItems.Count();
+        // Clear any messages in the database for a clean test
+        DatabaseHelper.ResetDatabase(_context);
+
 
       // Get the current time
       DateTime currentTime = DateTime.UtcNow;
@@ -146,6 +137,10 @@ namespace messaging.tests
       // Submit update message
       HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordUpdate.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
+
+
+            // Make sure the ACKs made it into the queue before querying the endpoint
+            Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
       Hl7.Fhir.Model.Bundle updatedBundle = null;
       // This code does not have access to the background jobs, the best that can
@@ -167,8 +162,20 @@ namespace messaging.tests
       // Even though the message is a duplicate, it is still ACK'd
       Assert.Equal(2, updatedBundle.Entry.Count);
 
-      // Should receive the initial submission message and then an update messaage
-      Assert.Equal(ijeItems + 2, _context.IJEItems.Count());
+        // Should receive the initial submission message and then an update messaage
+        Assert.Equal(2, await GetTableCount(_context.IJEItems, 2));
     }
-  }
+
+        // Gets the number of items in the table; retries with cooldown if the expected number is not yet present
+        protected async Task<int> GetTableCount<T>(IQueryable<T> table, int expectedCount, int retries = 3, int cooldown = 500) where T : class
+        {
+            int count = table.Count();
+            while (count < expectedCount && --retries > 0)
+            {
+                await Task.Delay(cooldown);
+                count = table.Count();
+            }
+            return count;
+        }
+    }
 }
