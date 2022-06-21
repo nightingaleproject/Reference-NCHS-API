@@ -239,7 +239,7 @@ namespace messaging.Controllers
                 entry.Response.LastModified = DateTime.UtcNow;      
                 return entry;
             }
-
+            item.Source = GetMessageSource();
             try
             {
                 SaveIncomingMessageItem(item, queue);
