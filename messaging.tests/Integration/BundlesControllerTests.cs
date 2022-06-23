@@ -53,7 +53,7 @@ namespace messaging.tests
       // This code does not have access to the background jobs, the best that can
       // be done is checking to see if the response is correct and if it is still
       // incorrect after the specified delay then assuming that something is wrong
-      for(int x = 0; x < 3; ++x) {
+      for(int x = 0; x < 5; ++x) {
         HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
         updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
         if(updatedBundle.Entry.Count > 0) {
