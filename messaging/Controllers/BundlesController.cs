@@ -2,13 +2,14 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
 using messaging.Models;
 using messaging.Services;
 using Hl7.Fhir.Model;
 using VRDR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 namespace messaging.Controllers
 {
@@ -19,57 +20,68 @@ namespace messaging.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider Services;
         private readonly AppSettings _settings;
+        private readonly ILogger<BundlesController> _logger;
 
-        public BundlesController(ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
+        public BundlesController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
             _context = context;
             Services = services;
             _settings = settings.Value;
+            _logger = logger;
         }
 
         // GET: Bundles
         [HttpGet]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime _since = default(DateTime))
         {
-            // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
-            IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId);
-
-            // Further scope the search to either unretrieved messages (or all since a specific time)
-            // TODO only allow the since param in development
-            // if _since is the default value, then apply the retrieved at logic
-            if (_since == default(DateTime))
+            try
             {
-                outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
+                // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
+                IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId);
+
+                // Further scope the search to either unretrieved messages (or all since a specific time)
+                // TODO only allow the since param in development
+                // if _since is the default value, then apply the retrieved at logic
+                if (_since == default(DateTime))
+                {
+                    outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
+                }
+                else
+                {
+                    outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
+                }
+
+                // Convert to list to execute the query, capture the result for re-use
+                List<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.ToList();
+
+                // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
+                // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
+                IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));
+
+                // create bundle to hold the response
+                Bundle responseBundle = new Bundle();
+                responseBundle.Type = Bundle.BundleType.Searchset;
+                responseBundle.Timestamp = DateTime.Now;
+                var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
+                DateTime retrievedTime = DateTime.UtcNow;
+                
+                // Add messages to the bundle
+                foreach (var message in messages)
+                {
+                    responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
+                }
+
+                // update each outgoing message's RetrievedAt field
+                outgoingMessages.ForEach(msgItem => MarkAsRetrieved(msgItem, retrievedTime));
+                _context.SaveChanges();
+                return responseBundle;
             }
-            else
+            catch (Exception ex)
             {
-                outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
+                _logger.LogDebug($"An exception occurred while retrieving the response messages: {ex}");
+                return StatusCode(500);
             }
 
-            // Convert to list to execute the query, capture the result for re-use
-            List<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.ToList();
-
-            // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
-            // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
-            IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));
-
-            // create bundle to hold the response
-            Bundle responseBundle = new Bundle();
-            responseBundle.Type = Bundle.BundleType.Searchset;
-            responseBundle.Timestamp = DateTime.Now;
-            var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
-            DateTime retrievedTime = DateTime.UtcNow;
-            
-            // Add messages to the bundle
-            foreach (var message in messages)
-            {
-                responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
-            }
-
-            // update each outgoing message's RetrievedAt field
-            outgoingMessages.ForEach(msgItem => MarkAsRetrieved(msgItem, retrievedTime));
-            _context.SaveChanges();
-            return responseBundle;
         }
 
         // Allows overriding by STEVE controller to filter off different field
@@ -115,7 +127,7 @@ namespace messaging.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
+                _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
                 return BadRequest();
             }
 
@@ -127,7 +139,7 @@ namespace messaging.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An exception occurred while saving the incoming message: {ex}");
+                _logger.LogDebug($"An exception occurred while saving the incoming message: {ex}");
                 return StatusCode(500);
             }
 
