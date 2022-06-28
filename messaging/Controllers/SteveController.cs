@@ -1,6 +1,7 @@
 ﻿using Hl7.Fhir.Model;
 using messaging.Models;
 using messaging.Services;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System;
@@ -15,7 +16,7 @@ namespace messaging.Controllers
     public class SteveController : BundlesController
     {
 
-        public SteveController(ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings) : base(context, services, settings) { }
+        public SteveController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings) : base(logger, context, services, settings) { }
 
         protected override IEnumerable<OutgoingMessageItem> ExcludeRetrieved(IEnumerable<OutgoingMessageItem> source)
         {

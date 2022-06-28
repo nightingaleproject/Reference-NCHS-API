@@ -301,6 +301,30 @@ This section documents information useful for developers of the API itself and i
 4. Migrate your local database to match the current migration: `dotnet ef --project messaging database update`
 5. Run the server using `dotnet run --project messaging`
 
+## Logging
+
+### Debug Logging
+To turn on debug logging, update the log level from `Information` to `Debug` in appsettings.json, see example below
+```
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Debug",
+      "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Debug"
+    }
+```
+
+### Logging to File
+To save logs to a file, uncomment the line below in Startup.cs
+```
+loggerFactory.AddFile("logs/nvssmessaging-{Date}.txt");
+```
+and this package reference in messaging.csproj
+```
+<PackageReference Include="Serilog.Extensions.Logging.File" Version="2.0.0"/>
+```
+
 # License
 
 Copyright 2021 The MITRE Corporation
