@@ -128,7 +128,7 @@ namespace messaging.Controllers
             catch (Exception ex)
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
-                return BadRequest("Failed to parse message. Please verify that it is consistent with the current IG.");
+                return BadRequest("Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
             }
 
             // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
