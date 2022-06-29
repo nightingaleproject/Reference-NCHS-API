@@ -97,11 +97,11 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async Task MissingCertificateNumberCauses400()
+        public async Task MissingMessageTypeCauses400()
         {
-            // Create a new empty Death Record and remove CertificateNumber
+            // Create a new empty Death Record and remove MessageType
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
-            recordSubmission.CertNo = null;
+            recordSubmission.MessageType = null;
 
             // Submit that Death Record; should get a 400 back (not 500 as previously observed)
             HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());

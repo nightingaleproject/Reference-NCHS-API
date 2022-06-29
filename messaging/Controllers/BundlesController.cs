@@ -138,10 +138,10 @@ namespace messaging.Controllers
                 _logger.LogDebug("Rejecting message with no MessageId");
                 return BadRequest("Message was missing required field MessageId");
             }
-            if (item.CertificateNumber == null)
+            if (item.MessageType == null)
             {
-                _logger.LogDebug("Rejecting message with no CertifacteNumber.");
-                return BadRequest("Message was missing required field CertificateNumber");
+                _logger.LogDebug("Rejecting message with no MessageType.");
+                return BadRequest("Message was missing required field MessageType");
             }
 
             item.Source = GetMessageSource();
