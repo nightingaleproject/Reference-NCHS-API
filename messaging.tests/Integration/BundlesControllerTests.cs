@@ -84,7 +84,31 @@ namespace messaging.tests
       Assert.Equal(HttpStatusCode.BadRequest, createBrokenSubmissionMessage.StatusCode);
     }
 
-    [Fact]
+        [Fact]
+        public async Task MissingMessageIdCauses400()
+        {
+            // Create a new empty Death Record and remove MessageId
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            recordSubmission.MessageId = null;
+
+            // Submit that Death Record; should get a 400 back (not 500 as previously observed)
+            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task MissingMessageTypeCauses400()
+        {
+            // Create a new empty Death Record and remove MessageType
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            recordSubmission.MessageType = null;
+
+            // Submit that Death Record; should get a 400 back (not 500 as previously observed)
+            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
     public async Task DuplicateSubmissionMessageIsIgnored()
     {
         // Clear any messages in the database for a clean test
