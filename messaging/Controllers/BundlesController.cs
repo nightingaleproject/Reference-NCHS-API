@@ -133,6 +133,7 @@ namespace messaging.Controllers
 
             // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
             // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
+	    // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
             if (item.MessageId == null)
             {
                 _logger.LogDebug("Rejecting message with no MessageId");
