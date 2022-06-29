@@ -128,7 +128,20 @@ namespace messaging.Controllers
             catch (Exception ex)
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
-                return BadRequest();
+                return BadRequest("Failed to parse message. Please verify that it is consistent with the current IG.");
+            }
+
+            // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
+            // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
+            if (item.MessageId == null)
+            {
+                _logger.LogDebug("Rejecting message with no MessageId");
+                return BadRequest("Message was missing required field MessageId");
+            }
+            if (item.CertificateNumber == null)
+            {
+                _logger.LogDebug("Rejecting message with no CertifacteNumber.");
+                return BadRequest("Message was missing required field CertificateNumber");
             }
 
             item.Source = GetMessageSource();
