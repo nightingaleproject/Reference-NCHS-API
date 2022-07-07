@@ -176,7 +176,7 @@ namespace messaging.Controllers
 
                     try
                     {
-                        SaveIncomingMessageItem(item, queue);
+                        await SaveIncomingMessageItem(item, queue);
                     }
                     catch (Exception ex)
                     {
@@ -242,7 +242,7 @@ namespace messaging.Controllers
             item.Source = GetMessageSource();
             try
             {
-                SaveIncomingMessageItem(item, queue);
+                await SaveIncomingMessageItem(item, queue);
             }
             catch (Exception ex)
             {
@@ -296,7 +296,7 @@ namespace messaging.Controllers
             return item;
         }
 
-        protected async void SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
+        protected async System.Threading.Tasks.Task SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
         {
             await _context.IncomingMessageItems.AddAsync(item);
             await _context.SaveChangesAsync();
