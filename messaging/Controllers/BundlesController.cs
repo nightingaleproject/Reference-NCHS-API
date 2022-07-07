@@ -139,7 +139,7 @@ namespace messaging.Controllers
                     // Capture the each messsage's result in an entry and add to the response bundle.
                     foreach (var entry in bundle.Entry)
                     {
-                        Bundle.EntryComponent respEntry = InsertBatchMessages(entry, jurisdictionId, queue);
+                        Bundle.EntryComponent respEntry = await InsertBatchMessages(entry, jurisdictionId, queue);
                         responseBundle.Entry.Add(respEntry);
                     }
                     return responseBundle;
@@ -196,7 +196,7 @@ namespace messaging.Controllers
         // InsertBatchMessages handles a single message in a batch upload submission
         // Each message is handled independent of the other messages. A status code is generated for
         // each message and is returned in the response bundle
-        private Bundle.EntryComponent InsertBatchMessages( Bundle.EntryComponent msgBundle, string jurisdictionId, [FromServices] IBackgroundTaskQueue queue)
+        private async Task<Bundle.EntryComponent> InsertBatchMessages( Bundle.EntryComponent msgBundle, string jurisdictionId, [FromServices] IBackgroundTaskQueue queue)
         {
             Bundle.EntryComponent entry = new Bundle.EntryComponent();
             entry.Resource = msgBundle.Resource;
@@ -296,10 +296,10 @@ namespace messaging.Controllers
             return item;
         }
 
-        protected void SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
+        protected async void SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
         {
             _context.IncomingMessageItems.Add(item);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             if (_settings.AckAndIJEConversion)
             {
