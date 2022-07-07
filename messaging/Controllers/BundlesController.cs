@@ -298,7 +298,7 @@ namespace messaging.Controllers
 
         protected async void SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
         {
-            _context.IncomingMessageItems.Add(item);
+            await _context.IncomingMessageItems.AddAsync(item);
             await _context.SaveChangesAsync();
 
             if (_settings.AckAndIJEConversion)
