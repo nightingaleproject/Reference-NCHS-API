@@ -207,7 +207,7 @@ namespace messaging.Controllers
                 BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
                 item = ParseIncomingMessageItem(jurisdictionId, message.ToJSON());
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
                 entry.Response = new Bundle.ResponseComponent();
