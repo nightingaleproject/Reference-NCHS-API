@@ -1,8 +1,13 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using messaging.Services;
 using Microsoft.Extensions.Options;
+using System;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 
 namespace messaging
 {
@@ -10,11 +15,33 @@ namespace messaging
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            // old files will be cleaned up as per the retainedFileCountLimit (every 31 days)
+            var config = new ConfigurationBuilder()
+                .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json")
+                .Build();
+
+            Log.Logger = new LoggerConfiguration()
+                    .ReadFrom.Configuration(config)
+                    .CreateLogger();
+            try
+            {
+                Log.Information("Starting the NVSS FHIR API");
+                CreateHostBuilder(args).Build().Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Host terminated unexpectedly");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+            
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .UseSerilog()
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

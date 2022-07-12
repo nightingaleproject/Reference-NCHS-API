@@ -59,10 +59,6 @@ namespace messaging
             {
                 endpoints.MapControllers();
             });
-
-            // Uncomment the following line to enable logging when running under IIS
-            // Serilog.Extensions.Logging.File must also be enabled in messaging.csproj
-            // loggerFactory.AddFile("logs/nvssmessaging-{Date}.txt");
         }
     }
 }
