@@ -1,18 +1,21 @@
 using messaging.Models;
-using messaging.tests.Helpers;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
+using Xunit;
+using System.Net.Http;
 using System;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Testing;
+using messaging.tests.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
+using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Model;
 using VRDR;
-using Xunit;
 
 namespace messaging.tests
 {
-    [Collection("EndpointIntegrationTests")] // Ensure endpoint tests don't run in parallel
+  [Collection("EndpointIntegrationTests")] // Ensure endpoint tests don't run in parallel
   public class BundlesControllerTests : IClassFixture<CustomWebApplicationFactory<messaging.Startup>>
   {
     private readonly HttpClient _client;
@@ -34,10 +37,10 @@ namespace messaging.tests
     }
 
     [Fact]
-    public async Task NewSubmissionMessagePostCreatesNewAcknowledgement()
+    public async System.Threading.Tasks.Task NewSubmissionMessagePostCreatesNewAcknowledgement()
     {
-        // Clear any messages in the database for a clean test
-        DatabaseHelper.ResetDatabase(_context);
+      // Clear any messages in the database for a clean test
+      DatabaseHelper.ResetDatabase(_context);
 
       // Create a new empty Death Record
       DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -50,13 +53,13 @@ namespace messaging.tests
       // This code does not have access to the background jobs, the best that can
       // be done is checking to see if the response is correct and if it is still
       // incorrect after the specified delay then assuming that something is wrong
-      for(int x = 0; x < 3; ++x) {
+      for(int x = 0; x < 5; ++x) {
         HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
         updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
         if(updatedBundle.Entry.Count > 0) {
           break;
         } else {
-          await Task.Delay(x * 500);
+          await System.Threading.Tasks.Task.Delay(x * 500);
         }
       }
       // with the new retrievedAt column, only one message should be returned
@@ -79,40 +82,40 @@ namespace messaging.tests
     }
 
     [Fact]
-      public async Task UnparsableMessagesCauseAnError() {
+    public async System.Threading.Tasks.Task UnparsableMessagesCauseAnError() {
       HttpResponseMessage createBrokenSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", "{}");
       Assert.Equal(HttpStatusCode.BadRequest, createBrokenSubmissionMessage.StatusCode);
     }
 
-        [Fact]
-        public async Task MissingMessageIdCauses400()
-        {
-            // Create a new empty Death Record and remove MessageId
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
-            recordSubmission.MessageId = null;
-
-            // Submit that Death Record; should get a 400 back (not 500 as previously observed)
-            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task MissingMessageTypeCauses400()
-        {
-            // Create a new empty Death Record and remove MessageType
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
-            recordSubmission.MessageType = null;
-
-            // Submit that Death Record; should get a 400 back (not 500 as previously observed)
-            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        }
-
-        [Fact]
-    public async Task DuplicateSubmissionMessageIsIgnored()
+    [Fact]
+    public async System.Threading.Tasks.Task MissingMessageIdCauses400()
     {
-        // Clear any messages in the database for a clean test
-        DatabaseHelper.ResetDatabase(_context);
+        // Create a new empty Death Record and remove MessageId
+        DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+        recordSubmission.MessageId = null;
+
+        // Submit that Death Record; should get a 400 back (not 500 as previously observed)
+        HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task MissingMessageTypeCauses400()
+    {
+        // Create a new empty Death Record and remove MessageType
+        DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+        recordSubmission.MessageType = null;
+
+        // Submit that Death Record; should get a 400 back (not 500 as previously observed)
+        HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task DuplicateSubmissionMessageIsIgnored()
+    {
+      // Clear any messages in the database for a clean test
+      DatabaseHelper.ResetDatabase(_context);
 
       // Create a new empty Death Record
       DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -125,9 +128,8 @@ namespace messaging.tests
       HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, duplicateSubmissionMessage.StatusCode);
 
-
-            // Make sure the ACKs made it into the queue before querying the endpoint
-            Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
+      // Make sure the ACKs made it into the queue before querying the endpoint
+      Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
       HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
       Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
@@ -135,17 +137,16 @@ namespace messaging.tests
       // Even though the message is a duplicate, it is still ACK'd
       Assert.Equal(2, updatedBundle.Entry.Count);
 
-            // Since the message is a duplicate, only 1 message per ID is actually parsed.
-            Assert.Equal(1, await GetTableCount(_context.IJEItems, 1));
-        }
+      // Since the message is a duplicate, only 1 message per ID is actually parsed.
+      Assert.Equal(1, await GetTableCount(_context.IJEItems, 1));
+    }
 
     [Fact]
-    public async Task UpdateMessagesAreSuccessfullyAcknowledged()
+    public async System.Threading.Tasks.Task UpdateMessagesAreSuccessfullyAcknowledged()
     {
 
-        // Clear any messages in the database for a clean test
-        DatabaseHelper.ResetDatabase(_context);
-
+      // Clear any messages in the database for a clean test
+      DatabaseHelper.ResetDatabase(_context);
 
       // Get the current time
       DateTime currentTime = DateTime.UtcNow;
@@ -162,9 +163,8 @@ namespace messaging.tests
       HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordUpdate.ToJson());
       Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
 
-
-            // Make sure the ACKs made it into the queue before querying the endpoint
-            Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
+      // Make sure the ACKs made it into the queue before querying the endpoint
+      Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
       Hl7.Fhir.Model.Bundle updatedBundle = null;
       // This code does not have access to the background jobs, the best that can
@@ -179,27 +179,101 @@ namespace messaging.tests
         if(updatedBundle.Entry.Count > 1) {
           break;
         } else {
-          await Task.Delay(x * 500);
+          await System.Threading.Tasks.Task.Delay(x * 500);
         }
       }
 
       // Even though the message is a duplicate, it is still ACK'd
       Assert.Equal(2, updatedBundle.Entry.Count);
 
-        // Should receive the initial submission message and then an update messaage
-        Assert.Equal(2, await GetTableCount(_context.IJEItems, 2));
+      // Should receive the initial submission message and then an update messaage
+      Assert.Equal(2, await GetTableCount(_context.IJEItems, 2));
     }
 
-        // Gets the number of items in the table; retries with cooldown if the expected number is not yet present
-        protected async Task<int> GetTableCount<T>(IQueryable<T> table, int expectedCount, int retries = 3, int cooldown = 500) where T : class
+    // Gets the number of items in the table; retries with cooldown if the expected number is not yet present
+    protected async Task<int> GetTableCount<T>(IQueryable<T> table, int expectedCount, int retries = 3, int cooldown = 500) where T : class
+    {
+        int count = table.Count();
+        while (count < expectedCount && --retries > 0)
         {
-            int count = table.Count();
-            while (count < expectedCount && --retries > 0)
-            {
-                await Task.Delay(cooldown);
-                count = table.Count();
-            }
-            return count;
+            await System.Threading.Tasks.Task.Delay(cooldown);
+            count = table.Count();
         }
+        return count;
     }
+    
+
+    [Fact]
+    public async System.Threading.Tasks.Task ParseBatchIncomingMessages()
+    {
+      string batchJson = FixtureStream("fixtures/json/BatchMessages.json").ReadToEnd();
+      HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+
+      HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
+    }
+
+
+    [Fact]
+    public async System.Threading.Tasks.Task ParseBatchIncomingSingleMessage()
+    {
+      string batchJson = FixtureStream("fixtures/json/BatchSingleMessage.json").ReadToEnd();
+      HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+
+      HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task ParseBatchIncomingMessagesWithOneError()
+    {
+      string batchJson = FixtureStream("fixtures/json/BatchWithOneErrorMessage.json").ReadToEnd();
+      HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+
+      FhirJsonParser parser = new FhirJsonParser();
+      string content = await submissionMessage.Content.ReadAsStringAsync();
+      Bundle bundle = parser.Parse<Bundle>(content);
+      
+      for (int i = 0; i < 2; i++)
+      {
+        var entry = bundle.Entry[i];
+        string status = entry.Response.Status;
+        if (i == 0)
+        {
+          Assert.Equal("400", status);
+        }
+        if (i == 1)
+        {
+          Assert.Equal("201", status);
+        }
+      }
+
+      HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
+    }
+
+    [Fact]
+    public async System.Threading.Tasks.Task ReturnErrorOnInvalidBatch()
+    {
+      string batchJson = FixtureStream("fixtures/json/BatchInvalidJsonError.json").ReadToEnd();
+      HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
+
+      HttpResponseMessage submissionMessages2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.BadRequest, submissionMessages2.StatusCode);
+    }
+
+    private StreamReader FixtureStream(string filePath)
+    {
+        if (!Path.IsPathRooted(filePath))
+        {
+            filePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
+        }
+        return File.OpenText(filePath);
+    }
+  }
 }
+

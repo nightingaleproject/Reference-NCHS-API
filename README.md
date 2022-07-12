@@ -1,4 +1,4 @@
-This repository provides a description of the NVSS API supporting exchange of mortality data between
+This repository provides a description of the NVSS API exchange of mortality data between
 NCHS and vital records jurisdictions, along with a reference implementation. This implementation and
 documentation describes the server side of the API. For the client side see the
 [Reference NVSS Client API](https://github.com/nightingaleproject/Reference-Client-API).
@@ -61,15 +61,19 @@ The API supports several types of POST interaction:
 * POSTing a void message voiding one or more existing death records, used to indicate that a previously submitted record is no longer valid
 * POSTing an alias message providing decedent alias information for an existing death record, used to provide additional identifying information about a decedent
 * POSTing an acknowledgment message acknowledging receipt of a coding response message from NCHS
+* POSTing a batch submission, used to submit multiple messages at once, each message is processed independent of other messages in the batch, returns a batch-response with status codes for each message submitted via the original bundle, [FHIR batch documentation](http://www.hl7.org/fhir/http.html#transaction) 
 
 ### Receive Responses
 ```
 GET https://localhost:5001/<jurisdiction-id>/Bundles
 ```
+which returns any message response that has not been retrieved yet
 or
 ```
 GET https://localhost:5001/<jurisdiction-id>/Bundles/_since=yyyy-MM-ddTHH:mm:ss.fffffff
 ```
+which returns any message created after the datetime provided in the _since parameter
+
 The API supports GET requests to retrieve responses from NCHS, including:
 
  * Acknowledgment messages acknowledging jurisdiction-submitted submission, update, and void messages
@@ -81,6 +85,15 @@ The API supports a `_since` parameter that will limit the messages returned to o
 Messages flow from NCHS back to jurisdictions by jurisdiction systems polling the API looking for
 new responses. This approach of pulling responses rather than NCHS pushing responses to
 jurisdictions allows return messages without requiring jurisdictions to set up a listening endpoint.
+
+## STEVE
+Jurisdictions can send their POST and GET requests through STEVE or direct to NCHS. 
+
+### POST expected behavior
+If a duplicate message is POST'd through STEVE and direct to NCHS, the second message received will be ignored. 
+
+### GET expected behavior
+If a jurisdiction places a GET request through STEVE and a GET request direct to NCHS, they will recieve all messages that have not been retrieved through that channel yet. Therefore, the two requests may have duplicate messages. Clients are expected to typically only use one channel. If the client needs to make requests through both channels, the client is responsible for ignoring duplicate messages that come through both channels.
 
 ### Authenticate
 ```
