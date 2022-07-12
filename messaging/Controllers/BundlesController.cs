@@ -196,7 +196,7 @@ namespace messaging.Controllers
         // InsertBatchMessages handles a single message in a batch upload submission
         // Each message is handled independent of the other messages. A status code is generated for
         // each message and is returned in the response bundle
-        private async Task<Bundle.EntryComponent> InsertBatchMessages( Bundle.EntryComponent msgBundle, string jurisdictionId, [FromServices] IBackgroundTaskQueue queue)
+        private async Task<Bundle.EntryComponent> InsertBatchMessages( Bundle.EntryComponent msgBundle, string jurisdictionId, IBackgroundTaskQueue queue)
         {
             Bundle.EntryComponent entry = new Bundle.EntryComponent();
             entry.Resource = msgBundle.Resource;
@@ -271,7 +271,7 @@ namespace messaging.Controllers
             return "SAM";
         }
 
-        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, [FromBody] object text)
+        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, object text)
         {
             BaseMessage message = BaseMessage.Parse(text.ToString());
             IncomingMessageItem item = new IncomingMessageItem();
