@@ -315,18 +315,53 @@ This section documents information useful for developers of the API itself and i
 5. Run the server using `dotnet run --project messaging`
 
 ## Logging
+The application uses Serilog as the third party log provider. Serilog replaces .NET standard Logging and can be configured in the appsettings.json file. 
+
+### Logging Sinks
+Serilog supports a variety of sinks to write your logs to. The default configuration writes the logs to the console and to a file. A new file is created each day and files are deleted after 31 days by default. These default configurations can be overwritten in the appsettings.json file. Serilog's provided sinks are listed [here](https://github.com/serilog/serilog/wiki/Provided-Sinks). Splunk, S3, and DBs are among the many options provided by serilog. To change the sink configuration, update the "Using" and "WriteTo" configuration fields in the example below.
+```
+  "Serilog": {
+    "Using": [
+      "Serilog.Sinks.ApplicationInsights", "Serilog.Sinks.File"
+    ],
+    "WriteTo": [
+      { "Name": "Console" },
+      { "Name": "File", "Args": { "path": "Logs/log.txt", "rollingInterval": "Day"} }
+    ],
+    ...
+  }
+```
+### Turn Off Logging
+To turn off logging to a sink, remove the `WriteTo` configuration for the sink you wish to remove. Ex. below will only write to the console.
+```
+  "Serilog": {
+    "Using": [
+      "Serilog.Sinks.ApplicationInsights"
+    ],
+    "WriteTo": [
+      { "Name": "Console" }
+    ],
+    ...
+  }
+```
 
 ### Debug Logging
 To turn on debug logging, update the log level from `Information` to `Debug` in appsettings.json, see example below
 ```
-  "Logging": {
-    "LogLevel": {
+  "Serilog": {
+    ...
+    "MinimumLevel": {
       "Default": "Debug",
-      "Microsoft": "Warning",
-      "Microsoft.Hosting.Lifetime": "Debug",
-      "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Debug"
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information",
+        "System": "Information",
+        "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Debug"
+      }
     }
+  },
 ```
+
 
 ### Logging to File
 To save logs to a file, uncomment the line below in Startup.cs
