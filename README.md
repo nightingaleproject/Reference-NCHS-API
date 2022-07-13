@@ -302,7 +302,7 @@ This section documents information useful for developers of the API itself and i
 5. Run the server using `dotnet run --project messaging`
 
 ## Logging
-The application uses Serilog as the third party log provider. Serilog can be configured in the appsettings.json file. 
+The application uses Serilog as the third party log provider. Serilog replaces .NET standard Logging and can be configured in the appsettings.json file. 
 
 ### Logging Sinks
 Serilog supports a variety of sinks to write your logs to. The default configuration writes the logs to the console and to a file. A new file is created each day and files are deleted after 31 days by default. These default configurations can be overwritten in the appsettings.json file. Serilog's provided sinks are listed [here](https://github.com/serilog/serilog/wiki/Provided-Sinks). Splunk, S3, and DBs are among the many options provided by serilog. To change the sink configuration, update the "Using" and "WriteTo" configuration fields in the example below.
