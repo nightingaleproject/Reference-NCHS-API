@@ -72,7 +72,7 @@ namespace messaging.Controllers
                 }
 
                 // Convert to list to execute the query, capture the result for re-use
-                List<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.Take(_count).ToList();
+                List<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.Skip((page - 1) * _count).Take(_count).ToList();
 
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
