@@ -33,13 +33,26 @@ namespace messaging.Controllers
 
         // GET: Bundles
         [HttpGet]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count = 100, DateTime _since = default(DateTime))
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count = 100, DateTime _since = default(DateTime), int page = 1)
         {
             if (_count < 0)
             {
                 // TODO: Specification-conformant error handling
                 // OperationOutcome.ForMessage("_count must not be negative", OperationOutcome.IssueType.Processing, OperationOutcome.IssueSeverity.Error);
                 return BadRequest("_count must not be negative");
+            }
+            if (page < 0)
+            {
+                // TODO: Specification-conformant error handling
+                // OperationOutcome.ForMessage("page must not be negative", OperationOutcome.IssueType.Processing, OperationOutcome.IssueSeverity.Error);
+                return BadRequest("page must not be negative");
+            }
+            // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
+            if (_since == default(DateTime) && page > 1)
+            {
+                // TODO: Specification-conformant error handling
+                // OperationOutcome.ForMessage("Paging not supported", OperationOutcome.IssueType.Processing, OperationOutcome.IssueSeverity.Error);
+                return BadRequest("Paging not supported");
             }
             try
             {
@@ -78,7 +91,13 @@ namespace messaging.Controllers
                 }
                 else
                 {
-                    // TODO: Paging for _since
+                    responseBundle.FirstLink = new Uri(Url.Action("Bundles", new { _since = _since, page = 1 }));
+                    int lastPage = (outgoingMessages.Count + (_count - 1)) / _count;
+                    responseBundle.LastLink = new Uri(Url.Action("Bundles", new { _since = _since, page = lastPage }));
+                    if (page < lastPage)
+                    {
+                        responseBundle.NextLink = new Uri(Url.Action("Bundles", new { _since = _since, page = page + 1 }));
+                    }
                 }
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
                 DateTime retrievedTime = DateTime.UtcNow;
