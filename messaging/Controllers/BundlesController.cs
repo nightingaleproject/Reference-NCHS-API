@@ -33,8 +33,14 @@ namespace messaging.Controllers
 
         // GET: Bundles
         [HttpGet]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime _since = default(DateTime))
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count = 100, DateTime _since = default(DateTime))
         {
+            if (_count < 0)
+            {
+                // TODO: Specification-conformant error handling
+                // OperationOutcome.ForMessage("_count must not be negative", OperationOutcome.IssueType.Processing, OperationOutcome.IssueSeverity.Error);
+                return BadRequest("_count must not be negative");
+            }
             try
             {
                 // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
@@ -57,12 +63,23 @@ namespace messaging.Controllers
 
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
-                IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));
+                IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks = outgoingMessages.Take(_count).Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));
 
                 // create bundle to hold the response
                 Bundle responseBundle = new Bundle();
                 responseBundle.Type = Bundle.BundleType.Searchset;
                 responseBundle.Timestamp = DateTime.Now;
+                responseBundle.Total = outgoingMessages.Count;
+                // For the usual use case (unread only), the "next" page is just a repeated request.
+                // But when using since, we have to actually track pages
+                if (_since == default(DateTime))
+                {
+                    responseBundle.NextLink = new Uri(Url.Action("Bundles"));
+                }
+                else
+                {
+                    // TODO: Paging for _since
+                }
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
                 DateTime retrievedTime = DateTime.UtcNow;
                 
