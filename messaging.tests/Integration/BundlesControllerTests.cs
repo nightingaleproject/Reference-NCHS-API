@@ -253,9 +253,30 @@ namespace messaging.tests
 
       HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundles", batchJson);
       Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
+        }
+
+    [Fact]
+    public async void SpecifyingPageGreaterThanOneRequiresSince()
+    {
+        HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?page=3");
+        Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
     }
 
     [Fact]
+    public async void NegativePageInvalid()
+    {
+        HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?page=-2");
+        Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
+    }
+
+    [Fact]
+    public async void NegativeCountPerPageInvalid()
+    {
+        HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=-50");
+        Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
+    }
+
+        [Fact]
     public async System.Threading.Tasks.Task ReturnErrorOnInvalidBatch()
     {
       string batchJson = FixtureStream("fixtures/json/BatchInvalidJsonError.json").ReadToEnd();
