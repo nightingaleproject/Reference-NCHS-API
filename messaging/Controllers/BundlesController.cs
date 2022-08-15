@@ -87,16 +87,16 @@ namespace messaging.Controllers
                 // But when using since, we have to actually track pages
                 if (_since == default(DateTime))
                 {
-                    responseBundle.NextLink = new Uri(Url.Action("Bundles", new { jurisdictionId = jurisdictionId }));
+                    responseBundle.NextLink = new Uri(Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId }));
                 }
                 else
                 {
-                    responseBundle.FirstLink = new Uri(Url.Action("Bundles", new { jurisdictionId = jurisdictionId, _since = _since, page = 1 }));
+                    responseBundle.FirstLink = new Uri(Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = _since, page = 1 }));
                     int lastPage = (outgoingMessages.Count + (_count - 1)) / _count;
-                    responseBundle.LastLink = new Uri(Url.Action("Bundles", new { jurisdictionId = jurisdictionId, _since = _since, page = lastPage }));
+                    responseBundle.LastLink = new Uri(Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = _since, page = lastPage }));
                     if (page < lastPage)
                     {
-                        responseBundle.NextLink = new Uri(Url.Action("Bundles", new { jurisdictionId = jurisdictionId, _since = _since, page = page + 1 }));
+                        responseBundle.NextLink = new Uri(Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = _since, page = page + 1 }));
                     }
                 }
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
