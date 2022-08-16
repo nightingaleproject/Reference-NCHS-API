@@ -37,21 +37,15 @@ namespace messaging.Controllers
         {
             if (_count < 0)
             {
-                // TODO: Specification-conformant error handling
-                // OperationOutcome.ForMessage("_count must not be negative", OperationOutcome.IssueType.Processing, OperationOutcome.IssueSeverity.Error);
                 return BadRequest("_count must not be negative");
             }
             if (page < 0)
             {
-                // TODO: Specification-conformant error handling
-                // OperationOutcome.ForMessage("page must not be negative", OperationOutcome.IssueType.Processing, OperationOutcome.IssueSeverity.Error);
                 return BadRequest("page must not be negative");
             }
             // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
             if (_since == default(DateTime) && page > 1)
             {
-                // TODO: Specification-conformant error handling
-                // OperationOutcome.ForMessage("Paging not supported", OperationOutcome.IssueType.Processing, OperationOutcome.IssueSeverity.Error);
                 return BadRequest("Paging not supported");
             }
             try
