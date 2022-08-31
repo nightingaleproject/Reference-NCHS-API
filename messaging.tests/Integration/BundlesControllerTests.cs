@@ -276,7 +276,114 @@ namespace messaging.tests
         Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
     }
 
-        [Fact]
+    [Fact]
+    public async void ReturnCorrectNumberOfRecordsWithPagination()
+    {
+      DatabaseHelper.ResetDatabase(_context);
+
+      // the test should insert 50 records
+      Bundle batchMsg = new Bundle();
+      batchMsg.Type = Bundle.BundleType.Batch;
+      DeathRecordSubmissionMessage submission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
+      for (int i = 0; i < 50; i++)
+      {
+          submission.CertNo = (uint?)i;
+          Bundle.EntryComponent entry = new Bundle.EntryComponent();
+          entry.Resource = (Resource)submission;
+          batchMsg.Entry.Add(entry);
+      }
+
+      string batchJson = batchMsg.ToJson();
+      HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+      Assert.Equal(50, await GetTableCount(_context.IncomingMessageItems, 50));
+
+      // wait for acknowledgement generation
+      Assert.Equal(50, await GetTableCount(_context.OutgoingMessageItems, 50));
+
+      // the page count should be set to 20
+      // 1st response verify is 20 records
+      HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=20");
+      Assert.Equal(HttpStatusCode.OK, getBundles.StatusCode);
+
+      FhirJsonParser parser = new FhirJsonParser();
+      string bundleOfBundles = await getBundles.Content.ReadAsStringAsync();
+      Bundle bundle = parser.Parse<Bundle>(bundleOfBundles);
+      Assert.Equal(20, bundle.Entry.Count);
+
+      // 2nd response is 20 records
+      HttpResponseMessage getBundles1 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=20");
+      Assert.Equal(HttpStatusCode.OK, getBundles1.StatusCode);
+
+      string bundleOfBundles1 = await getBundles1.Content.ReadAsStringAsync();
+      Bundle bundle1 = parser.Parse<Bundle>(bundleOfBundles1);
+      Assert.Equal(20, bundle1.Entry.Count);
+
+      // 3rd response is 10 records
+      HttpResponseMessage getBundles2 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=20");
+      Assert.Equal(HttpStatusCode.OK, getBundles2.StatusCode);
+
+      string bundleOfBundles2 = await getBundles2.Content.ReadAsStringAsync();
+      Bundle bundle2 = parser.Parse<Bundle>(bundleOfBundles2);
+      Assert.Equal(10, bundle2.Entry.Count);
+
+      // 4th response is 0 records
+      HttpResponseMessage getBundles3 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=20");
+      Assert.Equal(HttpStatusCode.OK, getBundles3.StatusCode);
+
+      string bundleOfBundles3 = await getBundles3.Content.ReadAsStringAsync();
+      Bundle bundle3 = parser.Parse<Bundle>(bundleOfBundles3);
+      Assert.Equal(0, bundle3.Entry.Count);
+    }
+
+    [Fact]
+    public async void ReturnCorrectNumberOfRecordsWithPaginationAndSince()
+    {
+      DatabaseHelper.ResetDatabase(_context);
+
+      DateTime startTest = DateTime.UtcNow;
+      var startTestFmt = startTest.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+      // the test should insert 18 records
+      Bundle batchMsg = new Bundle();
+      batchMsg.Type = Bundle.BundleType.Batch;
+      DeathRecordSubmissionMessage submission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
+      for (int i = 0; i < 18; i++)
+      {
+          submission.CertNo = (uint?)i;
+          Bundle.EntryComponent entry = new Bundle.EntryComponent();
+          entry.Resource = (Resource)submission;
+          batchMsg.Entry.Add(entry);
+      }
+
+      string batchJson = batchMsg.ToJson();
+      HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+      Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+      Assert.Equal(18, await GetTableCount(_context.IncomingMessageItems, 18));
+
+      // wait for acknowledgement generation
+      Assert.Equal(18, await GetTableCount(_context.OutgoingMessageItems, 18));
+
+      // the page count should be set to 5
+      // 1st response verify is 5 records
+      HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_since=" + startTestFmt + "&_count=5");
+      Assert.Equal(HttpStatusCode.OK, getBundles.StatusCode);
+
+      FhirJsonParser parser = new FhirJsonParser();
+      string bundleOfBundles = await getBundles.Content.ReadAsStringAsync();
+      Bundle bundle = parser.Parse<Bundle>(bundleOfBundles);
+      Assert.Equal(5, bundle.Entry.Count);
+
+      // the page count should be set to 5
+      // 3rd page should only have 3
+      HttpResponseMessage getBundles2 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_since=" + startTestFmt + "&_count=5&page=4");
+      Assert.Equal(HttpStatusCode.OK, getBundles2.StatusCode);
+
+      string bundleOfBundles2 = await getBundles2.Content.ReadAsStringAsync();
+      Bundle bundle2 = parser.Parse<Bundle>(bundleOfBundles2);
+      Assert.Equal(3, bundle2.Entry.Count);
+    }
+
+    [Fact]
     public async System.Threading.Tasks.Task ReturnErrorOnInvalidBatch()
     {
       string batchJson = FixtureStream("fixtures/json/BatchInvalidJsonError.json").ReadToEnd();
