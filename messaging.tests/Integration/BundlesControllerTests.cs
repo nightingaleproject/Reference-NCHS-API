@@ -267,7 +267,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void InvalidJurisdictionGetsError()
+        public async void PostWithInvalidJurisdictionGetsError()
         {
             string badJurisdiction = "AB";
             Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
@@ -280,7 +280,17 @@ namespace messaging.tests
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
         }
 
-    private StreamReader FixtureStream(string filePath)
+        [Fact]
+        public async void GetWithInvalidJurisdictionGetsError()
+        {
+            string badJurisdiction = "AB";
+            Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
+
+            HttpResponseMessage response = await _client.GetAsync($"/{badJurisdiction}/Bundles");
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        private StreamReader FixtureStream(string filePath)
     {
         if (!Path.IsPathRooted(filePath))
         {
