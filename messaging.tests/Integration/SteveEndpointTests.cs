@@ -49,7 +49,7 @@ namespace messaging.tests
             Assert.Single(updatedBundle.Entry);
 
             // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
-            HttpResponseMessage noMessages = await _client.GetAsync("STEVE/XX/Bundles");
+            HttpResponseMessage noMessages = await _client.GetAsync("STEVE/FL/Bundles");
             var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
             Assert.Empty(noMessagesBundle.Entry);
 
