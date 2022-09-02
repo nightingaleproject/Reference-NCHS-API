@@ -21,7 +21,7 @@ namespace messaging.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider Services;
         private readonly AppSettings _settings;
-        private readonly ILogger<BundlesController> _logger;
+        protected readonly ILogger<BundlesController> _logger;
 
         public BundlesController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
@@ -35,6 +35,13 @@ namespace messaging.Controllers
         [HttpGet]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime _since = default(DateTime))
         {
+            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
+            {
+                // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
+                _logger.LogError("Rejecting request with invalid jurisdiction ID.");
+                return BadRequest();
+            }
+
             try
             {
                 // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated

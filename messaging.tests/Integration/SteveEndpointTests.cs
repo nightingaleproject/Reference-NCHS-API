@@ -146,6 +146,20 @@ namespace messaging.tests
             Assert.Single(response.Entry);
         }
 
+        [Fact]
+        public async void InvalidJurisdictionGetsError()
+        {
+            string badJurisdiction = "AB";
+            Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/{badJurisdiction}/Bundles", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
         private async Task<Hl7.Fhir.Model.Bundle> GetQueuedMessages(string endpoint, int retries = 3, int cooldown = 500)
         {
             Hl7.Fhir.Model.Bundle queued = null;
