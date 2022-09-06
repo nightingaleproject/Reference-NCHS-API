@@ -49,7 +49,7 @@ namespace messaging.tests
             Assert.Single(updatedBundle.Entry);
 
             // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
-            HttpResponseMessage noMessages = await _client.GetAsync("STEVE/XX/Bundles");
+            HttpResponseMessage noMessages = await _client.GetAsync("STEVE/FL/Bundles");
             var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
             Assert.Empty(noMessagesBundle.Entry);
 
@@ -144,6 +144,30 @@ namespace messaging.tests
             HttpResponseMessage jurisdictionResponse = await _client.GetAsync(MA_ENDPOINT);
             response = await JsonResponseHelpers.ParseBundleAsync(jurisdictionResponse);
             Assert.Single(response.Entry);
+        }
+
+        [Fact]
+        public async void PostWithInvalidJurisdictionGetsError()
+        {
+            string badJurisdiction = "AB";
+            Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{badJurisdiction}/Bundles", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
+        [Fact]
+        public async void GetWithInvalidJurisdictionGetsError()
+        {
+            string badJurisdiction = "AB";
+            Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
+
+            HttpResponseMessage response = await _client.GetAsync($"/STEVE/{badJurisdiction}/Bundles");
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
         private async Task<Hl7.Fhir.Model.Bundle> GetQueuedMessages(string endpoint, int retries = 3, int cooldown = 500)

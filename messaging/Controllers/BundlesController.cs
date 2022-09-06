@@ -21,7 +21,7 @@ namespace messaging.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider Services;
         private readonly AppSettings _settings;
-        private readonly ILogger<BundlesController> _logger;
+        protected readonly ILogger<BundlesController> _logger;
 
         public BundlesController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
@@ -35,6 +35,13 @@ namespace messaging.Controllers
         [HttpGet]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime _since = default(DateTime))
         {
+            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
+            {
+                // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
+                _logger.LogError("Rejecting request with invalid jurisdiction ID.");
+                return BadRequest();
+            }
+
             try
             {
                 // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
@@ -104,6 +111,13 @@ namespace messaging.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<IncomingMessageItem>> GetIncomingMessageItem(string jurisdictionId, long id)
         {
+            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
+            {
+                // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
+                _logger.LogError("Rejecting request with invalid jurisdiction ID.");
+                return BadRequest();
+            }
+
             var IncomingMessageItem = await _context.IncomingMessageItems.Where(x => x.Id == id && x.JurisdictionId == jurisdictionId).FirstOrDefaultAsync();
 
             if (IncomingMessageItem == null)
@@ -119,6 +133,12 @@ namespace messaging.Controllers
         [HttpPost]
         public async Task<ActionResult<Bundle>> PostIncomingMessageItem(string jurisdictionId, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
+            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
+            {
+                // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
+                _logger.LogError("Rejecting request with invalid jurisdiction ID.");
+                return BadRequest();
+            }
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
             Bundle responseBundle = new Bundle();
