@@ -334,14 +334,17 @@ namespace messaging.Controllers
         {
             switch (message.MessageType)
             {
+                case "http://nchs.cdc.gov/vrdr_acknowledgement":
+                case "http://nchs.cdc.gov/vrdr_alias":
+                case "http://nchs.cdc.gov/vrdr_causeofdeath_coding":
+                case "http://nchs.cdc.gov/vrdr_causeofdeath_coding_update":
+                case "http://nchs.cdc.gov/vrdr_demographics_coding":
+                case "http://nchs.cdc.gov/vrdr_demographics_coding_update":
+                case "http://nchs.cdc.gov/vrdr_extraction_error":
+                case "http://nchs.cdc.gov/vrdr_status":
                 case "http://nchs.cdc.gov/vrdr_submission":
                 case "http://nchs.cdc.gov/vrdr_submission_update":
-                case "http://nchs.cdc.gov/vrdr_acknowledgement":
                 case "http://nchs.cdc.gov/vrdr_submission_void":
-                case "http://nchs.cdc.gov/vrdr_coding":
-                case "http://nchs.cdc.gov/vrdr_coding_update":
-                case "http://nchs.cdc.gov/vrdr_extraction_error":
-                case "http://nchs.cdc.gov/vrdr_alias":
                     return "MOR";
                 default:
                     return "UNK";
