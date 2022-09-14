@@ -341,6 +341,7 @@ namespace messaging.Controllers
                 case "http://nchs.cdc.gov/vrdr_coding":
                 case "http://nchs.cdc.gov/vrdr_coding_update":
                 case "http://nchs.cdc.gov/vrdr_extraction_error":
+                case "http://nchs.cdc.gov/vrdr_alias":
                     return "MOR";
                 default:
                     return "UNK";
