@@ -20,7 +20,7 @@ namespace messaging.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider Services;
-        private readonly AppSettings _settings;
+        protected readonly AppSettings _settings;
         protected readonly ILogger<BundlesController> _logger;
 
         public BundlesController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
@@ -47,7 +47,7 @@ namespace messaging.Controllers
             {
                 return BadRequest("_count must not be negative");
             }
-            if (page < 0)
+            if (page < 1)
             {
                 return BadRequest("page must not be negative");
             }
@@ -88,18 +88,21 @@ namespace messaging.Controllers
                 responseBundle.Total = outgoingMessages.Count;
                 // For the usual use case (unread only), the "next" page is just a repeated request.
                 // But when using since, we have to actually track pages
+                string baseUrl = GetNextUri();
                 if (_since == default(DateTime))
                 {
-                    responseBundle.NextLink = new Uri(Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId }));
+                    responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId }));
                 }
                 else
                 {
-                    responseBundle.FirstLink = new Uri(Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = _since, page = 1 }));
-                    int lastPage = (outgoingMessages.Count + (_count - 1)) / _count;
-                    responseBundle.LastLink = new Uri(Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = _since, page = lastPage }));
+                    var sinceFmt = _since.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = 1 }));
+                    // take the total number of the original selected messages, round up, and divide by the count to get the total number of pages
+                    int lastPage = (outgoingMessagesQuery.Count() + (_count - 1)) / _count;
+                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = lastPage }));
                     if (page < lastPage)
                     {
-                        responseBundle.NextLink = new Uri(Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = _since, page = page + 1 }));
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = page + 1 }));
                     }
                 }
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
@@ -321,6 +324,15 @@ namespace messaging.Controllers
         protected virtual string GetMessageSource()
         {
             return "SAM";
+        }
+
+        /// <summary>
+        /// Get the value to use for the message Next Link for pagination (default is SAM). ALlows override by STEVE endpoint.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual string GetNextUri()
+        {
+            return (_settings.SAMS);
         }
 
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, object text)

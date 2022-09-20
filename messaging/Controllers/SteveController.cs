@@ -32,5 +32,10 @@ namespace messaging.Controllers
         {
             return "STV";
         }
+
+        protected override string GetNextUri()
+        {
+            return (_settings.STEVE);
+        }
     }
 }
