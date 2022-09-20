@@ -168,6 +168,27 @@ Example Response:
 < Server: Kestrel
 ```
 
+### Sending Bulk Messages
+
+Multiple messages can be sent using a single connection. When possible multiple messages should be
+sent per connection to increase efficiency of API use. Sending multiple messages is similar to
+sending a single message; the set of message is simply wrapped in a "batch" FHIR Bundle. Note that
+the concept of "batch" used here is different than the batch processing used with the IJE standard
+in that this is simply a way of sending multiple messages at once; the messages in a bulk upload
+will not necessarily be processed or acknowledged together. To bulk upload messages,
+
+1. Create one or more FHIR Records, as described in the "Sending Messages" section above.
+2. Create FHIR VRDR Messages to act as envelopes for the FHIR Records created above, as described in the "Sending Messages" section above.
+3. Wrap the messages in a "batch" Bundle as described [in the FHIR specification](https://www.hl7.org/fhir/http.html#transaction); refer to the [example "batch" Bundle](./messaging.tests/fixtures/json/BatchMessages.json) for details.
+4. Submit the "batch" Bundle of messages using a POST request to the `/<JurisdictionID>/Bundles` endpoint in the same way a single message can be submitted; the following example demonstrates the request format using [curl](https://curl.se/):
+```bash
+curl --location --request POST 'https://localhost:5001/MA/Bundles' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <OAuthToken>' \
+--data "@path/to/file.json"
+```
+4. The API will return a 200 OK HTTP response if everything is functioning correctly.
+
 ## Receiving Messages
 1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the `/<JurisdictionID>/Bundles` endpoint. The following example demonstrates the request format using [curl](https://curl.se/):
 ```bash
