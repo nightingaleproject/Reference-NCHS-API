@@ -86,6 +86,83 @@ Messages flow from NCHS back to jurisdictions by jurisdiction systems polling th
 new responses. This approach of pulling responses rather than NCHS pushing responses to
 jurisdictions allows return messages without requiring jurisdictions to set up a listening endpoint.
 
+## Pagination
+The API implements pagination. The default page size is set to 100. There are 3 parameters for pagination. Each parameter is optional.
+- `_count` used to specify the number of records per page, default is 100
+- `_since` used to retrieve response messages created after the `_since` datetime  
+- `page` used to specify the page of data you are interested in. This parameter is only used if a `_since` datetime is provided.  
+
+If a response contains a `next` link, there is additional data to retrieve. Client side systems should parse out the `next` link and automate the next request to retrieve the next page of data. If a `_since` parameter is not provided, the `next` link will not change.
+
+### Example responses with links.
+1. A default request will return the first 100 responses from the unretrieved messages queue. A default `next` link is provided.  
+    Request  
+    ```
+    GET https://localhost:5001/<jurisdiction-id>/Bundles
+    ```
+    Response links  
+    ```
+        "link": [
+            {
+                "relation": "next",
+                "url": " https://localhost:5001/OSELS/NCHS/NVSSFHIRAPI/MA/Bundles?_count=100"
+            }
+        ]
+    ```
+2. A default request with a specified page size of 50. This will return the first 50 responses from the unretrieved messages queue. A default `next` link is provided.  
+    Request  
+    ```
+    GET https://localhost:5001/<jurisdiction-id>/Bundles?_count=50
+    ```
+    Response links  
+    ```
+        "link": [
+            {
+                "relation": "next",
+                "url": "https://localhost:5001/<jurisdiction-id>/Bundles?_count=50"
+            }
+        ]
+    ```
+3. A timestamp based request with a specified page size of 50 records. If there are additional pages to retrieve, there will be a `next` link. Will return the first 50 responses created after the _since datetime parameter and a `first`, `last`, and `next` link if there is more data to retrieve.  
+    Request  
+    ```
+    GET https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50
+    ```
+    Response links  
+    ```
+        "link": [
+            {
+                "relation": "first",
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=1"
+            },
+            {
+                "relation": "last",
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3"
+            },
+            {
+                "relation": "next",
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=2"
+            }
+        ],
+    ```
+4. The 3rd and last page of a timestamp based request with a specified page size of 50 records. If this is the last page, there will not be a `next` link. Will return the third page of 50 responses created after the _since datetime parameter and a `first`, `last` link. There is no `next` link because there is no more data to retrieve.  
+    Request  
+    ```
+    GET https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3
+    ```
+    Response links  
+    ```
+        "link": [
+            {
+                "relation": "first",
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=1"
+            },
+            {
+                "relation": "last",
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3"
+            }
+        ],
+    ```
 ## STEVE
 Jurisdictions can send their POST and GET requests through STEVE or direct to NCHS. 
 

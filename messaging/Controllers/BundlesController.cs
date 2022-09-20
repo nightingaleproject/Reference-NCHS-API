@@ -91,7 +91,7 @@ namespace messaging.Controllers
                 string baseUrl = GetNextUri();
                 if (_since == default(DateTime))
                 {
-                    responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId }));
+                    responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _count = _count }));
                 }
                 else
                 {
