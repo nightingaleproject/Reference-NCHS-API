@@ -29,12 +29,17 @@ namespace messaging.Controllers
             Services = services;
             _settings = settings.Value;
             _logger = logger;
+
         }
 
         // GET: Bundles
         [HttpGet]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count = 100, DateTime _since = default(DateTime), int page = 1)
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since = default(DateTime), int page = 1)
         {
+            if (_count == 0) 
+            {
+                _count = _settings.PageCount;
+            }
 
             if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
             {

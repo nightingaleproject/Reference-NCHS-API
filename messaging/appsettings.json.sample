@@ -2,7 +2,8 @@
   "AppSettings": {
     "AckAndIJEConversion": true,
     "SAMS" : "https://apigw.cdc.gov/OSELS/NCHS/NVSSFHIRAPI",
-    "STEVE" : "https://ingress.devfhir.steve.naphsis.us"
+    "STEVE" : "https://ingress.devfhir.steve.naphsis.us",
+    "PageCount" : 100
   },
   "Serilog": {
     "Using": [
