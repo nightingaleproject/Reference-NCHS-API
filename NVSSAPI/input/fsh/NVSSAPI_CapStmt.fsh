@@ -15,6 +15,6 @@ Usage: #definition
 * rest.mode = #server
 * rest.resource[+].type = #Bundle
 * rest.resource[=].interaction[0].code = #search-type
-* rest.resource[=].searchParam[0].name = "_lastUpdated"
+* rest.resource[=].searchParam[0].name = "_since"
 * rest.resource[=].searchParam[=].type = #date
 * rest.resource[=].interaction[+].code = #create
