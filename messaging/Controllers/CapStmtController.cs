@@ -40,7 +40,8 @@ namespace messaging.Controllers
                 using (StreamReader r = new StreamReader("NVSSAPI/fsh-generated/resources/CapabilityStatement-NVSS-API-CS.json"))
                 {
                     string str = r.ReadToEnd();
-                    JObject json = JObject.Parse(str);
+                    string customStmt = str.Replace("XX", jurisdictionId);
+                    JObject json = JObject.Parse(customStmt);
                     return Ok(json);
                 }
 
