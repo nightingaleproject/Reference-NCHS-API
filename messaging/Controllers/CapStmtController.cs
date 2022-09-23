@@ -1,15 +1,10 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using messaging.Models;
 using messaging.Services;
-using Hl7.Fhir.Serialization;
-using Hl7.Fhir.Model;
-using VRDR;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
