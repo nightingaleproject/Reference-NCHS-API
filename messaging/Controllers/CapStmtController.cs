@@ -1,4 +1,7 @@
 using System;
+using System.Reflection;
+using System.Linq;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -36,13 +39,17 @@ namespace messaging.Controllers
 
             try
             {
-                // read capability statement file
-                using (StreamReader r = new StreamReader("NVSSAPI/fsh-generated/resources/CapabilityStatement-NVSS-API-CS.json"))
+                // read capability statement file from embedded resource
+                using (Stream stream = this.GetType().Assembly.GetManifestResourceStream("messaging.NVSSAPI.fsh_generated.resources.CapabilityStatement-NVSS-API-CS.json"))
                 {
-                    string str = r.ReadToEnd();
-                    string customStmt = str.Replace("XX", jurisdictionId);
-                    JObject json = JObject.Parse(customStmt);
-                    return Ok(json);
+                    using (StreamReader r = new StreamReader(stream))
+                    {
+                        string str = r.ReadToEnd();
+                        string customStmt = str.Replace("XX", jurisdictionId);
+                        JObject json = JObject.Parse(customStmt);
+                        return Ok(json);
+                    }
+
                 }
 
             }
