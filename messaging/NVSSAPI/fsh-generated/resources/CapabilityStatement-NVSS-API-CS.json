@@ -1,0 +1,44 @@
+{
+  "resourceType": "CapabilityStatement",
+  "id": "NVSS-API-CS",
+  "url": "http://cdc.gov/nchs/nvss/fhir/nvss-api/CapabilityStatement/NVSS-API-CS",
+  "version": "0.0.1",
+  "name": "NVSS_API",
+  "title": "NVSS API Server Capability Statement",
+  "status": "draft",
+  "date": "2022-09-15",
+  "publisher": "NCHS",
+  "kind": "instance",
+  "implementation": {
+    "description": "NVSS API Server",
+    "url": "https://apigw.cdc.gov/OSELS/NCHS/NVSSFHIRAPI/XX/CapabilityStatement"
+  },
+  "fhirVersion": "4.0.1",
+  "format": [
+    "json"
+  ],
+  "rest": [
+    {
+      "mode": "server",
+      "resource": [
+        {
+          "type": "Bundle",
+          "interaction": [
+            {
+              "code": "search-type"
+            },
+            {
+              "code": "create"
+            }
+          ],
+          "searchParam": [
+            {
+              "name": "_since",
+              "type": "date"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
