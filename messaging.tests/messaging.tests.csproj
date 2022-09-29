@@ -19,5 +19,6 @@
     <None Update="fixtures/json/BatchMessages.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/BatchSingleMessage.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/BatchWithOneErrorMessage.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="fixtures/json/DeathRecordSubmissionMessage.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>  
 </Project>

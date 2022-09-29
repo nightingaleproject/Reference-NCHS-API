@@ -1,4 +1,10 @@
 {
+  "AppSettings": {
+    "AckAndIJEConversion": true,
+    "SAMS" : "https://apigw.cdc.gov/OSELS/NCHS/NVSSFHIRAPI",
+    "STEVE" : "https://ingress.devfhir.steve.naphsis.us",
+    "PageCount" : 100
+  },
   "Serilog": {
     "Using": [
       "Serilog.Sinks.ApplicationInsights", "Serilog.Sinks.File"

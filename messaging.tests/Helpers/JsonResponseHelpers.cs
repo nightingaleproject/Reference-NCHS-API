@@ -29,5 +29,11 @@ namespace messaging.tests.Helpers
       postRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
       return await client.SendAsync(postRequest);
     }
+
+    public static async Task<HttpResponseMessage> GetAsync(HttpClient client, string endpoint)
+    {
+        HttpRequestMessage getRequest = new HttpRequestMessage(HttpMethod.Get, endpoint);
+        return await client.SendAsync(getRequest);
+    }
   }
 }

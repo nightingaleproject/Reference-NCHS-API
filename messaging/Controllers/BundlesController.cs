@@ -20,7 +20,7 @@ namespace messaging.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider Services;
-        private readonly AppSettings _settings;
+        protected readonly AppSettings _settings;
         protected readonly ILogger<BundlesController> _logger;
 
         public BundlesController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
@@ -29,17 +29,37 @@ namespace messaging.Controllers
             Services = services;
             _settings = settings.Value;
             _logger = logger;
+
         }
 
         // GET: Bundles
         [HttpGet]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, DateTime _since = default(DateTime))
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since = default(DateTime), int page = 1)
         {
+            if (_count == 0) 
+            {
+                _count = _settings.PageCount;
+            }
+
             if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
             {
                 // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
                 return BadRequest();
+            }
+
+            if (_count < 0)
+            {
+                return BadRequest("_count must not be negative");
+            }
+            if (page < 1)
+            {
+                return BadRequest("page must not be negative");
+            }
+            // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
+            if (_since == default(DateTime) && page > 1)
+            {
+                return BadRequest("Pagination does not support specifying a page without a _since parameter");
             }
 
             try
@@ -60,7 +80,7 @@ namespace messaging.Controllers
                 }
 
                 // Convert to list to execute the query, capture the result for re-use
-                List<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.ToList();
+                List<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.Skip((page - 1) * _count).Take(_count).ToList();
 
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
@@ -70,6 +90,26 @@ namespace messaging.Controllers
                 Bundle responseBundle = new Bundle();
                 responseBundle.Type = Bundle.BundleType.Searchset;
                 responseBundle.Timestamp = DateTime.Now;
+                responseBundle.Total = outgoingMessages.Count;
+                // For the usual use case (unread only), the "next" page is just a repeated request.
+                // But when using since, we have to actually track pages
+                string baseUrl = GetNextUri();
+                if (_since == default(DateTime))
+                {
+                    responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _count = _count }));
+                }
+                else
+                {
+                    var sinceFmt = _since.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = 1 }));
+                    // take the total number of the original selected messages, round up, and divide by the count to get the total number of pages
+                    int lastPage = (outgoingMessagesQuery.Count() + (_count - 1)) / _count;
+                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = lastPage }));
+                    if (page < lastPage)
+                    {
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = page + 1 }));
+                    }
+                }
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
                 DateTime retrievedTime = DateTime.UtcNow;
                 
@@ -289,6 +329,15 @@ namespace messaging.Controllers
         protected virtual string GetMessageSource()
         {
             return "SAM";
+        }
+
+        /// <summary>
+        /// Get the value to use for the message Next Link for pagination (default is SAM). ALlows override by STEVE endpoint.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual string GetNextUri()
+        {
+            return (_settings.SAMS);
         }
 
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, object text)
