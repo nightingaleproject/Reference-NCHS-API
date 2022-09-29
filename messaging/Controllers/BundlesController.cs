@@ -59,7 +59,7 @@ namespace messaging.Controllers
             // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
             if (_since == default(DateTime) && page > 1)
             {
-                return BadRequest("Paging not supported");
+                return BadRequest("Pagination does not support specifying a page without a _since parameter");
             }
 
             try

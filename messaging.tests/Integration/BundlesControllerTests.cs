@@ -344,7 +344,7 @@ namespace messaging.tests
 
           string bundleOfBundles3 = await getBundles3.Content.ReadAsStringAsync();
           Bundle bundle3 = parser.Parse<Bundle>(bundleOfBundles3);
-          Assert.Equal(0, bundle3.Entry.Count);
+          Assert.Empty(bundle3.Entry);
         }
 
         [Fact]
