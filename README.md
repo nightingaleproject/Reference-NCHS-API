@@ -397,6 +397,11 @@ Example Response:
 
 This section documents information useful for developers of the API itself and is not relevant to users of the API or developers of systems that use the API.
 
+## Version Updates
+1. Update the CHANGELOG.md
+2. Update `NVSSAPI_CapStmt.fsh` to use the new version number
+3. Regenerate the fsh file so CapabilityStatement-NVSS-API-CS.json includes the new version number
+
 ## Steps to start the API In Development
 
 1. Run MSSQL server: In development `docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 -d mcr.microsoft.com/mssql/server`, or in production configure a proper MSSQL instance to your organizational requirements.
