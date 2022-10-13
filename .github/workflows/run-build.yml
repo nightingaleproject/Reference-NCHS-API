@@ -1,9 +1,0 @@
-name: Update Swagger UI
-on: [push]
-
-jobs:
-  update-swagger:
-    runs-on: ubuntu-latest
-    steps:
-        - name: Generate Swagger YAML file
-          run: dotnet build
