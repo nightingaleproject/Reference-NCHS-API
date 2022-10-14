@@ -15,7 +15,7 @@ jobs:
     - name: Install dependencies
       run: |
         dotnet tool restore
-        dotnet new tool-manifest
+        dotnet new tool-manifest --force
         dotnet tool install --version 6.4.0 Swashbuckle.AspNetCore.Cli 
     - name: Run Swagger Generation Scripts
       run: dotnet swagger "tofile" --output "${GITHUB_WORKSPACE}/swagger/v1/swagger.json" "${GITHUB_WORKSPACE}/messaging/bin/Debug/net6.0/messaging.dll" v1
