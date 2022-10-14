@@ -1,0 +1,30 @@
+name: Update swagger
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-dotnet@v1
+    - name: Install dependencies
+      run: dotnet restore
+    - name: Run Swagger Generation Scripts
+      run:
+        dotnet swagger tofile --output ../swagger/v1/swagger.json $(OutputPath)$(AssemblyName).dll v1
+        dotnet swagger tofile --output ../swagger/v1/swagger.yaml --yaml $(OutputPath)$(AssemblyName).dll v1
+    - name: Set up git config
+      run:
+        git config user.name "GitHub Actions Swagger Docs Bot"
+        git config user.email "<>"
+    - name: commit changes
+      run:
+        git checkout "${GITHUB_REF:11}"
+        git add ./swagger/v1/swagger.yaml
+        git add ./swagger/v1/swagger.json
+        git commit -m "Swagger Bot - Update Swagger Documentation."
+        git push
+        
