@@ -19,6 +19,6 @@ jobs:
         dotnet swagger "tofile" --output './swagger/v1/swagger.yaml' --yaml './messaging/bin/Debug/net6.0/messaging.dll' v1
         dotnet swagger "tofile" --output './swagger/v1/swagger.json' './messaging/bin/Debug/net6.0/messaging.dll' v1
     - name: Commit Documentation Updates (if needed).
-      - uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "GitHub Actions Swagger Docs Bot"
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "GitHub Actions Swagger Docs Bot"
