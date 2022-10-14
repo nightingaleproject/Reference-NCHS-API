@@ -18,7 +18,7 @@ jobs:
         dotnet new tool-manifest --force
         dotnet tool install --version 6.4.0 Swashbuckle.AspNetCore.Cli 
     - name: Run Swagger Generation Scripts
-      run: dotnet swagger "tofile" --output "${GITHUB_WORKSPACE}/swagger/v1/swagger.json" "${GITHUB_WORKSPACE}/messaging/bin/Debug/net6.0/messaging.dll" v1
+      run: dotnet swagger "tofile" --output "./swagger/v1/swagger.json" "./messaging/bin/Debug/net6.0/messaging.dll" v1
     - name: Set up git config
       run: |
         git config user.name "GitHub Actions Swagger Docs Bot"
