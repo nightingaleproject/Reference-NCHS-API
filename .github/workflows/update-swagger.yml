@@ -13,7 +13,10 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-dotnet@v1
     - name: Install dependencies
-      run: dotnet tool restore
+      run: |
+        dotnet tool restore
+        dotnet new tool-manifest
+        dotnet tool install --version 6.4.0 Swashbuckle.AspNetCore.Cli 
     - name: Run Swagger Generation Scripts
       run: dotnet swagger "tofile" --output "${GITHUB_WORKSPACE}/swagger/v1/swagger.json" "${GITHUB_WORKSPACE}/messaging/bin/Debug/net6.0/messaging.dll" v1
     - name: Set up git config
