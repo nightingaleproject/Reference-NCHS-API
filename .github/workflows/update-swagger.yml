@@ -20,15 +20,6 @@ jobs:
         ls './messaging'
     - name: Run Swagger Generation Scripts
       run: dotnet swagger "tofile" --output './swagger/v1/swagger.json' './messaging/bin/Debug/net6.0/messaging.dll' v1
-    - name: Set up git config
-      run: |
-        git config user.name "GitHub Actions Swagger Docs Bot"
-        git config user.email "<>"
-    - name: commit changes
-      run: |
-        git checkout "${GITHUB_REF:11}"
-        git add ./swagger/v1/swagger.yaml
-        git add ./swagger/v1/swagger.json
-        git commit -m "Swagger Bot - Update Swagger Documentation."
-        git push
-        
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "GitHub Actions Swagger Docs Bot"
