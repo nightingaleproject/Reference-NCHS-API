@@ -13,13 +13,11 @@ jobs:
     - name: Install dependencies
       run: |
         dotnet tool restore
-        dotnet new tool-manifest --force
-        dotnet tool install --version 6.4.0 Swashbuckle.AspNetCore.Cli
         dotnet build
-        ls
-        ls './messaging'
     - name: Run Swagger Generation Scripts
-      run: dotnet swagger "tofile" --output './swagger/v1/swagger.json' './messaging/bin/Debug/net6.0/messaging.dll' v1
+      run: |
+        dotnet swagger "tofile" --output './swagger/v1/swagger.yaml' --yaml './messaging/bin/Debug/net6.0/messaging.dll' v1
+        dotnet swagger "tofile" --output './swagger/v1/swagger.json' './messaging/bin/Debug/net6.0/messaging.dll' v1
     - uses: stefanzweifel/git-auto-commit-action@v4
       with:
         commit_message: "GitHub Actions Swagger Docs Bot"
