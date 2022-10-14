@@ -1,8 +1,6 @@
 name: Update swagger
 
 on:
-  push:
-    branches: [ swagger-page ]
   pull_request:
     branches: [ main ]
 
@@ -18,7 +16,7 @@ jobs:
         dotnet new tool-manifest --force
         dotnet tool install --version 6.4.0 Swashbuckle.AspNetCore.Cli 
     - name: Run Swagger Generation Scripts
-      run: dotnet swagger "tofile" --output "./swagger/v1/swagger.json" "./Reference-NCHS-API/messaging/bin/Debug/net6.0/messaging.dll" v1
+      run: dotnet swagger "tofile" --output "./swagger/v1/swagger.json" "/messaging/bin/Debug/net6.0/messaging.dll" v1
     - name: Set up git config
       run: |
         git config user.name "GitHub Actions Swagger Docs Bot"
