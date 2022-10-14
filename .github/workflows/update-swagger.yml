@@ -15,6 +15,7 @@ jobs:
         dotnet tool restore
         dotnet new tool-manifest --force
         dotnet tool install --version 6.4.0 Swashbuckle.AspNetCore.Cli
+        dotnet build
         ls
         ls 'messaging'
     - name: Run Swagger Generation Scripts
