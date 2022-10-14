@@ -15,9 +15,10 @@ jobs:
     - name: Install dependencies
       run: dotnet tool restore
     - name: Run Swagger Generation Scripts
+      working-directory: build
       run: |
-        dotnet swagger tofile --output /swagger/v1/swagger.yaml --yaml /messaging/bin/Debug/net6.0/messaging.dll v1 WorkingDirectory=./messaging
-        dotnet swagger tofile --output /swagger/v1/swagger.json /messaging/bin/Debug/net6.0/messaging.dll v1 WorkingDirectory=./messaging
+        dotnet swagger tofile --output /swagger/v1/swagger.yaml --yaml /messaging/bin/Debug/net6.0/messaging.dll v1 WorkingDirectory=/messaging
+        dotnet swagger tofile --output /swagger/v1/swagger.json /messaging/bin/Debug/net6.0/messaging.dll v1 WorkingDirectory=/messaging
     - name: Set up git config
       run: |
         git config user.name "GitHub Actions Swagger Docs Bot"
