@@ -3,16 +3,16 @@
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.1"/>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.1"/>
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.1"/>
-    <PackageReference Include="MiniProfiler.AspNetCore.Mvc" Version="4.2.22"/>
-    <PackageReference Include="MiniProfiler.EntityFrameworkCore" Version="4.2.22"/>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.1" />
+    <PackageReference Include="MiniProfiler.AspNetCore.Mvc" Version="4.2.22" />
+    <PackageReference Include="MiniProfiler.EntityFrameworkCore" Version="4.2.22" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Include="VRDR.Messaging" Version="4.0.0-preview11" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.3.1-dev-00337" />
@@ -20,7 +20,10 @@
     <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="4.0.1-dev-00038" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="NVSSAPI\fsh-generated\resources\CapabilityStatement-NVSS-API-CS.json"/>
+    <EmbeddedResource Include="NVSSAPI\fsh-generated\resources\CapabilityStatement-NVSS-API-CS.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="..\swagger\v1" />
   </ItemGroup>
   <!-- <ItemGroup>
     <ProjectReference Include="..\..\vrdr-dotnet\VRDR.Messaging\VRDRMessaging.csproj" />
