@@ -25,10 +25,6 @@
   <ItemGroup>
     <Folder Include="..\swagger\v1" />
   </ItemGroup>
-   <Target Name="OpenAPI" AfterTargets="Build" Condition="$(Configuration)=='Debug'">
-        <Exec Command="dotnet swagger tofile --output ../swagger/v1/swagger.yaml --yaml ../messaging/bin/Debug/net6.0/messaging.dll v1" WorkingDirectory="../messaging" />
-        <Exec Command="dotnet swagger tofile --output ../swagger/v1/swagger.json ../messaging/bin/Debug/net6.0/messaging.dll v1" WorkingDirectory="../messaging" />
-    </Target>
   <!-- <ItemGroup>
     <ProjectReference Include="..\..\vrdr-dotnet\VRDR.Messaging\VRDRMessaging.csproj" />
   </ItemGroup> -->
