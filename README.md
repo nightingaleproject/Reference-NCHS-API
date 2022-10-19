@@ -192,7 +192,7 @@ following manner:
 * Jurisdiction vital records system includes the appropriate access token for subsequent API requests
 
 # Open API Documentation
-To view the swagger generated Open API documentation, run the service using the instructions in [Steps to start the API In Development](https://github.com/nightingaleproject/Reference-NCHS-API#steps-to-start-the-api-in-development) below and navigate to https://localhost:5001/index.html
+To view the swagger generated Open API documentation, run the service using the instructions in [Steps to start the API In Development](https://github.com/nightingaleproject/Reference-NCHS-API#steps-to-start-the-api-in-development) below and navigate to https://localhost:5001/swagger/index.html
 You can also view a static version of the documentation hosted on GitHub at [NVSSMessaging Swagger](https://nightingaleproject.github.io/Reference-NCHS-API/).
 
 # Interacting with the API
