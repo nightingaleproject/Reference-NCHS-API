@@ -34,7 +34,7 @@ namespace messaging
             );
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1.1.0-preview5", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1.1.0-preview5", });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1", });
                 c.SwaggerGeneratorOptions.Servers = new List<OpenApiServer>()
                 {
                     new() {Url = "https://localhost:5001" }
