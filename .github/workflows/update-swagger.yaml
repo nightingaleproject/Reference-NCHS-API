@@ -15,9 +15,9 @@ jobs:
         dotnet tool restore
         dotnet build
     - name: Create Swagger folder
-        run: |
-          mkdir -p ./swagger
-          mkdir -p ./swagger/v1
+      run: |
+        mkdir -p ./swagger
+        mkdir -p ./swagger/v1
     - name: Run Swagger Doc Generation Scripts
       run: |
         dotnet swagger "tofile" --output './swagger/v1/swagger.yaml' --yaml './messaging/bin/Debug/net6.0/messaging.dll' v1
