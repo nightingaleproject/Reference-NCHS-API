@@ -26,3 +26,4 @@ jobs:
       with:
         commit_message: "GitHub Actions Bot - Update Swagger Documentation"
         branch: gh-pages
+        add_options: '-u'
