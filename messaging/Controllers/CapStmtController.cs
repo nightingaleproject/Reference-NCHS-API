@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace messaging.Controllers
 {
-    [Route("{jurisdictionId:length(2)}/CapabilityStatement")]
+    [Route("{jurisdictionId:length(2)}/metadata")]
     [ApiController]
     public class CapabilityStatement : ControllerBase
     {

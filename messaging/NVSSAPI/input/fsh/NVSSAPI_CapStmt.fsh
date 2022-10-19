@@ -9,7 +9,7 @@ Usage: #definition
 * publisher = "NCHS"
 * kind = #instance
 * implementation.description = "NVSS API Server"
-* implementation.url = "https://apigw.cdc.gov/OSELS/NCHS/NVSSFHIRAPI/XX/CapabilityStatement"
+* implementation.url = "https://apigw.cdc.gov/OSELS/NCHS/NVSSFHIRAPI/XX/metadata"
 * fhirVersion = #4.0.1
 * format = #json
 * rest.mode = #server

@@ -52,7 +52,7 @@ NCHS and NCHS responds using
 ## Endpoints
 ### Submit Death Records
 ```
-POST https://localhost:5001/<jurisdiction-id>/Bundles
+POST https://localhost:5001/<jurisdiction-id>/Bundle
 ```
 The API supports several types of POST interaction:
 
@@ -65,12 +65,12 @@ The API supports several types of POST interaction:
 
 ### Receive Responses
 ```
-GET https://localhost:5001/<jurisdiction-id>/Bundles
+GET https://localhost:5001/<jurisdiction-id>/Bundle
 ```
 which returns any message response that has not been retrieved yet
 or
 ```
-GET https://localhost:5001/<jurisdiction-id>/Bundles/_since=yyyy-MM-ddTHH:mm:ss.fffffff
+GET https://localhost:5001/<jurisdiction-id>/Bundle/_since=yyyy-MM-ddTHH:mm:ss.fffffff
 ```
 which returns any message created after the datetime provided in the _since parameter
 
@@ -98,68 +98,68 @@ If a response contains a `next` link, there is additional data to retrieve. Clie
 1. A default request will return the first 100 responses from the unretrieved messages queue. A default `next` link is provided.  
     Request  
     ```
-    GET https://localhost:5001/<jurisdiction-id>/Bundles
+    GET https://localhost:5001/<jurisdiction-id>/Bundle
     ```
     Response links  
     ```
         "link": [
             {
                 "relation": "next",
-                "url": " https://localhost:5001/OSELS/NCHS/NVSSFHIRAPI/MA/Bundles?_count=100"
+                "url": " https://localhost:5001/OSELS/NCHS/NVSSFHIRAPI/MA/Bundle?_count=100"
             }
         ]
     ```
 2. A default request with a specified page size of 50. This will return the first 50 responses from the unretrieved messages queue. A default `next` link is provided.  
     Request  
     ```
-    GET https://localhost:5001/<jurisdiction-id>/Bundles?_count=50
+    GET https://localhost:5001/<jurisdiction-id>/Bundle?_count=50
     ```
     Response links  
     ```
         "link": [
             {
                 "relation": "next",
-                "url": "https://localhost:5001/<jurisdiction-id>/Bundles?_count=50"
+                "url": "https://localhost:5001/<jurisdiction-id>/Bundle?_count=50"
             }
         ]
     ```
 3. A timestamp based request with a specified page size of 50 records. If there are additional pages to retrieve, there will be a `next` link. Will return the first 50 responses created after the _since datetime parameter and a `first`, `last`, and `next` link if there is more data to retrieve.  
     Request  
     ```
-    GET https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50
+    GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50
     ```
     Response links  
     ```
         "link": [
             {
                 "relation": "first",
-                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=1"
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=1"
             },
             {
                 "relation": "last",
-                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3"
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3"
             },
             {
                 "relation": "next",
-                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=2"
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=2"
             }
         ],
     ```
 4. The 3rd and last page of a timestamp based request with a specified page size of 50 records. If this is the last page, there will not be a `next` link. Will return the third page of 50 responses created after the _since datetime parameter and a `first`, `last` link. There is no `next` link because there is no more data to retrieve.  
     Request  
     ```
-    GET https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3
+    GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3
     ```
     Response links  
     ```
         "link": [
             {
                 "relation": "first",
-                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=1"
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=1"
             },
             {
                 "relation": "last",
-                "url": " https://localhost:5001/<jurisdiction-id>/Bundles?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3"
+                "url": " https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3"
             }
         ],
     ```
@@ -214,16 +214,16 @@ curl --request POST --url 'https://<OAuthHost>/auth/oauth/v2/token' \
 --data password='<Password>'
 
 # Send a request using the retrieved token
-curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundles
+curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundle
 ```
 
 ## Sending Messages
 
 1. Create a FHIR Record. The standard that specifies this format can be found [here](https://build.fhir.org/ig/HL7/vrdr/branches/Sep_2021_Connectathon/). There are also two public library implementations available to assist in the creation of FHIR Records, [VRDR-dotnet](https://github.com/nightingaleproject/vrdr-dotnet) and [VRDR_javalib](https://github.com/MortalityReporting/VRDR_javalib).
 2. Create a FHIR VRDR Message to act as an envelope for the FHIR Record created above. The standard that specifies this format can be found [here](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html). The [VRDR-dotnet Messaging library](https://github.com/nightingaleproject/vrdr-dotnet/blob/master/doc/Messaging.md) also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the [Canary](https://github.com/nightingaleproject/canary) project has a **Creating FHIR VRDR Messages** option in which will create an appropriate synthetic message for POSTing to the API.
-3. Submit the message using a POST request to the `/<JurisdictionID>/Bundles` endpoint; the following example demonstrates the request format using [curl](https://curl.se/):
+3. Submit the message using a POST request to the `/<JurisdictionID>/Bundle` endpoint; the following example demonstrates the request format using [curl](https://curl.se/):
 ```bash
-curl --location --request POST 'https://localhost:5001/MA/Bundles' \
+curl --location --request POST 'https://localhost:5001/MA/Bundle' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer <OAuthToken>' \
 --data "@path/to/file.json"
@@ -231,7 +231,7 @@ curl --location --request POST 'https://localhost:5001/MA/Bundles' \
 3. The API will return a 204 No Content HTTP response if everything is functioning correctly.
 Example Response:
 ```
-> POST /MA/Bundles HTTP/1.1
+> POST /MA/Bundle HTTP/1.1
 > Host: localhost:5001
 > User-Agent: curl/7.64.1
 > Accept: */*
@@ -258,9 +258,9 @@ will not necessarily be processed or acknowledged together. To bulk upload messa
 1. Create one or more FHIR Records, as described in the "Sending Messages" section above.
 2. Create FHIR VRDR Messages to act as envelopes for the FHIR Records created above, as described in the "Sending Messages" section above.
 3. Wrap the messages in a "batch" Bundle as described [in the FHIR specification](https://www.hl7.org/fhir/http.html#transaction); refer to the [example "batch" Bundle](./messaging.tests/fixtures/json/BatchMessages.json) for details.
-4. Submit the "batch" Bundle of messages using a POST request to the `/<JurisdictionID>/Bundles` endpoint in the same way a single message can be submitted; the following example demonstrates the request format using [curl](https://curl.se/):
+4. Submit the "batch" Bundle of messages using a POST request to the `/<JurisdictionID>/Bundle` endpoint in the same way a single message can be submitted; the following example demonstrates the request format using [curl](https://curl.se/):
 ```bash
-curl --location --request POST 'https://localhost:5001/MA/Bundles' \
+curl --location --request POST 'https://localhost:5001/MA/Bundle' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Bearer <OAuthToken>' \
 --data "@path/to/file.json"
@@ -268,18 +268,18 @@ curl --location --request POST 'https://localhost:5001/MA/Bundles' \
 4. The API will return a 200 OK HTTP response if everything is functioning correctly.
 
 ## Receiving Messages
-1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the `/<JurisdictionID>/Bundles` endpoint. The following example demonstrates the request format using [curl](https://curl.se/):
+1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the `/<JurisdictionID>/Bundle` endpoint. The following example demonstrates the request format using [curl](https://curl.se/):
 ```bash
-curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundles
+curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundle
 ```
 2. Time based filtering is also available, and can be used by providing the [FHIR parameter](https://www.hl7.org/fhir/http.html) `_since` as a filter. The best practice is to use time based filtering whenever retrieving messages. Always keep track of the last time polling was performed and use that timestamp to filter results in order to only retrieve messages that have not previously been processed.
 ```bash
-curl --header 'Authorization: Bearer <OAuthToken>' "https://localhost:5001/MA/Bundles?_since=2021-10-21T17:21:41.492893-04:00"
+curl --header 'Authorization: Bearer <OAuthToken>' "https://localhost:5001/MA/Bundle?_since=2021-10-21T17:21:41.492893-04:00"
 ```
 3. These requests return a 200 Response header with a body containing a [FHIR Bundle](https://www.hl7.org/fhir/bundle.html) of type 'searchset' containing a list of FHIR Messages. These messages can be either ACK, Error, or Coding Responses.
 Example Response:
 ```
-> GET /MA/Bundles HTTP/1.1
+> GET /MA/Bundle HTTP/1.1
 > Host: localhost:5001
 > User-Agent: curl/7.64.1
 > Accept: */*

@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace messaging.Controllers
 {
     [Route("{jurisdictionId:length(2)}/Bundles")]
+    [Route("{jurisdictionId:length(2)}/Bundle")]
     [ApiController]
     public class BundlesController : ControllerBase
     {
