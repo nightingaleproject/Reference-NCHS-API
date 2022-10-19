@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: NVSSMessaging
-  version: v1
+  version: v1.1.0-preview5
 servers:
   - url: https://localhost:5001
 paths:
