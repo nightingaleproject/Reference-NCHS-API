@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using messaging.Models;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace messaging
 {
@@ -33,15 +34,16 @@ namespace messaging
             );
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1", });
             });
+            services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             app.UseHttpLogging();
-
+            app.UseHttpsRedirection();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -49,12 +51,8 @@ namespace messaging
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NVSSMessaging v1"));
             }
             app.UseMiniProfiler();
-            app.UseHttpsRedirection();
-
             app.UseRouting();
-
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

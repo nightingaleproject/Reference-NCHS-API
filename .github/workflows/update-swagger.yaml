@@ -1,0 +1,29 @@
+name: Update Swagger Documentation
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-dotnet@v1
+    - name: Install Dependencies
+      run: |
+        dotnet tool restore
+        dotnet build
+    - name: Create Swagger folder
+      run: |
+        mkdir -p ./swagger
+        mkdir -p ./swagger/v1
+    - name: Run Swagger Doc Generation Scripts
+      run: |
+        dotnet swagger "tofile" --output './swagger/v1/swagger.yaml' --yaml './messaging/bin/Debug/net6.0/messaging.dll' v1
+        dotnet swagger "tofile" --output './swagger/v1/swagger.json' './messaging/bin/Debug/net6.0/messaging.dll' v1
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "GitHub Actions Bot - Update Swagger Documentation"
+        branch: gh-pages
+        add_options: '.'
