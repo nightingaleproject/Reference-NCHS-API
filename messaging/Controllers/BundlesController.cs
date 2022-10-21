@@ -200,7 +200,7 @@ namespace messaging.Controllers
                     // Capture the each messsage's result in an entry and add to the response bundle.
                     foreach (var entry in bundle.Entry)
                     {
-                        Bundle.EntryComponent respEntry = await InsertBatchMessages(entry, jurisdictionId, queue);
+                        Bundle.EntryComponent respEntry = await InsertBatchMessage(entry, jurisdictionId, queue);
                         responseBundle.Entry.Add(respEntry);
                     }
                     return responseBundle;
@@ -254,13 +254,12 @@ namespace messaging.Controllers
             }
         }
 
-        // InsertBatchMessages handles a single message in a batch upload submission
+        // InsertBatchMessage handles a single message in a batch upload submission
         // Each message is handled independent of the other messages. A status code is generated for
         // each message and is returned in the response bundle
-        private async Task<Bundle.EntryComponent> InsertBatchMessages( Bundle.EntryComponent msgBundle, string jurisdictionId, IBackgroundTaskQueue queue)
+        private async Task<Bundle.EntryComponent> InsertBatchMessage(Bundle.EntryComponent msgBundle, string jurisdictionId, IBackgroundTaskQueue queue)
         {
             Bundle.EntryComponent entry = new Bundle.EntryComponent();
-            entry.Resource = msgBundle.Resource;
             IncomingMessageItem item;
 
             try
@@ -273,10 +272,9 @@ namespace messaging.Controllers
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Etag = "W/1";
-                entry.Response.LastModified = DateTime.UtcNow;      
+                entry.Response.LastModified = DateTime.UtcNow;
+                entry.Response.Outcome = OperationOutcome.ForMessage(ex.ToString(), OperationOutcome.IssueType.Exception);
                 return entry;
-
             }
 
             // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
@@ -287,8 +285,8 @@ namespace messaging.Controllers
                 _logger.LogDebug("Rejecting message with no MessageId");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Etag = "W/1";
-                entry.Response.LastModified = DateTime.UtcNow;      
+                entry.Response.LastModified = DateTime.UtcNow;
+                entry.Response.Outcome = OperationOutcome.ForMessage("No message ID specified", OperationOutcome.IssueType.Exception);
                 return entry;
             }
             if (item.MessageType == null)
@@ -296,8 +294,8 @@ namespace messaging.Controllers
                 _logger.LogDebug("Rejecting message with no MessageType.");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Etag = "W/1";
                 entry.Response.LastModified = DateTime.UtcNow;      
+                entry.Response.Outcome = OperationOutcome.ForMessage("No message type specified", OperationOutcome.IssueType.Exception);
                 return entry;
             }
             item.Source = GetMessageSource();
@@ -310,17 +308,15 @@ namespace messaging.Controllers
                 _logger.LogDebug($"An exception occurred while saving the incoming message: {ex}");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "500";
-                entry.Response.Etag = "W/1";
                 entry.Response.LastModified = DateTime.UtcNow;   
+                entry.Response.Outcome = OperationOutcome.ForMessage(ex.ToString(), OperationOutcome.IssueType.Exception);
                 return entry;
             }
 
             entry.Response = new Bundle.ResponseComponent();
             entry.Response.Status = "201";
-            entry.Response.Etag = "W/1";
             entry.Response.LastModified = DateTime.UtcNow;       
             return entry;
-
         }
 
         /// <summary>
