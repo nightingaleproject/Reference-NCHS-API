@@ -22,8 +22,27 @@ jobs:
       run: |
         dotnet swagger "tofile" --output './swagger/v1/swagger.yaml' --yaml './messaging/bin/Debug/net6.0/messaging.dll' v1
         dotnet swagger "tofile" --output './swagger/v1/swagger.json' './messaging/bin/Debug/net6.0/messaging.dll' v1
-    - uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: "GitHub Actions Bot - Update Swagger Documentation"
-        branch: gh-pages
-        add_options: '.'
+    - name: Git setup
+      run: |
+        git config user.name "GitHub Actions Swagger Bot"
+        git config user.email "<>"
+    - shell: pwsh
+      id: check_file_changed
+      run: |
+        git fetch
+        $diff = git diff --name-only origin/gh-pages
+        $hasDiff = $diff.Length -gt 0
+        Write-Host "::set-output name=docs_changed::$hasDiff"
+    - name: Commit Swagger updates to the gh-pages branch
+      run: |
+        git fetch
+        git add ./swagger/v1/swagger.yaml
+        git add ./swagger/v1/swagger.json
+        git stash
+        git checkout gh-pages
+        git stash pop
+    - shell: pwsh
+      if: steps.check_file_changed.outputs.docs_changed == 'True'
+      run: |
+        git commit -m "GitHub Actions Bot - Update Swagger Documentation"
+        git push origin gh-pages
