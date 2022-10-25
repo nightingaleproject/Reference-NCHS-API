@@ -46,7 +46,7 @@ namespace messaging.tests
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
             Hl7.Fhir.Model.Bundle updatedBundle = null;
@@ -54,7 +54,7 @@ namespace messaging.tests
             // be done is checking to see if the response is correct and if it is still
             // incorrect after the specified delay then assuming that something is wrong
             for (int x = 0; x < 5; ++x) {
-                HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
+                HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundle");
                 updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
                 if (updatedBundle.Entry.Count > 0) {
                     break;
@@ -66,12 +66,12 @@ namespace messaging.tests
             Assert.Single(updatedBundle.Entry);
 
             // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
-            HttpResponseMessage noMessages = await _client.GetAsync("/FL/Bundles");
+            HttpResponseMessage noMessages = await _client.GetAsync("/FL/Bundle");
             var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
             Assert.Empty(noMessagesBundle.Entry);
 
             // Check that the retrievedAt column filters out the ACK message if we place another request
-            HttpResponseMessage noNewMsgs = await _client.GetAsync("/MA/Bundles");
+            HttpResponseMessage noNewMsgs = await _client.GetAsync("/MA/Bundle");
             Hl7.Fhir.Model.Bundle emptyBundle = await JsonResponseHelpers.ParseBundleAsync(noNewMsgs);
             Assert.Empty(emptyBundle.Entry);
 
@@ -83,7 +83,7 @@ namespace messaging.tests
 
         [Fact]
         public async System.Threading.Tasks.Task UnparsableMessagesCauseAnError() {
-            HttpResponseMessage createBrokenSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", "{}");
+            HttpResponseMessage createBrokenSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", "{}");
             Assert.Equal(HttpStatusCode.BadRequest, createBrokenSubmissionMessage.StatusCode);
         }
 
@@ -95,7 +95,7 @@ namespace messaging.tests
             recordSubmission.MessageId = null;
 
             // Submit that Death Record; should get a 400 back (not 500 as previously observed)
-            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
@@ -107,7 +107,7 @@ namespace messaging.tests
             recordSubmission.MessageType = null;
 
             // Submit that Death Record; should get a 400 back (not 500 as previously observed)
-            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
@@ -121,17 +121,17 @@ namespace messaging.tests
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
             // Submit Identifical Death Record Again
-            HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+            HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, duplicateSubmissionMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
             Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
-            HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundles");
+            HttpResponseMessage oneAck = await _client.GetAsync("/MA/Bundle");
             Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
 
             // Even though the message is a duplicate, it is still ACK'd
@@ -154,13 +154,13 @@ namespace messaging.tests
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
             // Submit that Death Record
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordSubmission.ToJson());
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
             DeathRecordUpdateMessage recordUpdate = new DeathRecordUpdateMessage(recordSubmission.DeathRecord);
 
             // Submit update message
-            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", recordUpdate.ToJson());
+            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordUpdate.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
@@ -173,7 +173,7 @@ namespace messaging.tests
             // use the since parameter to make sure we get both messages
             string since = currentTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
             for (int x = 0; x < 3; ++x) {
-                HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundles?_since=" + since);
+                HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundle?_since=" + since);
                 updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
                 // Waiting for 2 messages to appear
                 if (updatedBundle.Entry.Count > 1) {
@@ -207,6 +207,17 @@ namespace messaging.tests
         public async System.Threading.Tasks.Task ParseBatchIncomingMessages()
         {
             string batchJson = FixtureStream("fixtures/json/BatchMessages.json").ReadToEnd();
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
+            Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+
+            HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", batchJson);
+            Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task ParseBatchIncomingMessagesBackwardsCompatibility()
+        {
+            string batchJson = FixtureStream("fixtures/json/BatchMessages.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
 
@@ -219,10 +230,10 @@ namespace messaging.tests
         public async System.Threading.Tasks.Task ParseBatchIncomingSingleMessage()
         {
             string batchJson = FixtureStream("fixtures/json/BatchSingleMessage.json").ReadToEnd();
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
 
-            HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundles", batchJson);
+            HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
         }
 
@@ -230,7 +241,7 @@ namespace messaging.tests
         public async System.Threading.Tasks.Task ParseBatchIncomingMessagesWithOneError()
         {
             string batchJson = FixtureStream("fixtures/json/BatchWithOneErrorMessage.json").ReadToEnd();
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
 
             FhirJsonParser parser = new FhirJsonParser();
@@ -251,7 +262,7 @@ namespace messaging.tests
                 }
             }
 
-            HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundles", batchJson);
+            HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
         }
 
@@ -259,31 +270,31 @@ namespace messaging.tests
         public async System.Threading.Tasks.Task ReturnErrorOnInvalidBatch()
         {
             string batchJson = FixtureStream("fixtures/json/BatchInvalidJsonError.json").ReadToEnd();
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
 
-            HttpResponseMessage submissionMessages2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundles", batchJson);
+            HttpResponseMessage submissionMessages2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.BadRequest, submissionMessages2.StatusCode);
         }
         
         [Fact]
         public async void SpecifyingPageGreaterThanOneRequiresSince()
         {
-            HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?page=3");
+            HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?page=3");
             Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
         }
 
         [Fact]
         public async void NegativePageInvalid()
         {
-            HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?page=-2");
+            HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?page=-2");
             Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
         }
 
         [Fact]
         public async void NegativeCountPerPageInvalid()
         {
-            HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=-50");
+            HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=-50");
             Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
         }
 
@@ -305,7 +316,7 @@ namespace messaging.tests
           }
 
           string batchJson = batchMsg.ToJson();
-          HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+          HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
           Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
           Assert.Equal(50, await GetTableCount(_context.IncomingMessageItems, 50));
 
@@ -314,7 +325,7 @@ namespace messaging.tests
 
           // the page count should be set to 20
           // 1st response verify is 20 records
-          HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=20");
+          HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles.StatusCode);
 
           FhirJsonParser parser = new FhirJsonParser();
@@ -323,7 +334,7 @@ namespace messaging.tests
           Assert.Equal(20, bundle.Entry.Count);
 
           // 2nd response is 20 records
-          HttpResponseMessage getBundles1 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=20");
+          HttpResponseMessage getBundles1 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles1.StatusCode);
 
           string bundleOfBundles1 = await getBundles1.Content.ReadAsStringAsync();
@@ -331,7 +342,7 @@ namespace messaging.tests
           Assert.Equal(20, bundle1.Entry.Count);
 
           // 3rd response is 10 records
-          HttpResponseMessage getBundles2 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=20");
+          HttpResponseMessage getBundles2 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles2.StatusCode);
 
           string bundleOfBundles2 = await getBundles2.Content.ReadAsStringAsync();
@@ -339,7 +350,7 @@ namespace messaging.tests
           Assert.Equal(10, bundle2.Entry.Count);
 
           // 4th response is 0 records
-          HttpResponseMessage getBundles3 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_count=20");
+          HttpResponseMessage getBundles3 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles3.StatusCode);
 
           string bundleOfBundles3 = await getBundles3.Content.ReadAsStringAsync();
@@ -367,7 +378,7 @@ namespace messaging.tests
           }
 
           string batchJson = batchMsg.ToJson();
-          HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
+          HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
           Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
           Assert.Equal(18, await GetTableCount(_context.IncomingMessageItems, 18));
 
@@ -376,7 +387,7 @@ namespace messaging.tests
 
           // the page count should be set to 5
           // 1st response verify is 5 records
-          HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_since=" + startTestFmt + "&_count=5");
+          HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_since=" + startTestFmt + "&_count=5");
           Assert.Equal(HttpStatusCode.OK, getBundles.StatusCode);
 
           FhirJsonParser parser = new FhirJsonParser();
@@ -386,7 +397,7 @@ namespace messaging.tests
 
           // the page count should be set to 5
           // 3rd page should only have 3
-          HttpResponseMessage getBundles2 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundles?_since=" + startTestFmt + "&_count=5&page=4");
+          HttpResponseMessage getBundles2 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_since=" + startTestFmt + "&_count=5&page=4");
           Assert.Equal(HttpStatusCode.OK, getBundles2.StatusCode);
 
           string bundleOfBundles2 = await getBundles2.Content.ReadAsStringAsync();
@@ -404,7 +415,7 @@ namespace messaging.tests
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/{badJurisdiction}/Bundles", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/{badJurisdiction}/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
         }
 
@@ -414,7 +425,7 @@ namespace messaging.tests
             string badJurisdiction = "AB";
             Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
-            HttpResponseMessage response = await _client.GetAsync($"/{badJurisdiction}/Bundles");
+            HttpResponseMessage response = await _client.GetAsync($"/{badJurisdiction}/Bundle");
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 

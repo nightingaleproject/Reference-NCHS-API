@@ -11,7 +11,8 @@ using System.Threading.Tasks;
 
 namespace messaging.Controllers
 {
-    [Route("STEVE/{jurisdictionId:length(2)}/Bundles")]
+    [Route("STEVE/{jurisdictionId:length(2)}/Bundle")]
+    [Route("STEVE/{jurisdictionId:length(2)}/Bundles")] // Historical endpoint for backwards compatibility
     [ApiController]
     public class SteveController : BundlesController
     {
