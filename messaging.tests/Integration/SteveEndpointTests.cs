@@ -19,8 +19,8 @@ namespace messaging.tests
 
         private readonly ApplicationDbContext _context;
 
-        private readonly string STEVE_ENDPOINT = "/STEVE/MA/Bundles";
-        private readonly string MA_ENDPOINT = "/MA/Bundles";
+        private readonly string STEVE_ENDPOINT = "/STEVE/MA/Bundle";
+        private readonly string MA_ENDPOINT = "/MA/Bundle";
 
         public SteveEndpointTests(CustomWebApplicationFactory<messaging.Startup> factory)
         {
@@ -49,7 +49,7 @@ namespace messaging.tests
             Assert.Single(updatedBundle.Entry);
 
             // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
-            HttpResponseMessage noMessages = await _client.GetAsync("STEVE/FL/Bundles");
+            HttpResponseMessage noMessages = await _client.GetAsync("STEVE/FL/Bundle");
             var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
             Assert.Empty(noMessagesBundle.Entry);
 
@@ -156,7 +156,7 @@ namespace messaging.tests
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{badJurisdiction}/Bundles", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{badJurisdiction}/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
         }
 
@@ -166,7 +166,7 @@ namespace messaging.tests
             string badJurisdiction = "AB";
             Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
-            HttpResponseMessage response = await _client.GetAsync($"/STEVE/{badJurisdiction}/Bundles");
+            HttpResponseMessage response = await _client.GetAsync($"/STEVE/{badJurisdiction}/Bundle");
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 

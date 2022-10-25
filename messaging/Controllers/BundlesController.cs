@@ -14,8 +14,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace messaging.Controllers
 {
-    [Route("{jurisdictionId:length(2)}/Bundles")]
     [Route("{jurisdictionId:length(2)}/Bundle")]
+    [Route("{jurisdictionId:length(2)}/Bundles")] // Historical endpoint for backwards compatibility
     [ApiController]
     public class BundlesController : ControllerBase
     {
