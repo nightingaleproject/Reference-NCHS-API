@@ -37,7 +37,7 @@ namespace messaging.Controllers
         [HttpGet]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since = default(DateTime), int page = 1)
         {
-            if (_count == 0) 
+            if (_count == 0)
             {
                 _count = _settings.PageCount;
             }
@@ -113,7 +113,7 @@ namespace messaging.Controllers
                 }
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
                 DateTime retrievedTime = DateTime.UtcNow;
-                
+
                 // Add messages to the bundle
                 foreach (var message in messages)
                 {
@@ -183,12 +183,13 @@ namespace messaging.Controllers
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
             Bundle responseBundle = new Bundle();
-            try {
+            try
+            {
 
                 // check whether the bundle is a message or a batch
                 Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
                 if (bundle?.Type == Bundle.BundleType.Batch)
-                {   
+                {
                     responseBundle = new Bundle();
                     responseBundle.Type = Bundle.BundleType.BatchResponse;
                     responseBundle.Timestamp = DateTime.Now;
@@ -200,11 +201,11 @@ namespace messaging.Controllers
                     // Capture the each messsage's result in an entry and add to the response bundle.
                     foreach (var entry in bundle.Entry)
                     {
-                        Bundle.EntryComponent respEntry = await InsertBatchMessages(entry, jurisdictionId, queue);
+                        Bundle.EntryComponent respEntry = await InsertBatchMessage(entry, jurisdictionId, queue);
                         responseBundle.Entry.Add(respEntry);
                     }
                     return responseBundle;
-                } 
+                }
                 else
                 {
 
@@ -212,6 +213,11 @@ namespace messaging.Controllers
                     try
                     {
                         item = ParseIncomingMessageItem(jurisdictionId, text);
+                    }
+                    catch (VRDR.MessageParseException ex)
+                    {
+                        _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
+                        return BadRequest($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
                     }
                     catch (Exception ex)
                     {
@@ -248,19 +254,20 @@ namespace messaging.Controllers
 
                 // return HTTP status code 204 (No Content)
                 return NoContent();
-            } catch (Exception ex){
+            }
+            catch (Exception ex)
+            {
                 Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
                 return BadRequest();
             }
         }
 
-        // InsertBatchMessages handles a single message in a batch upload submission
+        // InsertBatchMessage handles a single message in a batch upload submission
         // Each message is handled independent of the other messages. A status code is generated for
         // each message and is returned in the response bundle
-        private async Task<Bundle.EntryComponent> InsertBatchMessages( Bundle.EntryComponent msgBundle, string jurisdictionId, IBackgroundTaskQueue queue)
+        private async Task<Bundle.EntryComponent> InsertBatchMessage(Bundle.EntryComponent msgBundle, string jurisdictionId, IBackgroundTaskQueue queue)
         {
             Bundle.EntryComponent entry = new Bundle.EntryComponent();
-            entry.Resource = msgBundle.Resource;
             IncomingMessageItem item;
 
             try
@@ -268,27 +275,32 @@ namespace messaging.Controllers
                 BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
                 item = ParseIncomingMessageItem(jurisdictionId, message.ToJSON());
             }
+            catch (VRDR.MessageParseException ex)
+            {
+                _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
+                entry.Response = new Bundle.ResponseComponent();
+                entry.Response.Status = "400";
+                entry.Response.Outcome = OperationOutcome.ForMessage($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
+                return entry;
+            }
             catch (Exception ex)
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Etag = "W/1";
-                entry.Response.LastModified = DateTime.UtcNow;      
+                entry.Response.Outcome = OperationOutcome.ForMessage("Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
                 return entry;
-
             }
 
             // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
             // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
-	        // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
+            // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
             if (item.MessageId == null)
             {
                 _logger.LogDebug("Rejecting message with no MessageId");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Etag = "W/1";
-                entry.Response.LastModified = DateTime.UtcNow;      
+                entry.Response.Outcome = OperationOutcome.ForMessage("Message was missing required field MessageId", OperationOutcome.IssueType.Exception);
                 return entry;
             }
             if (item.MessageType == null)
@@ -296,8 +308,7 @@ namespace messaging.Controllers
                 _logger.LogDebug("Rejecting message with no MessageType.");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Etag = "W/1";
-                entry.Response.LastModified = DateTime.UtcNow;      
+                entry.Response.Outcome = OperationOutcome.ForMessage("Message was missing required field MessageType", OperationOutcome.IssueType.Exception);
                 return entry;
             }
             item.Source = GetMessageSource();
@@ -307,20 +318,16 @@ namespace messaging.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogDebug($"An exception occurred while saving the incoming message: {ex}");
+                _logger.LogDebug($"An error occurred while saving the incoming message: {ex}");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "500";
-                entry.Response.Etag = "W/1";
-                entry.Response.LastModified = DateTime.UtcNow;   
+                entry.Response.Outcome = OperationOutcome.ForMessage("An error occurred while saving the incoming message", OperationOutcome.IssueType.Exception);
                 return entry;
             }
 
             entry.Response = new Bundle.ResponseComponent();
             entry.Response.Status = "201";
-            entry.Response.Etag = "W/1";
-            entry.Response.LastModified = DateTime.UtcNow;       
             return entry;
-
         }
 
         /// <summary>

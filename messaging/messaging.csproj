@@ -13,7 +13,7 @@
     <PackageReference Include="MiniProfiler.AspNetCore.Mvc" Version="4.2.22"/>
     <PackageReference Include="MiniProfiler.EntityFrameworkCore" Version="4.2.22"/>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
-    <PackageReference Include="VRDR.Messaging" Version="4.0.0-preview11"/>
+    <PackageReference Include="VRDR.Messaging" Version="4.0.0-preview12"/>
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0"/>
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.3.1-dev-00337"/>
     <PackageReference Include="Serilog.AspNetCore" Version="6.0.0-dev-00265"/>
