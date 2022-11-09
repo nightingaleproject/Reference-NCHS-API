@@ -8,6 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using messaging.Models;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Reflection;
+using System.IO;
+using System;
+
 
 namespace messaging
 {
@@ -35,8 +39,15 @@ namespace messaging
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1", });
+                // using System.Reflection;
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
             });
-            services.AddControllers();
+            services.AddControllers()
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.SuppressMapClientErrors = true;
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

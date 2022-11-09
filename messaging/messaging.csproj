@@ -22,6 +22,10 @@
   <ItemGroup>
     <EmbeddedResource Include="NVSSAPI\fsh-generated\resources\CapabilityStatement-NVSS-API-CS.json"/>
   </ItemGroup>
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
   <!-- <ItemGroup>
     <ProjectReference Include="..\..\vrdr-dotnet\VRDR.Messaging\VRDRMessaging.csproj" />
   </ItemGroup> -->
