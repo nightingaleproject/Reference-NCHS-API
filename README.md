@@ -393,6 +393,19 @@ Example Response:
   }]
 }
 ```
+# Http Error Responses
+|Endpoint     |Http Response Code|Common Fixes|
+|-------------|------------------|------------|
+|POST /token (SAMS) | 400 - Bad Request| Check all required parameters are present in the token request|
+|             | 401 - Unauthorized, invalid_request| Check the username and password credentials are correct|
+|             | 401 - Unauthorized, invalid_client| Check the client id and client secret are correct|
+|POST /Bundle | 400 - Bad Request| Check the body of the request is valid VRDR Message. If using pagination, check the parameters are valid.|
+|             | 500 - Internal Server Error, Authorization Failure (SAMS)| Refresh expired token|
+|             | 500 - Internal Server Error| Report issue on Zulip|
+|             | 501 - Not implemented| Check the url is correct|
+|GET /Bundle  | 500 - Internal Server Error, Authorization Failure (SAMS)| Refresh expired token|
+
+
 
 # API Developer Documentation
 
