@@ -258,6 +258,11 @@ namespace messaging.Controllers
                     try
                     {
                         item = ParseIncomingMessageItem(jurisdictionId, text);
+                        if (item.MessageType == "ExtractionErrorMessage")
+                        {
+                            _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
+                            return BadRequest($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.");
+                        }
                     }
                     catch (VRDR.MessageParseException ex)
                     {
@@ -310,6 +315,14 @@ namespace messaging.Controllers
             {
                 BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
                 item = ParseIncomingMessageItem(jurisdictionId, message.ToJSON());
+                if (item.MessageType == "ExtractionErrorMessage")
+                {
+                    _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
+                    entry.Response = new Bundle.ResponseComponent();
+                    entry.Response.Status = "400";
+                    entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.", OperationOutcome.IssueType.Exception);
+                    return entry;
+                }
             }
             catch (VRDR.MessageParseException ex)
             {
