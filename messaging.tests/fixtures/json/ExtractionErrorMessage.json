@@ -1,0 +1,68 @@
+{
+    "resourceType": "Bundle",
+    "id": "6d46a5c6-b370-4eb0-82dd-e004bbd651d4",
+    "timestamp": "2020-04-09T09:36:05.899558-04:00",
+    "type": "message",
+    "entry": [
+        {
+            "fullUrl": "urn:uuid:b27d6803-86bc-4ec5-bd43-173951ce362b",
+            "resource": {
+                "resourceType": "MessageHeader",
+                "id": "b27d6803-86bc-4ec5-bd43-173951ce362b",
+                "eventUri": "http://nchs.cdc.gov/vrdr_extraction_error",
+                "destination": [{"endpoint": "nightingale"}],
+                "source": {"endpoint": "http://nchs.cdc.gov/vrdr_submission"},
+                "response": {
+                    "identifier": "a9d66d2e-2480-4e8d-bab3-4e4c761da1b7",
+                    "code": "fatal-error",
+                    "details": {"reference": "28b5b3b5-25a2-4fc4-9dd6-21162b290787"}
+                },
+                "focus": [{"reference": "urn:uuid:df6f9785-1f00-4af8-bd5d-56c1b024691d"}]
+            }
+        },
+        {
+            "fullUrl": "urn:uuid:df6f9785-1f00-4af8-bd5d-56c1b024691d",
+            "resource": {
+                "resourceType": "Parameters",
+                "id": "df6f9785-1f00-4af8-bd5d-56c1b024691d",
+                "parameter": [
+                    {
+                        "name": "cert_no",
+                        "valueUnsignedInt": 1
+                    },
+                    {
+                        "name": "state_auxiliary_id",
+                        "valueString": "42"
+                    },
+                    {
+                        "name": "death_year",
+                        "valueUnsignedInt": 2018
+                    },
+                    {
+                        "name": "jurisdiction_id",
+                        "valueString": "MA"
+                    }
+                ]
+            }
+        },
+        {
+            "fullUrl": "urn:uuid:28b5b3b5-25a2-4fc4-9dd6-21162b290787",
+            "resource": {
+                "resourceType": "OperationOutcome",
+                "id": "28b5b3b5-25a2-4fc4-9dd6-21162b290787",
+                "issue": [
+                    {
+                        "severity": "fatal",
+                        "code": "invalid",
+                        "diagnostics": "The message was invalid"
+                    },
+                    {
+                        "severity": "warning",
+                        "code": "expired",
+                        "diagnostics": "The message was very old"
+                    }
+                ]
+            }
+        }
+    ]
+}

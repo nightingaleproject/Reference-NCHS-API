@@ -266,6 +266,17 @@ namespace messaging.tests
             HttpResponseMessage submissionMessages2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.BadRequest, submissionMessages2.StatusCode);
         }
+
+        [Fact]
+        public async System.Threading.Tasks.Task ReturnErrorOnSubmittedExtractionError()
+        {
+            string extErrJson = FixtureStream("fixtures/json/BatchInvalidJsonError.json").ReadToEnd();
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", extErrJson);
+            Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
+
+            HttpResponseMessage submissionMessages2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", extErrJson);
+            Assert.Equal(HttpStatusCode.BadRequest, submissionMessages2.StatusCode);
+        }
         
         [Fact]
         public async void SpecifyingPageGreaterThanOneRequiresSince()
