@@ -323,39 +323,49 @@ namespace messaging.tests
           // wait for acknowledgement generation
           Assert.Equal(50, await GetTableCount(_context.OutgoingMessageItems, 50));
 
-          // the page count should be set to 20
+          // The page count should be set to 20, but total should always be set to the total number of records and the
+          // "next" link should only appear if there are more results
+
           // 1st response verify is 20 records
-          HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
-          Assert.Equal(HttpStatusCode.OK, getBundles.StatusCode);
-
-          FhirJsonParser parser = new FhirJsonParser();
-          string bundleOfBundles = await getBundles.Content.ReadAsStringAsync();
-          Bundle bundle = parser.Parse<Bundle>(bundleOfBundles);
-          Assert.Equal(20, bundle.Entry.Count);
-
-          // 2nd response is 20 records
           HttpResponseMessage getBundles1 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles1.StatusCode);
 
+          FhirJsonParser parser = new FhirJsonParser();
           string bundleOfBundles1 = await getBundles1.Content.ReadAsStringAsync();
           Bundle bundle1 = parser.Parse<Bundle>(bundleOfBundles1);
+          Assert.Equal(50, bundle1.Total);
           Assert.Equal(20, bundle1.Entry.Count);
+          Assert.NotNull(bundle1.NextLink);
 
-          // 3rd response is 10 records
+          // 2nd response is 20 records
           HttpResponseMessage getBundles2 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles2.StatusCode);
 
           string bundleOfBundles2 = await getBundles2.Content.ReadAsStringAsync();
           Bundle bundle2 = parser.Parse<Bundle>(bundleOfBundles2);
-          Assert.Equal(10, bundle2.Entry.Count);
+          Assert.Equal(30, bundle2.Total);
+          Assert.Equal(20, bundle2.Entry.Count);
+          Assert.NotNull(bundle2.NextLink);
 
-          // 4th response is 0 records
+          // 3rd response is 10 records
           HttpResponseMessage getBundles3 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles3.StatusCode);
 
           string bundleOfBundles3 = await getBundles3.Content.ReadAsStringAsync();
           Bundle bundle3 = parser.Parse<Bundle>(bundleOfBundles3);
-          Assert.Empty(bundle3.Entry);
+          Assert.Equal(10, bundle3.Total);
+          Assert.Equal(10, bundle3.Entry.Count);
+          Assert.Null(bundle3.NextLink);
+
+          // 4th response is 0 records
+          HttpResponseMessage getBundles4 = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=20");
+          Assert.Equal(HttpStatusCode.OK, getBundles4.StatusCode);
+
+          string bundleOfBundles4 = await getBundles4.Content.ReadAsStringAsync();
+          Bundle bundle4 = parser.Parse<Bundle>(bundleOfBundles4);
+          Assert.Equal(0, bundle4.Total);
+          Assert.Empty(bundle4.Entry);
+          Assert.Null(bundle4.NextLink);
         }
 
         [Fact]

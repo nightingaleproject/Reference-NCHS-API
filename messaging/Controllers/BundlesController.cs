@@ -91,6 +91,8 @@ namespace messaging.Controllers
                     outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
                 }
 
+                int totalMessageCount = outgoingMessagesQuery.Count();
+
                 // Convert to list to execute the query, capture the result for re-use
                 List<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.Skip((page - 1) * _count).Take(_count).ToList();
 
@@ -102,13 +104,18 @@ namespace messaging.Controllers
                 Bundle responseBundle = new Bundle();
                 responseBundle.Type = Bundle.BundleType.Searchset;
                 responseBundle.Timestamp = DateTime.Now;
-                responseBundle.Total = outgoingMessages.Count;
+                // Note that total is total number of matching results, not number being returned (outgoingMessages.Count)
+                responseBundle.Total = totalMessageCount;
                 // For the usual use case (unread only), the "next" page is just a repeated request.
                 // But when using since, we have to actually track pages
                 string baseUrl = GetNextUri();
                 if (_since == default(DateTime))
                 {
-                    responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _count = _count }));
+                    // Only show the next link if there are additional messages beyond the current message set
+                    if (totalMessageCount > outgoingMessages.Count)
+                    {
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _count = _count }));
+                    }
                 }
                 else
                 {
