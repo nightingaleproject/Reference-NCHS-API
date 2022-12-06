@@ -270,11 +270,22 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task ReturnErrorOnSubmittedExtractionError()
         {
-            string extErrJson = FixtureStream("fixtures/json/BatchInvalidJsonError.json").ReadToEnd();
+            string extErrJson = FixtureStream("fixtures/json/ExtractionErrorMessage.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", extErrJson);
             Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
 
             HttpResponseMessage submissionMessages2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", extErrJson);
+            Assert.Equal(HttpStatusCode.BadRequest, submissionMessages2.StatusCode);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task ReturnErrorOnSubmittedCodingMessage()
+        {
+            string codeMsg = FixtureStream("fixtures/json/CauseOfDeathCodingMsg.json").ReadToEnd();
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", codeMsg);
+            Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
+
+            HttpResponseMessage submissionMessages2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", codeMsg);
             Assert.Equal(HttpStatusCode.BadRequest, submissionMessages2.StatusCode);
         }
         
