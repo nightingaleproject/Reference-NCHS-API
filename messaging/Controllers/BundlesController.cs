@@ -356,6 +356,7 @@ namespace messaging.Controllers
                 entry.Response.Outcome = OperationOutcome.ForMessage("Message was missing required field MessageType", OperationOutcome.IssueType.Exception);
                 return entry;
             }
+
             item.Source = GetMessageSource();
             try
             {
@@ -396,8 +397,13 @@ namespace messaging.Controllers
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, object text)
         {
             BaseMessage message = BaseMessage.Parse(text.ToString());
+            if (String.IsNullOrWhiteSpace(message.MessageSource))
+            {
+                _logger.LogDebug($"Message is missing source endpoint, setting the endpoint: {VRDR.MortalityData.Instance.JurisdictionEndpoints[jurisdictionId]}");
+                message.MessageSource = VRDR.MortalityData.Instance.JurisdictionEndpoints[jurisdictionId];
+            }
             IncomingMessageItem item = new IncomingMessageItem();
-            item.Message = text.ToString();
+            item.Message = message.ToJSON(); 
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;

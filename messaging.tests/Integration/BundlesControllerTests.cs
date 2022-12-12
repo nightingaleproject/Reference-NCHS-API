@@ -7,11 +7,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using messaging.tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Net;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Model;
 using VRDR;
+
 
 namespace messaging.tests
 {
@@ -427,6 +429,21 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/{badJurisdiction}/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
+        [Fact]
+        public async void PostFillInMissingEndpoint()
+        {
+            // Create a new empty Death Record with an empty source
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            var msgId = recordSubmission.MessageId;
+            Assert.Null(recordSubmission.MessageSource);
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+            IncomingMessageItem msgItem = await _context.IncomingMessageItems.Where(x => x.MessageId == msgId).FirstOrDefaultAsync();
+            BaseMessage message = BaseMessage.Parse(msgItem.Message);
+            Assert.Equal("https://example.com/MA/message/endpoint", message.MessageSource);
         }
 
         [Fact]
