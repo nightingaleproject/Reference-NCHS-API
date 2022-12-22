@@ -47,6 +47,9 @@ namespace messaging.tests
             // Create a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
@@ -90,30 +93,6 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async System.Threading.Tasks.Task MissingMessageIdCauses400()
-        {
-            // Create a new empty Death Record and remove MessageId
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
-            recordSubmission.MessageId = null;
-
-            // Submit that Death Record; should get a 400 back (not 500 as previously observed)
-            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        }
-
-        [Fact]
-        public async System.Threading.Tasks.Task MissingMessageTypeCauses400()
-        {
-            // Create a new empty Death Record and remove MessageType
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
-            recordSubmission.MessageType = null;
-
-            // Submit that Death Record; should get a 400 back (not 500 as previously observed)
-            HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        }
-
-        [Fact]
         public async System.Threading.Tasks.Task DuplicateSubmissionMessageIsIgnored()
         {
             // Clear any messages in the database for a clean test
@@ -121,6 +100,9 @@ namespace messaging.tests
 
             // Create a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
 
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
@@ -155,11 +137,17 @@ namespace messaging.tests
             // Create a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+
             // Submit that Death Record
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
             DeathRecordUpdateMessage recordUpdate = new DeathRecordUpdateMessage(recordSubmission.DeathRecord);
+            
+            // Set missing required fields
+            recordUpdate.MessageSource = "http://example.fhir.org";
 
             // Submit update message
             HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordUpdate.ToJson());
@@ -432,18 +420,54 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostFillInMissingEndpoint()
+        public async void PostCatchMissingSourceEndpoint()
         {
             // Create a new empty Death Record with an empty source
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
-            var msgId = recordSubmission.MessageId;
             Assert.Null(recordSubmission.MessageSource);
+
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
-            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
-            IncomingMessageItem msgItem = await _context.IncomingMessageItems.Where(x => x.MessageId == msgId).FirstOrDefaultAsync();
-            BaseMessage message = BaseMessage.Parse(msgItem.Message);
-            Assert.Equal("https://example.com/MA/message/endpoint", message.MessageSource);
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
+        [Fact]
+        public async void PostCatchMissingDestinationEndpoint()
+        {
+            // Create a new empty Death Record with an empty source
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.MessageDestination = null;
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
+        [Fact]
+        public async void PostCatchMissingId()
+        {
+            // Create a new empty Death Record with an empty source
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.MessageId = null;
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
+        [Fact]
+        public async void PostCatchMissingEventType()
+        {
+            // Create a new empty Death Record with an empty source
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.MessageType = null;
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
         }
 
         [Fact]
