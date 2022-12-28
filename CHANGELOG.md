@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.1.0-preview6 - 2022-12-28
+* Update the library version to v4.0.0-preview16
+
 ### v1.1.0-preview5 - 2022-09-30
 * Validate the jurisdiction id in GET and POST requests
 * Add Alias message types to the list of MOR message types
