@@ -262,12 +262,12 @@ namespace messaging.Controllers
                     catch (VRDR.MessageParseException ex)
                     {
                         _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
-                        return BadRequest($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
+                        return UnprocessableEntity($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
                     }
                     catch (Exception ex)
                     {
                         _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
-                        return BadRequest("Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
+                        return UnprocessableEntity("Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
                     }
 
                     // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
@@ -276,12 +276,12 @@ namespace messaging.Controllers
                     if (item.MessageId == null)
                     {
                         _logger.LogDebug("Rejecting message with no MessageId");
-                        return BadRequest("Message was missing required field MessageId");
+                        return UnprocessableEntity("Message was missing required field MessageId");
                     }
                     if (item.MessageType == null)
                     {
                         _logger.LogDebug("Rejecting message with no MessageType.");
-                        return BadRequest("Message was missing required field MessageType");
+                        return UnprocessableEntity("Message was missing required field MessageType");
                     }
 
                     item.Source = GetMessageSource();
@@ -324,7 +324,7 @@ namespace messaging.Controllers
             {
                 _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
                 entry.Response = new Bundle.ResponseComponent();
-                entry.Response.Status = "400";
+                entry.Response.Status = "422";
                 entry.Response.Outcome = OperationOutcome.ForMessage($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
                 return entry;
             }
@@ -332,7 +332,7 @@ namespace messaging.Controllers
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
                 entry.Response = new Bundle.ResponseComponent();
-                entry.Response.Status = "400";
+                entry.Response.Status = "422";
                 entry.Response.Outcome = OperationOutcome.ForMessage("Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
                 return entry;
             }
@@ -344,7 +344,7 @@ namespace messaging.Controllers
             {
                 _logger.LogDebug("Rejecting message with no MessageId");
                 entry.Response = new Bundle.ResponseComponent();
-                entry.Response.Status = "400";
+                entry.Response.Status = "422";
                 entry.Response.Outcome = OperationOutcome.ForMessage("Message was missing required field MessageId", OperationOutcome.IssueType.Exception);
                 return entry;
             }
@@ -352,7 +352,7 @@ namespace messaging.Controllers
             {
                 _logger.LogDebug("Rejecting message with no MessageType.");
                 entry.Response = new Bundle.ResponseComponent();
-                entry.Response.Status = "400";
+                entry.Response.Status = "422";
                 entry.Response.Outcome = OperationOutcome.ForMessage("Message was missing required field MessageType", OperationOutcome.IssueType.Exception);
                 return entry;
             }

@@ -84,11 +84,11 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task UnparsableMessagesCauseAnError() {
             HttpResponseMessage createBrokenSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", "{}");
-            Assert.Equal(HttpStatusCode.BadRequest, createBrokenSubmissionMessage.StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, createBrokenSubmissionMessage.StatusCode);
         }
 
         [Fact]
-        public async System.Threading.Tasks.Task MissingMessageIdCauses400()
+        public async System.Threading.Tasks.Task MissingMessageIdCauses422()
         {
             // Create a new empty Death Record and remove MessageId
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -96,11 +96,11 @@ namespace messaging.tests
 
             // Submit that Death Record; should get a 400 back (not 500 as previously observed)
             HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         }
 
         [Fact]
-        public async System.Threading.Tasks.Task MissingMessageTypeCauses400()
+        public async System.Threading.Tasks.Task MissingMessageTypeCauses422()
         {
             // Create a new empty Death Record and remove MessageType
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -108,7 +108,7 @@ namespace messaging.tests
 
             // Submit that Death Record; should get a 400 back (not 500 as previously observed)
             HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
-            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
         }
 
         [Fact]
@@ -254,7 +254,7 @@ namespace messaging.tests
                 string status = entry.Response.Status;
                 if (i == 0)
                 {
-                    Assert.Equal("400", status);
+                    Assert.Equal("422", status);
                 }
                 if (i == 1)
                 {

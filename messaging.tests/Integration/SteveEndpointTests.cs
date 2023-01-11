@@ -63,7 +63,7 @@ namespace messaging.tests
         public async Task UnparsableMessagesCauseAnError()
         {
             HttpResponseMessage createBrokenSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, "{}");
-            Assert.Equal(HttpStatusCode.BadRequest, createBrokenSubmissionMessage.StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, createBrokenSubmissionMessage.StatusCode);
         }
 
         [Fact]
