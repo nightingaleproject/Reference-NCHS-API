@@ -264,24 +264,15 @@ namespace messaging.Controllers
                         _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
                         return BadRequest($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
                     }
+                    catch (ArgumentException aEx)
+                    {
+                        _logger.LogDebug($"Rejecting message with missing required field: {aEx}");
+                        return BadRequest($"Message was missing required field: {aEx}");
+                    }
                     catch (Exception ex)
                     {
                         _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
                         return BadRequest("Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
-                    }
-
-                    // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
-                    // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
-                    // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
-                    if (item.MessageId == null)
-                    {
-                        _logger.LogDebug("Rejecting message with no MessageId");
-                        return BadRequest("Message was missing required field MessageId");
-                    }
-                    if (item.MessageType == null)
-                    {
-                        _logger.LogDebug("Rejecting message with no MessageType.");
-                        return BadRequest("Message was missing required field MessageType");
                     }
 
                     item.Source = GetMessageSource();
@@ -328,6 +319,14 @@ namespace messaging.Controllers
                 entry.Response.Outcome = OperationOutcome.ForMessage($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
                 return entry;
             }
+            catch (ArgumentException aEx)
+            {
+                _logger.LogDebug($"An exception occurred while parsing the incoming message: {aEx}");
+                entry.Response = new Bundle.ResponseComponent();
+                entry.Response.Status = "400";
+                entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required field. {aEx}.", OperationOutcome.IssueType.Exception);
+                return entry;
+            }
             catch (Exception ex)
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
@@ -337,25 +336,6 @@ namespace messaging.Controllers
                 return entry;
             }
 
-            // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
-            // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
-            // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
-            if (item.MessageId == null)
-            {
-                _logger.LogDebug("Rejecting message with no MessageId");
-                entry.Response = new Bundle.ResponseComponent();
-                entry.Response.Status = "400";
-                entry.Response.Outcome = OperationOutcome.ForMessage("Message was missing required field MessageId", OperationOutcome.IssueType.Exception);
-                return entry;
-            }
-            if (item.MessageType == null)
-            {
-                _logger.LogDebug("Rejecting message with no MessageType.");
-                entry.Response = new Bundle.ResponseComponent();
-                entry.Response.Status = "400";
-                entry.Response.Outcome = OperationOutcome.ForMessage("Message was missing required field MessageType", OperationOutcome.IssueType.Exception);
-                return entry;
-            }
             item.Source = GetMessageSource();
             try
             {
@@ -396,8 +376,33 @@ namespace messaging.Controllers
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, object text)
         {
             BaseMessage message = BaseMessage.Parse(text.ToString());
+
+            // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
+            // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
+            // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
+            if (String.IsNullOrWhiteSpace(message.MessageSource))
+            {
+                _logger.LogDebug($"Message is missing source endpoint, throw exception");
+                throw new ArgumentException("Message source endpoint cannot be null");
+            }
+            if (String.IsNullOrWhiteSpace(message.MessageDestination))
+            {
+                _logger.LogDebug($"Message is missing destination endpoint, throw exception");
+                throw new ArgumentException("Message destination endpoint cannot be null");
+            }
+            if (String.IsNullOrWhiteSpace(message.MessageId))
+            {
+                _logger.LogDebug($"Message is missing Message ID, throw exception");
+                throw new ArgumentException("Message ID cannot be null");
+            }
+            if (String.IsNullOrWhiteSpace(message.GetType().Name))
+            {
+                _logger.LogDebug($"Message is missing Message Event Type, throw exception");
+                throw new ArgumentException("Message Event Type cannot be null");
+            }
+
             IncomingMessageItem item = new IncomingMessageItem();
-            item.Message = text.ToString();
+            item.Message = message.ToJSON(); 
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;

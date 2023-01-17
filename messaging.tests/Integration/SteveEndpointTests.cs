@@ -42,6 +42,10 @@ namespace messaging.tests
 
             // Create and submit a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
@@ -74,6 +78,9 @@ namespace messaging.tests
 
             // Create a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
 
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
@@ -104,10 +111,17 @@ namespace messaging.tests
 
             // Create and submit a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
             DeathRecordUpdateMessage recordUpdate = new DeathRecordUpdateMessage(recordSubmission.DeathRecord);
+            
+            // Set missing required fields
+            recordUpdate.MessageSource = "http://example.fhir.org";
 
             // Submit update message
             HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordUpdate.ToJson());
@@ -133,6 +147,10 @@ namespace messaging.tests
 
             // Create and submit a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
