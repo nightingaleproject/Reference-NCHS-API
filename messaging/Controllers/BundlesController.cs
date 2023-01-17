@@ -258,6 +258,24 @@ namespace messaging.Controllers
                     try
                     {
                         item = ParseIncomingMessageItem(jurisdictionId, text);
+                        // Send a special message for extraction errors to report the error manually
+                        if (item.MessageType == nameof(ExtractionErrorMessage))
+                        {
+                            _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
+                            return BadRequest($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.");
+                        }
+                        // check this is a valid message type
+                        // submission message
+                        // update message
+                        // void message
+                        // alias message
+                        // acknowledgement message
+                        if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))
+                        {
+                            _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
+                            return BadRequest($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}");
+                        }
+
                     }
                     catch (VRDR.MessageParseException ex)
                     {
@@ -310,6 +328,22 @@ namespace messaging.Controllers
             {
                 BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
                 item = ParseIncomingMessageItem(jurisdictionId, message.ToJSON());
+                if (item.MessageType == "ExtractionErrorMessage")
+                {
+                    _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
+                    entry.Response = new Bundle.ResponseComponent();
+                    entry.Response.Status = "400";
+                    entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.", OperationOutcome.IssueType.Exception);
+                    return entry;
+                }
+                if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))
+                {
+                    _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
+                    entry.Response = new Bundle.ResponseComponent();
+                    entry.Response.Status = "400";
+                    entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}", OperationOutcome.IssueType.Exception);
+                    return entry;
+                }
             }
             catch (VRDR.MessageParseException ex)
             {
