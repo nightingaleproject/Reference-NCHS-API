@@ -285,7 +285,7 @@ namespace messaging.Controllers
                     catch (ArgumentException aEx)
                     {
                         _logger.LogDebug($"Rejecting message with missing required field: {aEx}");
-                        return BadRequest($"Message was missing required field: {aEx}");
+                        return BadRequest($"Message was missing required field: {aEx.Message}");
                     }
                     catch (Exception ex)
                     {
@@ -358,7 +358,7 @@ namespace messaging.Controllers
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {aEx}");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required field. {aEx}.", OperationOutcome.IssueType.Exception);
+                entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required field. {aEx.Message}.", OperationOutcome.IssueType.Exception);
                 return entry;
             }
             catch (Exception ex)
