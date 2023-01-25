@@ -77,7 +77,7 @@ namespace messaging.Controllers
             try
             {
                 // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
-                IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId);
+                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId));
 
                 // Further scope the search to either unretrieved messages (or all since a specific time)
                 // TODO only allow the since param in development
@@ -94,7 +94,8 @@ namespace messaging.Controllers
                 int totalMessageCount = outgoingMessagesQuery.Count();
 
                 // Convert to list to execute the query, capture the result for re-use
-                List<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.Skip((page - 1) * _count).Take(_count).ToList();
+                int numToSkip = (page - 1) * _count;
+                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.RetrievedAt).Skip(numToSkip).Take(_count);
 
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
@@ -112,7 +113,7 @@ namespace messaging.Controllers
                 if (_since == default(DateTime))
                 {
                     // Only show the next link if there are additional messages beyond the current message set
-                    if (totalMessageCount > outgoingMessages.Count)
+                    if (totalMessageCount > outgoingMessages.Count())
                     {
                         responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _count = _count }));
                     }
@@ -139,7 +140,9 @@ namespace messaging.Controllers
                 }
 
                 // update each outgoing message's RetrievedAt field
-                outgoingMessages.ForEach(msgItem => MarkAsRetrieved(msgItem, retrievedTime));
+                foreach(OutgoingMessageItem msgItem in outgoingMessages) {
+                    MarkAsRetrieved(msgItem, retrievedTime);
+                }
                 _context.SaveChanges();
                 return responseBundle;
             }
@@ -148,14 +151,13 @@ namespace messaging.Controllers
                 _logger.LogDebug($"An exception occurred while retrieving the response messages: {ex}");
                 return StatusCode(500);
             }
-
         }
 
         // Allows overriding by STEVE controller to filter off different field
         /// <summary>
         /// Applies a filter (e.g. calls Where) to reduce the source to unretrieved messages. Should NOT iterate result set/execute query
         /// </summary>
-        protected virtual IEnumerable<OutgoingMessageItem> ExcludeRetrieved(IEnumerable<OutgoingMessageItem> source)
+        protected virtual IQueryable<OutgoingMessageItem> ExcludeRetrieved(IQueryable<OutgoingMessageItem> source)
         {
             return source.Where(message => message.RetrievedAt == null);
         }
