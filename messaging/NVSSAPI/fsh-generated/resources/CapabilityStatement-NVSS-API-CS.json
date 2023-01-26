@@ -2,7 +2,7 @@
   "resourceType": "CapabilityStatement",
   "id": "NVSS-API-CS",
   "url": "http://cdc.gov/nchs/nvss/fhir/nvss-api/CapabilityStatement/NVSS-API-CS",
-  "version": "v1.1.0-preview8",
+  "version": "v1.1.0-preview9",
   "name": "NVSS_API",
   "title": "NVSS API Server Capability Statement",
   "status": "draft",

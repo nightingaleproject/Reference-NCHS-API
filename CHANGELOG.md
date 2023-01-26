@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.1.0-preview9 - 2023-01-26
+* Improve performance when handling large numbers of records
+
 ### v1.1.0-preview8 - 2023-01-17
 * Catches missing required fields in the message header and returns 400
 * Returns 400 if the message event type is not a submission, update, void, alias, or acknowledgement message 
