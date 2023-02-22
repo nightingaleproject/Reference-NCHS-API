@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.1.0-preview10 - 2023-02-22
+* Update the library version to v4.0.0-preview19
+
 ### v1.1.0-preview9 - 2023-01-26
 * Improve performance when handling large numbers of records
 
