@@ -70,7 +70,7 @@ GET https://localhost:5001/<jurisdiction-id>/Bundle
 which returns any message response that has not been retrieved yet
 or
 ```
-GET https://localhost:5001/<jurisdiction-id>/Bundle/_since=yyyy-MM-ddTHH:mm:ss.fffffff
+GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=yyyy-MM-ddTHH:mm:ss.fffffff
 ```
 which returns any message created after the datetime provided in the _since parameter
 
