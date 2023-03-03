@@ -436,6 +436,11 @@ namespace messaging.Controllers
                 _logger.LogDebug($"Message is missing Message Event Type, throw exception");
                 throw new ArgumentException("Message Event Type cannot be null");
             }
+            if (message.CertNo == null)
+            {
+                _logger.LogDebug($"Message is missing Certificate Number, throw exception");
+                throw new ArgumentException("Message Certificate Number cannot be null");
+            }
 
             IncomingMessageItem item = new IncomingMessageItem();
             item.Message = message.ToJSON(); 
@@ -444,16 +449,11 @@ namespace messaging.Controllers
             item.JurisdictionId = jurisdictionId;
             item.EventYear = message.DeathYear;
 
-            if (message.CertNo == null)
-            {
-                item.CertificateNumber = null;
-            }
-            else
-            {
-                uint certNo = (uint)message.CertNo;
-                string certNoFmt = certNo.ToString("D6");
-                item.CertificateNumber = certNoFmt;
-            }
+            // format the certificate number
+            uint certNo = (uint)message.CertNo;
+            string certNoFmt = certNo.ToString("D6");
+            item.CertificateNumber = certNoFmt;
+            
             item.EventType = getEventType(message);
 
             return item;
