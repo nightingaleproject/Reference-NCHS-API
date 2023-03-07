@@ -1,128 +1,73 @@
-# URL Validation
-URL validation applies to all incoming requests.
-- Validates that the Jurisdiction Code parameter is in the known set
-```
-            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
-            {
-                // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
-                _logger.LogError("Rejecting request with invalid jurisdiction ID.");
-                return BadRequest();
-            }
-```
+# Summary
+This file documents the API's validation checks along with the returned error codes and messages.
+
 # Get Requests
-Parameter validation for `count`, `page`, and `_since`
-- Validates that `count` isn't negative
-- Validates `page` is greater than 0
-- Requires a `_since` parameter if a `page` parameter other than 1 is provided
-```
-    public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since = default(DateTime), int page = 1)
-    {
-        if (_count == 0)
-        {
-            _count = _settings.PageCount;
-        }
 
-        if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
-        {
-            // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
-            _logger.LogError("Rejecting request with invalid jurisdiction ID.");
-            return BadRequest();
-        }
+## Parameter Validation
+Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_since`
 
-        if (_count < 0)
-        {
-            return BadRequest("_count must not be negative");
-        }
-        if (page < 1)
-        {
-            return BadRequest("page must not be negative");
-        }
-        // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
-        if (_since == default(DateTime) && page > 1)
-        {
-            return BadRequest("Pagination does not support specifying a page without a _since parameter");
-        }
-        ...
-```
-
+| Error Response | parameter | Validation Check | Error Message |
+|----------------|:---------:|:----------------:|--------:|
+| 400            | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request |
+| 400            | `_count` | `if _count < 0` | bad request: _count must not be negative |
+| 400            | `page` | `if page < 1` | bad request: page must not be negative |
+| 400            | `_since` | `if (_since == default(DateTime) && page > 1)` | bad request: Pagination does not support specifying a page without a _since parameter |
+  
+   
 # POST Requests
 Minimal validation is done on the bundle to avoid complexity at the API level. However, we want to make sure the message is parsable and traceable if it will be added to the database for ITB. It must be parsable, have the required headers, and be a valid event type.
-  
+
+## Parameter Validation
+
+Validation for the following URL parameters: `jurisdictionId`
+
+| Error Response | parameter | Validation Check | Error Message |
+|----------------|:---------:|:----------------:|--------:|
+| 400            | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request |
+
 ## Parsing Validation
-- Validate we can parse a basic bundle
-- Validate we can parse generic message for each entry in the budle
-```
-    Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
-```
-```
-    BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
-```
+
+| Error Response | Validation Check | Error Message |
+|----------------|:----------------:|--------:|
+| 400            | if parsing the generic bundle with `BaseMessage.ParseGenericBundle(text.ToString(), true);` throws an error | bad request: Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
+| 400            | if parsing a generic message with `BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);` throws an error | bad request: Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
+
 
 ## Message Header Field Validation
-- Validate the required headers are provided
-  - Required headers: MessageSource, MessageDestination, MessageId, Event Type, CertNo 
-```
-            if (String.IsNullOrWhiteSpace(message.MessageSource))
-            {
-                _logger.LogDebug($"Message is missing source endpoint, throw exception");
-                throw new ArgumentException("Message source endpoint cannot be null");
-            }
-            if (String.IsNullOrWhiteSpace(message.MessageDestination))
-            {
-                _logger.LogDebug($"Message is missing destination endpoint, throw exception");
-                throw new ArgumentException("Message destination endpoint cannot be null");
-            }
-            if (String.IsNullOrWhiteSpace(message.MessageId))
-            {
-                _logger.LogDebug($"Message is missing Message ID, throw exception");
-                throw new ArgumentException("Message ID cannot be null");
-            }
-            if (String.IsNullOrWhiteSpace(message.GetType().Name))
-            {
-                _logger.LogDebug($"Message is missing Message Event Type, throw exception");
-                throw new ArgumentException("Message Event Type cannot be null");
-            }
-            if (message.CertNo == null)
-            {
-                _logger.LogDebug($"Message is missing Certificate Number, throw exception");
-                throw new ArgumentException("Message Certificate Number cannot be null");
-            }
-```
-## Message Type Validation
-- NCHS does not currently process Extraction Error Messages. Return 400 and provide a specific error message directing them to report the error manually.
-- Validate the message Event Type is a valid type accepted at NCHS
-  - Valid Event Types for NCHS bound messages: DeathRecordSubmissionMessage, DeathRecordUpdateMessage, DeathRecordVoidMessage, DeathRecordAliasMessage, AcknowledgementMessage
-```
-    if (item.MessageType == nameof(ExtractionErrorMessage))
-    {
-        _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
-        return BadRequest($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.");
-    }
+Validates the required message headers are provided: `MessageSource`, `MessageDestination`, `MessageId`, `EventType`, `CertNo` 
 
-    if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))
-    {
-        _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
-        return BadRequest($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}");
-    }
-```
+| Error Response | Validation Check | Error Message |
+|----------------|:----------------:|--------:|
+| 400            | `if String.IsNullOrWhiteSpace(message.MessageSource)` | bad request: Message was missing required field: {aEx.Message} |
+| 400            | `if String.IsNullOrWhiteSpace(message.MessageDestination)` | bad request: Message was missing required field: {aEx.Message} |
+| 400            | `if String.IsNullOrWhiteSpace(message.MessageId)` | bad request: Message was missing required field: {aEx.Message} |
+| 400            | `if String.IsNullOrWhiteSpace(message.GetType().Name)` | bad request: Message was missing required field: {aEx.Message} |
+| 400            | `if message.CertNo == null` | bad request: Message was missing required field: {aEx.Message} |
+
+## Message Type Validation
+Validates the message is not `ExtractionErrorMessage` messages since NCHS does not support them.  
+Validates the message Event Type is a valid type accepted at NCHS: `DeathRecordSubmissionMessage`, `DeathRecordUpdateMessage`, `DeathRecordVoidMessage`, `DeathRecordAliasMessage`, or `AcknowledgementMessage`
+
+| Error Response | Validation Check | Error Message |
+|----------------|:----------------:|--------:|
+| 400            | `if (item.MessageType == nameof(ExtractionErrorMessage)` | bad request: Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually. |
+| 400            | `if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))` | bad request: Unsupported message type: NCHS API does not accept messages of type {item.MessageType} |
+
 ## Single Message Error Responses
 Errors caught or generated in the checks listed above result in 400 with the following error messages.
 ```
     try
     {
         item = ParseIncomingMessageItem(jurisdictionId, text);
+        
         // Send a special message for extraction errors to report the error manually
         if (item.MessageType == nameof(ExtractionErrorMessage))
         {
             _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
             return BadRequest($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.");
         }
+
         // check this is a valid message type
-        // submission message
-        // update message
-        // void message
-        // alias message
-        // acknowledgement message
         if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))
         {
             _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
@@ -153,6 +98,7 @@ Errors caught or generated in the checks listed above result in 400 entry in the
     {
         BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
         item = ParseIncomingMessageItem(jurisdictionId, message.ToJSON());
+        
         if (item.MessageType == "ExtractionErrorMessage")
         {
             _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
@@ -161,6 +107,7 @@ Errors caught or generated in the checks listed above result in 400 entry in the
             entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.", OperationOutcome.IssueType.Exception);
             return entry;
         }
+        
         if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))
         {
             _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
