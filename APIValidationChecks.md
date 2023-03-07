@@ -6,7 +6,7 @@ This file documents the API's validation checks along with the returned error co
 ## Parameter Validation
 Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_since`
 
-| Error Response | parameter | Validation Check | Error Message |
+| Error Response Code | parameter | Validation Check | Error Message |
 |----------------|:---------:|:----------------:|--------:|
 | 400            | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request |
 | 400            | `_count` | `if _count < 0` | bad request: _count must not be negative |
@@ -21,13 +21,13 @@ Minimal validation is done on the bundle to avoid complexity at the API level. H
 
 Validation for the following URL parameters: `jurisdictionId`
 
-| Error Response | parameter | Validation Check | Error Message |
+| Error Response Code | parameter | Validation Check | Error Message |
 |----------------|:---------:|:----------------:|--------:|
 | 400            | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request |
 
 ## Parsing Validation
 
-| Error Response | Validation Check | Error Message |
+| Error Response Code | Validation Check | Error Message |
 |----------------|:----------------:|--------:|
 | 400            | if parsing the generic bundle with `BaseMessage.ParseGenericBundle(text.ToString(), true);` throws an error | bad request: Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
 | 400            | if parsing a generic message with `BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);` throws an error | bad request: Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
@@ -36,7 +36,7 @@ Validation for the following URL parameters: `jurisdictionId`
 ## Message Header Field Validation
 Validates the required message headers are provided: `MessageSource`, `MessageDestination`, `MessageId`, `EventType`, `CertNo` 
 
-| Error Response | Validation Check | Error Message |
+| Error Response Code | Validation Check | Error Message |
 |----------------|:----------------:|--------:|
 | 400            | `if String.IsNullOrWhiteSpace(message.MessageSource)` | bad request: Message was missing required field: {aEx.Message} |
 | 400            | `if String.IsNullOrWhiteSpace(message.MessageDestination)` | bad request: Message was missing required field: {aEx.Message} |
@@ -48,7 +48,7 @@ Validates the required message headers are provided: `MessageSource`, `MessageDe
 Validates the message is not `ExtractionErrorMessage` messages since NCHS does not support them.  
 Validates the message Event Type is a valid type accepted at NCHS: `DeathRecordSubmissionMessage`, `DeathRecordUpdateMessage`, `DeathRecordVoidMessage`, `DeathRecordAliasMessage`, or `AcknowledgementMessage`
 
-| Error Response | Validation Check | Error Message |
+| Error Response Code | Validation Check | Error Message |
 |----------------|:----------------:|--------:|
 | 400            | `if (item.MessageType == nameof(ExtractionErrorMessage)` | bad request: Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually. |
 | 400            | `if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))` | bad request: Unsupported message type: NCHS API does not accept messages of type {item.MessageType} |
