@@ -45,9 +45,13 @@ namespace messaging.tests
             
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
 
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            // Make sure the ACKs made it into the queue before querying the endpoint
+            Assert.Equal(1, await GetTableCount(_context.OutgoingMessageItems, 1));
 
             Hl7.Fhir.Model.Bundle updatedBundle = await GetQueuedMessages(STEVE_ENDPOINT);
             Assert.Single(updatedBundle.Entry);
@@ -81,6 +85,7 @@ namespace messaging.tests
             
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
 
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
@@ -114,6 +119,7 @@ namespace messaging.tests
             
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
             
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
@@ -122,6 +128,7 @@ namespace messaging.tests
             
             // Set missing required fields
             recordUpdate.MessageSource = "http://example.fhir.org";
+            recordUpdate.CertNo = 1;
 
             // Submit update message
             HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordUpdate.ToJson());
@@ -150,9 +157,13 @@ namespace messaging.tests
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
 
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
+
+            // Make sure the ACKs made it into the queue before querying the endpoint
+            Assert.Equal(1, await GetTableCount(_context.OutgoingMessageItems, 1));
 
             // Get the STEVE response
             Hl7.Fhir.Model.Bundle response = await GetQueuedMessages(STEVE_ENDPOINT);
@@ -167,6 +178,9 @@ namespace messaging.tests
         [Fact]
         public async void PostWithInvalidJurisdictionGetsError()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string badJurisdiction = "AB";
             Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 

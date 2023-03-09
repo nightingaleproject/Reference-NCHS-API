@@ -49,6 +49,7 @@ namespace messaging.tests
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
 
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
@@ -88,6 +89,9 @@ namespace messaging.tests
 
         [Fact]
         public async System.Threading.Tasks.Task UnparsableMessagesCauseAnError() {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             HttpResponseMessage createBrokenSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", "{}");
             Assert.Equal(HttpStatusCode.BadRequest, createBrokenSubmissionMessage.StatusCode);
         }
@@ -103,6 +107,7 @@ namespace messaging.tests
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
 
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
@@ -128,7 +133,6 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task UpdateMessagesAreSuccessfullyAcknowledged()
         {
-
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
 
@@ -139,6 +143,7 @@ namespace messaging.tests
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
 
             // Submit that Death Record
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
@@ -148,6 +153,7 @@ namespace messaging.tests
             
             // Set missing required fields
             recordUpdate.MessageSource = "http://example.fhir.org";
+            recordUpdate.CertNo = 1;
 
             // Submit update message
             HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordUpdate.ToJson());
@@ -196,6 +202,9 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task ParseBatchIncomingMessages()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string batchJson = FixtureStream("fixtures/json/BatchMessages.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
@@ -207,6 +216,9 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task ParseBatchIncomingMessagesBackwardsCompatibility()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string batchJson = FixtureStream("fixtures/json/BatchMessages.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundles", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
@@ -219,6 +231,9 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task ParseBatchIncomingSingleMessage()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string batchJson = FixtureStream("fixtures/json/BatchSingleMessage.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
@@ -230,6 +245,9 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task ParseBatchIncomingMessagesWithOneError()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string batchJson = FixtureStream("fixtures/json/BatchWithOneErrorMessage.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
@@ -259,6 +277,9 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task ReturnErrorOnInvalidBatch()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string batchJson = FixtureStream("fixtures/json/BatchInvalidJsonError.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
@@ -270,6 +291,9 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task ReturnErrorOnSubmittedExtractionError()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string extErrJson = FixtureStream("fixtures/json/ExtractionErrorMessage.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", extErrJson);
             Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
@@ -281,6 +305,9 @@ namespace messaging.tests
         [Fact]
         public async System.Threading.Tasks.Task ReturnErrorOnSubmittedCodingMessage()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string codeMsg = FixtureStream("fixtures/json/CauseOfDeathCodingMsg.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", codeMsg);
             Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
@@ -313,6 +340,8 @@ namespace messaging.tests
         [Fact]
         public async void ReturnCorrectNumberOfRecordsWithPagination()
         {
+        
+          // Clear any messages in the database for a clean test
           DatabaseHelper.ResetDatabase(_context);
 
           // the test should insert 50 records
@@ -383,6 +412,7 @@ namespace messaging.tests
         [Fact]
         public async void ReturnCorrectNumberOfRecordsWithPaginationAndSince()
         {
+          // Clear any messages in the database for a clean test
           DatabaseHelper.ResetDatabase(_context);
 
           DateTime startTest = DateTime.UtcNow;
@@ -430,6 +460,9 @@ namespace messaging.tests
         [Fact]
         public async void PostWithInvalidJurisdictionGetsError()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string badJurisdiction = "AB";
             Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
@@ -444,6 +477,9 @@ namespace messaging.tests
         [Fact]
         public async void PostCatchMissingSourceEndpoint()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             // Create a new empty Death Record with an empty source
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
             Assert.Null(recordSubmission.MessageSource);
@@ -456,9 +492,13 @@ namespace messaging.tests
         [Fact]
         public async void PostCatchMissingDestinationEndpoint()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             // Create a new empty Death Record with an empty source
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
             recordSubmission.MessageDestination = null;
 
             // Submit that Death Record
@@ -469,9 +509,13 @@ namespace messaging.tests
         [Fact]
         public async void PostCatchMissingId()
         {
-            // Create a new empty Death Record with an empty source
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record with an empty message id
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
             recordSubmission.MessageId = null;
 
             // Submit that Death Record
@@ -482,10 +526,29 @@ namespace messaging.tests
         [Fact]
         public async void PostCatchMissingEventType()
         {
-            // Create a new empty Death Record with an empty source
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record with an empty message type
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
             recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
             recordSubmission.MessageType = null;
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
+        [Fact]
+        public async void PostCatchMissingCertNo()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record with an empty message type
+            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            recordSubmission.MessageSource = "http://example.fhir.org";
 
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
@@ -495,6 +558,9 @@ namespace messaging.tests
         [Fact]
         public async void GetWithInvalidJurisdictionGetsError()
         {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
             string badJurisdiction = "AB";
             Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
