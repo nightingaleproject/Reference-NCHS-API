@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.1.0-preview11 - 2023-03-10
+* Catch null certificate numbers in the message header and return 400
+* Added documentation for all validation checks at the API level
+
 ### v1.1.0-preview10 - 2023-02-22
 * Update the library version to v4.0.0-preview19
 
