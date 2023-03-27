@@ -57,20 +57,23 @@ namespace messaging.Controllers
             {
                 // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
-                return BadRequest();
+                return BadRequest("Invalid jurisdiction ID");
             }
 
             if (_count < 0)
             {
+                _logger.LogError("Rejecting request with invalid count parameter.");
                 return BadRequest("_count must not be negative");
             }
             if (page < 1)
             {
+                _logger.LogError("Rejecting request with invalid page number.");
                 return BadRequest("page must not be negative");
             }
             // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
             if (_since == default(DateTime) && page > 1)
             {
+                _logger.LogError("Rejecting request with a page number but no _since parameter.");
                 return BadRequest("Pagination does not support specifying a page without a _since parameter");
             }
 
@@ -176,7 +179,7 @@ namespace messaging.Controllers
             {
                 // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
-                return BadRequest();
+                return BadRequest("Invalid jurisdiction ID");
             }
 
             var IncomingMessageItem = await _context.IncomingMessageItems.Where(x => x.Id == id && x.JurisdictionId == jurisdictionId).FirstOrDefaultAsync();
@@ -225,7 +228,7 @@ namespace messaging.Controllers
             {
                 // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
-                return BadRequest();
+                return BadRequest("Invalid jurisdiction ID");
             }
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
@@ -313,8 +316,8 @@ namespace messaging.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An exception occurred while parsing the incoming message: {ex}");
-                return BadRequest();
+                _logger.LogDebug($"An exception occurred while parsing the incoming bundle: {ex}");
+                return BadRequest("Failed to parse bundle. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
             }
         }
 

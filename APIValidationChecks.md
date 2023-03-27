@@ -8,7 +8,7 @@ Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_
 
 | Error Response Code | parameter | Validation Check | Error Message |
 |-----|:------:|----------------|--------|
-| 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request |
+| 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
 | 400 | `_count` | `if _count < 0` | bad request: _count must not be negative |
 | 400 | `page` | `if page < 1` | bad request: page must not be negative |
 | 400 | `_since` | `if (_since == default(DateTime) && page > 1)` | bad request: Pagination does not support specifying a page without a _since parameter |
@@ -23,13 +23,13 @@ Validation for the following URL parameters: `jurisdictionId`
 
 | Error Response Code | parameter | Validation Check | Error Message |
 |-----|:------:|----------------|--------|
-| 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request |
+| 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
 
 ## Parsing Validation
 
 | Error Response Code | Validation Check | Error Message |
 |------|----------------|--------|
-| 400 | if parsing the generic bundle with `BaseMessage.ParseGenericBundle(text.ToString(), true);` throws an error | bad request: Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
+| 400 | if parsing the generic bundle with `BaseMessage.ParseGenericBundle(text.ToString(), true);` throws an error | bad request: Failed to parse bundle. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
 | 400 | if parsing a generic message with `BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);` throws an error | bad request: Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
 
 
