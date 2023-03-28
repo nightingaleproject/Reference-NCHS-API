@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.1.0-preview12 - 2023-03-28
+* Add logging for caught bundle parsing errors
+* Add error response messages on parameter validation
+
 ### v1.1.0-preview11 - 2023-03-10
 * Catch null certificate numbers in the message header and return 400
 * Added documentation for all validation checks at the API level
