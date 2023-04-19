@@ -171,31 +171,10 @@ namespace messaging.Controllers
             omi.RetrievedAt = retrieved;
         }
 
-        // GET: Bundles/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<IncomingMessageItem>> GetIncomingMessageItem(string jurisdictionId, long id)
-        {
-            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
-            {
-                // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
-                _logger.LogError("Rejecting request with invalid jurisdiction ID.");
-                return BadRequest("Invalid jurisdiction ID");
-            }
-
-            var IncomingMessageItem = await _context.IncomingMessageItems.Where(x => x.Id == id && x.JurisdictionId == jurisdictionId).FirstOrDefaultAsync();
-
-            if (IncomingMessageItem == null)
-            {
-                return NotFound();
-            }
-
-            return IncomingMessageItem;
-        }
-
         // POST: Bundles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         /// <summary>
-        /// Submits an FHIR message to the API for processing
+        /// Submits a FHIR message to the API for processing
         /// </summary>
         /// <returns>If a single FHIR Message was submitted, nothing is returned. If a batch Bundle was submitted, a batch response is returned.</returns>
         /// <remarks>
