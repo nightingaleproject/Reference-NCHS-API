@@ -408,6 +408,11 @@ namespace messaging.Controllers
                 _logger.LogDebug($"Message is missing destination endpoint, throw exception");
                 throw new ArgumentException("Message destination endpoint cannot be null");
             }
+            if (!validateNCHSDestination(message.MessageDestination))
+            {
+                _logger.LogDebug($"Message destination endpoint does not include a valid NCHS endpoint, throw exception");
+                throw new ArgumentException("Message destination endpoint does not include a valid NCHS endpoint");
+            }
             if (String.IsNullOrWhiteSpace(message.MessageId))
             {
                 _logger.LogDebug($"Message is missing Message ID, throw exception");
@@ -422,6 +427,11 @@ namespace messaging.Controllers
             {
                 _logger.LogDebug($"Message is missing Certificate Number, throw exception");
                 throw new ArgumentException("Message Certificate Number cannot be null");
+            }
+            if ((uint)message.CertNo.ToString().Length > 6)
+            {
+                _logger.LogDebug($"Message Certificate Number number is greater than 6 characters, throw exception");
+                throw new ArgumentException("Message Certificate Number cannot be more than 6 digits long");
             }
 
             IncomingMessageItem item = new IncomingMessageItem();
@@ -474,6 +484,35 @@ namespace messaging.Controllers
                 default:
                     return "UNK";
             }
+        }
+
+        // validateNCHSDestination checks that an NCHS destination is included
+        // in the list of destinations
+        private bool validateNCHSDestination(string destination)
+        {
+            // validate NCHS is in the list of destination endpoints
+            List<string> destinationEndpoints = destination.Split(',').ToList();
+            foreach (string d in destinationEndpoints)
+            {
+                switch (d)
+                {
+                    case "http://nchs.cdc.gov/vrdr_acknowledgement":
+                    case "http://nchs.cdc.gov/vrdr_alias":
+                    case "http://nchs.cdc.gov/vrdr_causeofdeath_coding":
+                    case "http://nchs.cdc.gov/vrdr_causeofdeath_coding_update":
+                    case "http://nchs.cdc.gov/vrdr_demographics_coding":
+                    case "http://nchs.cdc.gov/vrdr_demographics_coding_update":
+                    case "http://nchs.cdc.gov/vrdr_extraction_error":
+                    case "http://nchs.cdc.gov/vrdr_status":
+                    case "http://nchs.cdc.gov/vrdr_submission":
+                    case "http://nchs.cdc.gov/vrdr_submission_update":
+                    case "http://nchs.cdc.gov/vrdr_submission_void":
+                        return true;
+                    default:
+                        break;
+                }
+            }
+            return false;
         }
     }
 }
