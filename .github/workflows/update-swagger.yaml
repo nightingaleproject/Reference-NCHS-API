@@ -40,7 +40,7 @@ jobs:
         git add ./swagger/v1/swagger.json
         git stash
         git checkout gh-pages
-        git stash show -p | git apply && git stash drop
+        git checkout stash -- .
     - shell: pwsh
       if: steps.check_file_changed.outputs.docs_changed == 'True'
       run: |
