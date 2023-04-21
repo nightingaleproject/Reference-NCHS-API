@@ -1,5 +1,31 @@
 ## Changelog
 
+### v1.1.0-preview12 - 2023-03-28
+* Add logging for caught bundle parsing errors
+* Add error response messages on parameter validation
+
+### v1.1.0-preview11 - 2023-03-10
+* Catch null certificate numbers in the message header and return 400
+* Added documentation for all validation checks at the API level
+
+### v1.1.0-preview10 - 2023-02-22
+* Update the library version to v4.0.0-preview19
+
+### v1.1.0-preview9 - 2023-01-26
+* Improve performance when handling large numbers of records
+
+### v1.1.0-preview8 - 2023-01-17
+* Catches missing required fields in the message header and returns 400
+* Returns 400 if the message event type is not a submission, update, void, alias, or acknowledgement message 
+
+### v1.1.0-preview7 - 2022-12-28
+* Update the library version to v4.0.0-preview16
+
+### v1.1.0-preview6 - 2022-12-02
+* Created Swagger GitHub Page and Auto Swagger API Documentation
+* Improve batch upload response
+* Add response codes to swagger and README
+
 ### v1.1.0-preview5 - 2022-09-30
 * Validate the jurisdiction id in GET and POST requests
 * Add Alias message types to the list of MOR message types

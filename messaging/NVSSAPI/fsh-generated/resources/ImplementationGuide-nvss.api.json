@@ -1,0 +1,57 @@
+{
+  "resourceType": "ImplementationGuide",
+  "id": "nvss.api",
+  "url": "http://cdc.gov/nchs/nvss/fhir/nvss-api/ImplementationGuide/nvss.api",
+  "version": "0.1.0",
+  "name": "NVSSAPI",
+  "status": "draft",
+  "publisher": "NCHS",
+  "contact": [
+    {
+      "name": "NCHS",
+      "telecom": [
+        {
+          "system": "url",
+          "value": "http://cdc.gov/nchs/"
+        }
+      ]
+    }
+  ],
+  "packageId": "nvss.api",
+  "fhirVersion": [
+    "4.0.1"
+  ],
+  "definition": {
+    "resource": [
+      {
+        "reference": {
+          "reference": "CapabilityStatement/NVSS-API-CS"
+        },
+        "name": "NVSS-API-CS",
+        "exampleBoolean": false
+      }
+    ],
+    "page": {
+      "nameUrl": "toc.html",
+      "title": "Table of Contents",
+      "generation": "html",
+      "page": [
+        {
+          "nameUrl": "index.html",
+          "title": "Home",
+          "generation": "markdown"
+        }
+      ]
+    },
+    "parameter": [
+      {
+        "code": "copyrightyear",
+        "value": "2022+"
+      },
+      {
+        "code": "releaselabel",
+        "value": "ci-build"
+      }
+    ]
+  }
+}

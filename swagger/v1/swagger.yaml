@@ -3,10 +3,11 @@ info:
   title: NVSSMessaging
   version: v1
 paths:
-  '/{jurisdictionId}/Bundles':
+  '/{jurisdictionId}/Bundle':
     get:
       tags:
         - Bundles
+      summary: Retrieves outgoing messages for the jurisdiction
       parameters:
         - name: jurisdictionId
           in: path
@@ -33,23 +34,21 @@ paths:
             default: 1
       responses:
         '200':
-          description: Success
+          description: Content retrieved successfully
           content:
-            text/plain:
-              schema:
-                type: object
-                additionalProperties: { }
             application/json:
               schema:
                 type: object
                 additionalProperties: { }
-            text/json:
-              schema:
-                type: object
-                additionalProperties: { }
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
     post:
       tags:
         - Bundles
+      summary: Submits a FHIR message to the API for processing
+      description: "Sample request:\r\n            \r\n    POST\r\n            \r\n    {\r\n        \"resourceType\": \"Bundle\",\r\n        \"id\": \"bffdbf2e-c0db-49cf-9f52-59a6459635b9\",\r\n        \"type\": \"message\",\r\n        \"timestamp\": \"2022-07-27T15:30:39.5787234+00:00\",\r\n        \"entry\": [\r\n            { ...\r\n            }\r\n        ]\r\n    }"
       parameters:
         - name: jurisdictionId
           in: path
@@ -69,25 +68,17 @@ paths:
           application/*+json:
             schema: { }
       responses:
-        '200':
-          description: Success
-          content:
-            text/plain:
-              schema:
-                type: object
-                additionalProperties: { }
-            application/json:
-              schema:
-                type: object
-                additionalProperties: { }
-            text/json:
-              schema:
-                type: object
-                additionalProperties: { }
-  '/{jurisdictionId}/Bundles/{id}':
+        '204':
+          description: Content created
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+  '/{jurisdictionId}/Bundles':
     get:
       tags:
         - Bundles
+      summary: Retrieves outgoing messages for the jurisdiction
       parameters:
         - name: jurisdictionId
           in: path
@@ -96,26 +87,65 @@ paths:
             maxLength: 2
             minLength: 2
             type: string
-        - name: id
+        - name: _count
+          in: query
+          schema:
+            type: integer
+            format: int32
+        - name: _since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 1
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { }
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+    post:
+      tags:
+        - Bundles
+      summary: Submits a FHIR message to the API for processing
+      description: "Sample request:\r\n            \r\n    POST\r\n            \r\n    {\r\n        \"resourceType\": \"Bundle\",\r\n        \"id\": \"bffdbf2e-c0db-49cf-9f52-59a6459635b9\",\r\n        \"type\": \"message\",\r\n        \"timestamp\": \"2022-07-27T15:30:39.5787234+00:00\",\r\n        \"entry\": [\r\n            { ...\r\n            }\r\n        ]\r\n    }"
+      parameters:
+        - name: jurisdictionId
           in: path
           required: true
           schema:
-            type: integer
-            format: int64
+            maxLength: 2
+            minLength: 2
+            type: string
+      requestBody:
+        content:
+          application/json-patch+json:
+            schema: { }
+          application/json:
+            schema: { }
+          text/json:
+            schema: { }
+          application/*+json:
+            schema: { }
       responses:
-        '200':
-          description: Success
-          content:
-            text/plain:
-              schema:
-                $ref: '#/components/schemas/IncomingMessageItem'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IncomingMessageItem'
-            text/json:
-              schema:
-                $ref: '#/components/schemas/IncomingMessageItem'
-  '/{jurisdictionId}/CapabilityStatement':
+        '204':
+          description: Content created
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+  '/{jurisdictionId}/metadata':
     get:
       tags:
         - CapabilityStatement
@@ -130,10 +160,11 @@ paths:
       responses:
         '200':
           description: Success
-  '/STEVE/{jurisdictionId}/Bundles':
+  '/STEVE/{jurisdictionId}/Bundle':
     get:
       tags:
         - Steve
+      summary: Retrieves outgoing messages for the jurisdiction
       parameters:
         - name: jurisdictionId
           in: path
@@ -160,23 +191,21 @@ paths:
             default: 1
       responses:
         '200':
-          description: Success
+          description: Content retrieved successfully
           content:
-            text/plain:
-              schema:
-                type: object
-                additionalProperties: { }
             application/json:
               schema:
                 type: object
                 additionalProperties: { }
-            text/json:
-              schema:
-                type: object
-                additionalProperties: { }
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
     post:
       tags:
         - Steve
+      summary: Submits a FHIR message to the API for processing
+      description: "Sample request:\r\n            \r\n    POST\r\n            \r\n    {\r\n        \"resourceType\": \"Bundle\",\r\n        \"id\": \"bffdbf2e-c0db-49cf-9f52-59a6459635b9\",\r\n        \"type\": \"message\",\r\n        \"timestamp\": \"2022-07-27T15:30:39.5787234+00:00\",\r\n        \"entry\": [\r\n            { ...\r\n            }\r\n        ]\r\n    }"
       parameters:
         - name: jurisdictionId
           in: path
@@ -196,25 +225,17 @@ paths:
           application/*+json:
             schema: { }
       responses:
-        '200':
-          description: Success
-          content:
-            text/plain:
-              schema:
-                type: object
-                additionalProperties: { }
-            application/json:
-              schema:
-                type: object
-                additionalProperties: { }
-            text/json:
-              schema:
-                type: object
-                additionalProperties: { }
-  '/STEVE/{jurisdictionId}/Bundles/{id}':
+        '204':
+          description: Content created
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+  '/STEVE/{jurisdictionId}/Bundles':
     get:
       tags:
         - Steve
+      summary: Retrieves outgoing messages for the jurisdiction
       parameters:
         - name: jurisdictionId
           in: path
@@ -223,26 +244,65 @@ paths:
             maxLength: 2
             minLength: 2
             type: string
-        - name: id
+        - name: _count
+          in: query
+          schema:
+            type: integer
+            format: int32
+        - name: _since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 1
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { }
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+    post:
+      tags:
+        - Steve
+      summary: Submits a FHIR message to the API for processing
+      description: "Sample request:\r\n            \r\n    POST\r\n            \r\n    {\r\n        \"resourceType\": \"Bundle\",\r\n        \"id\": \"bffdbf2e-c0db-49cf-9f52-59a6459635b9\",\r\n        \"type\": \"message\",\r\n        \"timestamp\": \"2022-07-27T15:30:39.5787234+00:00\",\r\n        \"entry\": [\r\n            { ...\r\n            }\r\n        ]\r\n    }"
+      parameters:
+        - name: jurisdictionId
           in: path
           required: true
           schema:
-            type: integer
-            format: int64
+            maxLength: 2
+            minLength: 2
+            type: string
+      requestBody:
+        content:
+          application/json-patch+json:
+            schema: { }
+          application/json:
+            schema: { }
+          text/json:
+            schema: { }
+          application/*+json:
+            schema: { }
       responses:
-        '200':
-          description: Success
-          content:
-            text/plain:
-              schema:
-                $ref: '#/components/schemas/IncomingMessageItem'
-            application/json:
-              schema:
-                $ref: '#/components/schemas/IncomingMessageItem'
-            text/json:
-              schema:
-                $ref: '#/components/schemas/IncomingMessageItem'
-  '/STEVE/{jurisdictionId}/CapabilityStatement':
+        '204':
+          description: Content created
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+  '/STEVE/{jurisdictionId}/metadata':
     get:
       tags:
         - SteveCapabilityStatement
@@ -257,54 +317,4 @@ paths:
       responses:
         '200':
           description: Success
-components:
-  schemas:
-    IncomingMessageItem:
-      required:
-        - jurisdictionId
-        - messageId
-        - messageType
-        - processedStatus
-        - source
-      type: object
-      properties:
-        createdDate:
-          type: string
-          format: date-time
-        updatedDate:
-          type: string
-          format: date-time
-        id:
-          type: integer
-          format: int64
-        messageId:
-          minLength: 1
-          type: string
-        messageType:
-          minLength: 1
-          type: string
-        source:
-          maxLength: 3
-          minLength: 1
-          type: string
-        processedStatus:
-          maxLength: 10
-          minLength: 1
-          type: string
-        jurisdictionId:
-          maxLength: 2
-          minLength: 1
-          type: string
-        eventYear:
-          type: integer
-          format: int32
-          nullable: true
-        certificateNumber:
-          maxLength: 6
-          type: string
-          nullable: true
-        eventType:
-          maxLength: 3
-          type: string
-          nullable: true
-      additionalProperties: false
+components: { }
