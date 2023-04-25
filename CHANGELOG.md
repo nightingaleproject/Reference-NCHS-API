@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.1.0-preview13 - 2023-04-24
+* Update swagger docs
+* Validate certificate number length
+* Validate NCHS is included in the message header destination
+* Update library to v4.0.0-preview21
+
 ### v1.1.0-preview12 - 2023-03-28
 * Add logging for caught bundle parsing errors
 * Add error response messages on parameter validation
