@@ -85,7 +85,7 @@ These instructions walk through the steps of installing the FHIR API on a Window
 4. If there are new migrations to apply run `dotnet ef --project messaging migrations script <name-of-last-applied-migration>` to get the SQL script for all migrations after the last applied migration
 5. Run `dotnet publish —configuration release` on your local machine
 6. Copy the files in messaging > bin > release > net6.0
-7. Connect to the remote server's filesystem and copy the files to a folder
+7. Connect to the remote server's filesystem (\\ASTV-NVSS-API for test and dev, \\ASPV-NVSS-API for prod)and copy the files to a folder
 8. Copy appsettings and web.config from the `NVSS-API-TEST` folder and paste them in the new folder
 9.  If you are applying migrations, connect to the dev server database in visual studio code using server explorer
    1. Select Microsoft SQL Server
