@@ -163,16 +163,41 @@ If a response contains a `next` link, there is additional data to retrieve. Clie
             }
         ],
     ```
+
 ## STEVE
-Jurisdictions can send their POST and GET requests through STEVE or direct to NCHS. 
 
-### POST expected behavior
-If a duplicate message is POST'd through STEVE and direct to NCHS, the second message received will be ignored. 
+There are two instances of FHIR APIs meeting this specification for jurisdictions to submit
+mortality data. One is provided as part of the State and Territorial Exchange of Vital Events
+(STEVE) system, and is intended to be the primary means for jurisdictions to both submit data to
+NCHS and to exchange FHIR-based vital records data with other jurisdictions. The other is provided
+by NCHS and is intended to act as a backup channel to the STEVE FHIR API in the event of a long term
+outage. Both APIs implement the same specification, so moving submission to the backup NCHS API if
+ever needed should require only a simple configuration change. When performing testing both channels
+should be included to insure that the backup channel configuration is functional.
 
-### GET expected behavior
-If a jurisdiction places a GET request through STEVE and a GET request direct to NCHS, they will recieve all messages that have not been retrieved through that channel yet. Therefore, the two requests may have duplicate messages. Clients are expected to typically only use one channel. If the client needs to make requests through both channels, the client is responsible for ignoring duplicate messages that come through both channels.
+Jurisdiction client implementations in a production context are expected to only use the primary
+STEVE FHIR API for data submission to NCHS. If both APIs are used, the following behavior should be
+expected:
 
-### Authenticate
+* **Interjurisdictional Exchange**: Data submitted via the STEVE API will go to NCHS and also be
+  used for interjurisdictional exchange as configured by the submitting jurisdiction on STEVE. Data
+  submitted via the NCHS API will only go to NCHS and will not go to other jurisdictions.
+
+* **Duplicate Submissions**: If a duplicate message is POST'd both through STEVE and directly to
+  NCHS the second message received will be ignored by NCHS. This is based on comparing the message
+  ID of the submission, not on the content of the message, and is the same behavior as expected
+  when submitting two duplicate copies of a message to the same API.
+
+* **Duplicate Retrievals**: The NVSS FHIR APIs keep track of which messages have been retrieved via
+  GET requests. Subsequent GET requests will not retrieve messages that have already been retrieved.
+  However, the NCHS and STEVE FHIR APIs keep track of which messages have been retrieved separately
+  from each other. If a jurisdiction places a GET request through STEVE and subsequently places a
+  GET request directly to NCHS the two requests will contain duplicate messages. If for any reason a
+  client implementation needs to make requests through both channels the client is responsible for
+  ignoring duplicate messages that come through both channels using the message ID to detect
+  duplicates.
+
+## Authentication
 ```
 POST https://<OAuthHost>/auth/oauth/v2/token
 ```
