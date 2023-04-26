@@ -290,7 +290,39 @@ curl --location --request POST 'https://localhost:5001/MA/Bundle' \
 --header 'Authorization: Bearer <OAuthToken>' \
 --data "@path/to/file.json"
 ```
-4. The API will return a 200 OK HTTP response if everything is functioning correctly.
+5. The API will return a 200 OK HTTP response if the overall bulk upload was processed correctly; this does not provide information on the status of the individual records with the batch.
+6. On a successful submission the HTTP response will contain a payload of a `batch-response` Bundle with response codes for each individual record that was submitted. The response codes appear in the same order that the records were submitted in the bulk upload. The individual response codes should each be checked to ensure that they all have a successful `201` status code:
+
+```
+{
+  "resourceType": "Bundle",
+  "type": "batch-response",
+  "timestamp": "2022-12-22T12:14:09.1780469-05:00",
+  "entry": [
+    {
+      "response": {
+        "status": "201"
+      }
+    },
+    {
+      "response": {
+        "status": "201"
+      }
+    },
+    {
+      "response": {
+        "status": "201"
+      }
+    }
+  ]
+}
+```
+
+#### Bulk Upload Batch Size
+
+Bulk upload is strongly recommended to increase efficient and performant use of the API. However,
+for efficient use of the API batches should also not exceed 10MB in size. Given the size of a
+typical record his means that batch sizes from 20 to 100 records should work well.
 
 ## Receiving Messages
 1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the `/<JurisdictionID>/Bundle` endpoint. The following example demonstrates the request format using [curl](https://curl.se/):
