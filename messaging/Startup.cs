@@ -67,18 +67,6 @@ namespace messaging
                 });
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NVSSMessaging v1"));
             }
-            if (env.IsProduction())
-            {
-                app.UseDeveloperExceptionPage();
-                app.UseSwagger(c =>
-                {
-                    c.PreSerializeFilters.Add((swagger, httpReq) =>
-                    {
-                        swagger.Servers = new List<OpenApiServer> { new OpenApiServer { Url = "https://prod.ASPV-NVSS-API.cdc.gov" } };
-                    });
-                });
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NVSSMessaging v1"));
-            }
             app.UseMiniProfiler();
             app.UseRouting();
             app.UseAuthorization();
