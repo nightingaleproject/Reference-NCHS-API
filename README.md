@@ -87,14 +87,19 @@ new responses. This approach of pulling responses rather than NCHS pushing respo
 jurisdictions allows return messages without requiring jurisdictions to set up a listening endpoint.
 
 ## Pagination
-The API implements pagination. The default page size is set to 100. There are 3 parameters for pagination. Each parameter is optional.
-- `_count` used to specify the number of records per page, default is 100
-- `_since` used to retrieve response messages created after the `_since` datetime  
-- `page` used to specify the page of data you are interested in. This parameter is only used if a `_since` datetime is provided.  
+The API implements pagination. The default page size in production is set to 100. The test environment is set to 25. 
+
+There are 3 optional parameters for pagination.
+
+- `_count` used to specify the number of records per page, default is 100 in prod and 25 in test
+- `_since` used to retrieve all response messages created after the `_since` datetime, __for testing only__
+- `page` used to specify the page of data you are interested in. This parameter is only used if a `_since` datetime is provided, __for testing only__
 
 If a response contains a `next` link, there is additional data to retrieve. Client side systems should parse out the `next` link and automate the next request to retrieve the next page of data. If a `_since` parameter is not provided, the `next` link will not change.
 
-### Example responses with links.
+### Default Pagination
+It is recommended to use the default GET request when implementing automated client systems. The default behavior is implemented as a queue. Each default request will return the next page of unretrieved messages.
+#### Example responses with links.
 1. A default request will return the first 100 responses from the unretrieved messages queue. A default `next` link is provided.  
     Request  
     ```
@@ -123,7 +128,13 @@ If a response contains a `next` link, there is additional data to retrieve. Clie
             }
         ]
     ```
-3. A timestamp based request with a specified page size of 50 records. If there are additional pages to retrieve, there will be a `next` link. Will return the first 50 responses created after the _since datetime parameter and a `first`, `last`, and `next` link if there is more data to retrieve.  
+
+### Testing with the Since Parameter
+When testing, there may be a need to retrieve messages that were already pulled off the queue. The `_since` parameter allows users to request messages based on timestamp versus using a queue. The `_since` parameter is intended for testing and special cases where messages need to be retrieved a second time from NCHS. It should no be used when implementing an automated client side system.
+
+#### Example responses with links.
+
+1. A timestamp based request with a specified page size of 50 records. If there are additional pages to retrieve, there will be a `next` link. Will return the first 50 responses created after the _since datetime parameter and a `first`, `last`, and `next` link if there is more data to retrieve.  
     Request  
     ```
     GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50
@@ -145,7 +156,7 @@ If a response contains a `next` link, there is additional data to retrieve. Clie
             }
         ],
     ```
-4. The 3rd and last page of a timestamp based request with a specified page size of 50 records. If this is the last page, there will not be a `next` link. Will return the third page of 50 responses created after the _since datetime parameter and a `first`, `last` link. There is no `next` link because there is no more data to retrieve.  
+2. The 3rd and last page of a timestamp based request with a specified page size of 50 records. If this is the last page, there will not be a `next` link. Will return the third page of 50 responses created after the _since datetime parameter and a `first`, `last` link. There is no `next` link because there is no more data to retrieve.  
     Request  
     ```
     GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=2022-06-16T10:28:01.000-05:00&_count=50&page=3
