@@ -91,14 +91,14 @@ The API implements pagination. The default page size in production is set to 100
 
 There are 3 optional parameters for pagination.
 
-- `_count` used to specify the number of records per page, default is 100
-- `_since` used to retrieve all response messages created after the `_since` datetime  
-- `page` used to specify the page of data you are interested in. This parameter is only used if a `_since` datetime is provided.  
+- `_count` used to specify the number of records per page, default is 100 in prod and 25 in test
+- `_since` used to retrieve all response messages created after the `_since` datetime, __for testing only__
+- `page` used to specify the page of data you are interested in. This parameter is only used if a `_since` datetime is provided, __for testing only__
 
 If a response contains a `next` link, there is additional data to retrieve. Client side systems should parse out the `next` link and automate the next request to retrieve the next page of data. If a `_since` parameter is not provided, the `next` link will not change.
 
 ### Default Pagination
-It is recommended to use the default GET request when implementing automated client systems. The default behavior is implemented as a queue. Each default request will return the next page of unretrieved messages. This simplifies implementing pagination in the client side system and eleminates the need to track `_since` timestamps and `page` numbers.
+It is recommended to use the default GET request when implementing automated client systems. The default behavior is implemented as a queue. Each default request will return the next page of unretrieved messages.
 #### Example responses with links.
 1. A default request will return the first 100 responses from the unretrieved messages queue. A default `next` link is provided.  
     Request  
@@ -130,7 +130,7 @@ It is recommended to use the default GET request when implementing automated cli
     ```
 
 ### Testing with the Since Parameter
-When testing, there may be a need to retrieve messages that were already pulled off the queue. The `_since` parameter allows users to request messages based on timestamp versus using a queue. The `_since` parameter is intended for testing and special cases where messages need to be retrieved a second time from NCHS. It should no be used when implementing an automated client side system because it will introduce unnecessary complexity.
+When testing, there may be a need to retrieve messages that were already pulled off the queue. The `_since` parameter allows users to request messages based on timestamp versus using a queue. The `_since` parameter is intended for testing and special cases where messages need to be retrieved a second time from NCHS. It should no be used when implementing an automated client side system.
 
 #### Example responses with links.
 
