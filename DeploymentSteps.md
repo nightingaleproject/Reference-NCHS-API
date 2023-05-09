@@ -13,7 +13,7 @@ These instructions walk through the steps of installing the FHIR API on a Window
    3. From the project root directory, run `dotnet publish —configuration release` on your local machine
    4. Copy all files in messaging > bin > release > net6.0
    5. Paste the files to a folder on the new Windows Server
-   6. Create and update the appsettings and web.config files in the project folder on the new server
+   6. Create and update all three appsettings and web.config files in the project folder on the new server
       1. appsettings (update the database server name)
    ```
    {
@@ -40,6 +40,9 @@ These instructions walk through the steps of installing the FHIR API on a Window
            <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
          </handlers>
          <aspNetCore processPath="dotnet" arguments=".\messaging.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
+           <environmentVariables>
+            <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="<environment>" />
+           </environmentVariables>
        </system.webServer>
      </location>
    </configuration>      
@@ -86,7 +89,7 @@ These instructions walk through the steps of installing the FHIR API on a Window
 5. Run `dotnet publish —configuration release` on your local machine
 6. Copy the files in messaging > bin > release > net6.0
 7. Connect to the remote server's filesystem (\\ASTV-NVSS-API for test and dev, \\ASPV-NVSS-API for prod)and copy the files to a folder
-8. Copy appsettings and web.config from the `NVSS-API-TEST` folder and paste them in the new folder
+8. Copy all three appsettings and web.config from the `NVSS-API-TEST` folder and paste them in the new folder
 9.  If you are applying migrations, connect to the dev server database in visual studio code using server explorer
    1. Select Microsoft SQL Server
    2. server name: dstv-infc-1900.cdc.gov, dsdv-infc-1900.cdc.gov
