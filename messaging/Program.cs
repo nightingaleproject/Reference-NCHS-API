@@ -16,6 +16,7 @@ namespace messaging
         public static void Main(string[] args)
         {
             // old files will be cleaned up as per the retainedFileCountLimit (every 31 days)
+            //dev -5.10.2023
             var config = new ConfigurationBuilder()
                 .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json")
                 .Build();
