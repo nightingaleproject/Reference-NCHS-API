@@ -4,12 +4,10 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using messaging.Models;
 using messaging.Services;
-using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Model;
 using VRDR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
@@ -209,6 +207,27 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
                 return BadRequest("Invalid jurisdiction ID");
             }
+
+            Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
+
+            if (bundle.Type.Equals(Bundle.BundleType.Message))
+            {
+                if (!ValidateJurisdictionId(bundle, jurisdictionId))
+                {
+                    return BadRequest("The message resource jurisdiction ID did not match the parameter jurisdiction ID [" + jurisdictionId + "].");
+                }
+            }
+            else if (bundle.Type.Equals(Bundle.BundleType.Batch))
+            {
+                foreach (Bundle.EntryComponent entry in bundle.Entry)
+                {
+                    if (entry.Resource.TypeName.Equals(ResourceType.Bundle.ToString()) && !ValidateJurisdictionId((Bundle) entry.Resource, jurisdictionId))
+                    {
+                        return BadRequest("The message resource jurisdiction ID did not match the parameter jurisdiction ID [" + jurisdictionId + "].");
+                    }
+                }
+            }
+        
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
             Bundle responseBundle = new Bundle();
@@ -216,7 +235,6 @@ namespace messaging.Controllers
             {
 
                 // check whether the bundle is a message or a batch
-                Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
                 if (bundle?.Type == Bundle.BundleType.Batch)
                 {
                     responseBundle = new Bundle();
@@ -298,6 +316,27 @@ namespace messaging.Controllers
                 _logger.LogDebug($"An exception occurred while parsing the incoming bundle: {ex}");
                 return BadRequest("Failed to parse bundle. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
             }
+        }
+
+        private bool ValidateJurisdictionId(Bundle bundle, string jurisdictionId) {
+            Parameters parameters = (Parameters) bundle.Entry.FirstOrDefault(entry => entry.Resource.TypeName.Equals(ResourceType.Parameters.ToString())).Resource;
+            if (parameters == null)
+            {
+                _logger.LogError("Rejecting request without a parameters resource.");
+                return false;
+            }
+            string messageJurisdiction = parameters.GetSingle("jurisdiction_id")?.Value.ToString();
+            if (messageJurisdiction == null)
+            {
+                _logger.LogError("Rejecting request without a jurisdiction ID in submission.");
+                return false;
+            }
+            if (!jurisdictionId.Equals(messageJurisdiction))
+            {
+                _logger.LogError("Rejecting request with non-matching jurisidtion IDs: Message jurisdiction ID [" + messageJurisdiction + "] and parameter jurisdiction ID [" + jurisdictionId + "].");
+                return false;
+            }
+            return true;
         }
 
         // InsertBatchMessage handles a single message in a batch upload submission
