@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.1.0-preview15 - 2023-05-19
+* Update library to v4.0.1
+
 ### v1.1.0-preview14 - 2023-05-04
 * Readme updates
 * Remove swagger for prod
