@@ -261,7 +261,10 @@ namespace messaging.tests
             // Create a new batch message
             string batchJson = FixtureStream("fixtures/json/BatchMessages.json").ReadToEnd();
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{jurisdictionParameter}/Bundles", batchJson);
-            Assert.Equal(HttpStatusCode.BadRequest, submissionMessage.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+            Hl7.Fhir.Model.Bundle responseBundle = await JsonResponseHelpers.ParseBundleAsync(submissionMessage);
+            Assert.Equal("400", responseBundle.Entry[0].Response.Status);
+            Assert.Equal("400", responseBundle.Entry[1].Response.Status);
         }
 
         private StreamReader FixtureStream(string filePath)

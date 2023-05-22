@@ -208,32 +208,12 @@ namespace messaging.Controllers
                 return BadRequest("Invalid jurisdiction ID");
             }
 
-            Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
-
-            if (bundle.Type.Equals(Bundle.BundleType.Message))
-            {
-                if (!ValidateJurisdictionId(bundle, jurisdictionId))
-                {
-                    return BadRequest("The message resource jurisdiction ID did not match the parameter jurisdiction ID [" + jurisdictionId + "].");
-                }
-            }
-            else if (bundle.Type.Equals(Bundle.BundleType.Batch))
-            {
-                foreach (Bundle.EntryComponent entry in bundle.Entry)
-                {
-                    if (entry.Resource.TypeName.Equals(ResourceType.Bundle.ToString()) && !ValidateJurisdictionId((Bundle) entry.Resource, jurisdictionId))
-                    {
-                        return BadRequest("The message resource jurisdiction ID did not match the parameter jurisdiction ID [" + jurisdictionId + "].");
-                    }
-                }
-            }
-        
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
             Bundle responseBundle = new Bundle();
             try
             {
-
+                Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
                 // check whether the bundle is a message or a batch
                 if (bundle?.Type == Bundle.BundleType.Batch)
                 {
@@ -318,22 +298,15 @@ namespace messaging.Controllers
             }
         }
 
-        private bool ValidateJurisdictionId(Bundle bundle, string jurisdictionId) {
-            Parameters parameters = (Parameters) bundle.Entry.FirstOrDefault(entry => entry.Resource.TypeName.Equals(ResourceType.Parameters.ToString())).Resource;
-            if (parameters == null)
-            {
-                _logger.LogError("Rejecting request without a parameters resource.");
-                return false;
-            }
-            string messageJurisdiction = parameters.GetSingle("jurisdiction_id")?.Value.ToString();
-            if (messageJurisdiction == null)
+        private bool ValidateJurisdictionId(string messageJurisdictionId, string urlParamJurisdictionId) {
+            if (messageJurisdictionId == null)
             {
                 _logger.LogError("Rejecting request without a jurisdiction ID in submission.");
                 return false;
             }
-            if (!jurisdictionId.Equals(messageJurisdiction))
+            if (!messageJurisdictionId.Equals(urlParamJurisdictionId))
             {
-                _logger.LogError("Rejecting request with non-matching jurisidtion IDs: Message jurisdiction ID [" + messageJurisdiction + "] and parameter jurisdiction ID [" + jurisdictionId + "].");
+                _logger.LogError("Rejecting request with non-matching jurisidtion IDs: Message jurisdiction ID [" + messageJurisdictionId + "] and parameter jurisdiction ID [" + urlParamJurisdictionId + "].");
                 return false;
             }
             return true;
@@ -471,6 +444,11 @@ namespace messaging.Controllers
             {
                 _logger.LogDebug($"Message Certificate Number number is greater than 6 characters, throw exception");
                 throw new ArgumentException("Message Certificate Number cannot be more than 6 digits long");
+            }
+            if (!ValidateJurisdictionId(message.JurisdictionId, jurisdictionId))
+            {
+                _logger.LogDebug($"The message resource jurisdiction ID {message.JurisdictionId} did not match the parameter jurisdiction ID {jurisdictionId}.");
+                throw new ArgumentException($"Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}.");
             }
 
             IncomingMessageItem item = new IncomingMessageItem();
