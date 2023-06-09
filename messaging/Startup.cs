@@ -70,10 +70,16 @@ namespace messaging
             app.UseMiniProfiler();
             app.UseRouting();
             app.UseAuthorization();
+            if (env.IsProduction())
+            {
+                // authentication callback for production
+                app.UseMiddleware<ExtractCustomHeaderMiddleware>();
+            }
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
         }
     }
+
 }
