@@ -111,6 +111,12 @@ namespace messaging
             app.UseAuthentication();
             app.UseAuthorization();
 
+            if (env.IsProduction())
+            {
+                // authentication callback for production
+                app.UseMiddleware<ExtractCustomHeaderMiddleware>();
+            }
+
             app.UseEndpoints(endpoints =>
             {
                 // the default redirect when the request is unauthorized is /Account/Login
@@ -128,4 +134,5 @@ namespace messaging
             });
         }
     }
+
 }
