@@ -2,6 +2,7 @@ using messaging.Models;
 using messaging.tests.Helpers;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -19,8 +20,8 @@ namespace messaging.tests
 
         private readonly ApplicationDbContext _context;
 
-        private readonly string STEVE_ENDPOINT = "/STEVE/MA/Bundle";
-        private readonly string MA_ENDPOINT = "/MA/Bundle";
+        private readonly string STEVE_ENDPOINT = "/STEVE/NY/Bundle";
+        private readonly string NY_ENDPOINT = "/NY/Bundle";
 
         public SteveEndpointTests(CustomWebApplicationFactory<messaging.Startup> factory)
         {
@@ -41,7 +42,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             // Create and submit a new empty Death Record
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
             
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
@@ -56,7 +57,7 @@ namespace messaging.tests
             Hl7.Fhir.Model.Bundle updatedBundle = await GetQueuedMessages(STEVE_ENDPOINT);
             Assert.Single(updatedBundle.Entry);
 
-            // Check to see if the results returned for a jurisdiction other than MA does not return MA entries
+            // Check to see if the results returned for a jurisdiction other than NY does not return NY entries
             HttpResponseMessage noMessages = await _client.GetAsync("STEVE/FL/Bundle");
             var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
             Assert.Empty(noMessagesBundle.Entry);
@@ -81,7 +82,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             // Create a new empty Death Record
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
             
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
@@ -115,7 +116,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             // Create and submit a new empty Death Record
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
             
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
@@ -153,7 +154,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             // Create and submit a new empty Death Record
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
@@ -170,7 +171,7 @@ namespace messaging.tests
             Assert.Single(response.Entry);
 
             // Get the Jurisdiction response (don't need the retries because it is known to be in the queue)
-            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(MA_ENDPOINT);
+            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(NY_ENDPOINT);
             response = await JsonResponseHelpers.ParseBundleAsync(jurisdictionResponse);
             Assert.Single(response.Entry);
         }
@@ -229,6 +230,50 @@ namespace messaging.tests
                 count = table.Count();
             }
             return count;
+        }
+
+        [Fact]
+        public async void PostWithNonMatchingJurisdictionsError()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // The jurisdiction ID of the input record submission is 'NY', which should not work with a 'PA' endpoint parameter.
+            string jurisdictionParameter = "PA";
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{jurisdictionParameter}/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
+        [Fact]
+        public async void PostBatchWithNonMatchingJurisdictionsError()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // The jurisdiction ID of the input record submission is 'MA', which should not work with a 'PA' endpoint parameter.
+            string jurisdictionParameter = "PA";
+
+            // Create a new batch message
+            string batchJson = FixtureStream("fixtures/json/BatchMessages.json").ReadToEnd();
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{jurisdictionParameter}/Bundles", batchJson);
+            Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+            Hl7.Fhir.Model.Bundle responseBundle = await JsonResponseHelpers.ParseBundleAsync(submissionMessage);
+            Assert.Equal("400", responseBundle.Entry[0].Response.Status);
+            Assert.Equal("400", responseBundle.Entry[1].Response.Status);
+        }
+
+        private StreamReader FixtureStream(string filePath)
+        {
+            if (!Path.IsPathRooted(filePath))
+            {
+                filePath = System.IO.Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
+            }
+            return File.OpenText(filePath);
         }
     }
 }
