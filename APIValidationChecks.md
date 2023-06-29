@@ -9,6 +9,7 @@ Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_
 | Error Response Code | parameter | Validation Check | Error Message |
 |-----|:------:|----------------|--------|
 | 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
+| 400 | `jurisdictionId` | `if !messageJurisdictionId.Equals(urlParamJurisdictionId)` | Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}. |
 | 400 | `_count` | `if _count < 0` | bad request: _count must not be negative |
 | 400 | `page` | `if page < 1` | bad request: page must not be negative |
 | 400 | `_since` | `if (_since == default(DateTime) && page > 1)` | bad request: Pagination does not support specifying a page without a _since parameter |
@@ -16,14 +17,6 @@ Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_
    
 # POST Requests
 Minimal validation is done on the bundle to avoid complexity at the API level. However, we want to make sure the message is parsable and traceable if it will be added to the database for ITB. It must be parsable, have the required headers, and be a valid event type.
-
-## Parameter Validation
-
-Validation for the following URL parameters: `jurisdictionId`
-
-| Error Response Code | parameter | Validation Check | Error Message |
-|-----|:------:|----------------|--------|
-| 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
 
 ## Parsing Validation
 
