@@ -565,6 +565,7 @@ namespace messaging.tests
 
             // Create a new empty Death Record WITH nchs in the endpoint list
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
+            recordSubmission.JurisdictionId = "MA";
             recordSubmission.MessageSource = "http://example.fhir.org";
             recordSubmission.CertNo = 1;
             recordSubmission.MessageDestination = "temp,http://nchs.CDC.gov/VRDR_Submission,temp";
