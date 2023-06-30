@@ -38,10 +38,10 @@ Validates the required message headers are provided: `MessageSource`, `MessageDe
 | 400 | `if message.CertNo == null` | bad request: Message was missing required field: {aEx.Message} |
 
 ## Message Type Validation
-Validates the message is not `ExtractionErrorMessage` messages since NCHS does not support them.  
-Validates the certificate number is no more than 6 characters.  
-Validates the message Event Type is a valid type accepted at NCHS: `DeathRecordSubmissionMessage`, `DeathRecordUpdateMessage`, `DeathRecordVoidMessage`, `DeathRecordAliasMessage`, or `AcknowledgementMessage`.  
-Validates the Destination Endpoint includes a valid nchs endpoint: `http://nchs.cdc.gov/vrdr_acknowledgement`, `http://nchs.cdc.gov/vrdr_alias`, `http://nchs.cdc.gov/vrdr_causeofdeath_coding`, `http://nchs.cdc.gov/vrdr_causeofdeath_coding_update`, `http://nchs.cdc.gov/vrdr_demographics_coding`, `http://nchs.cdc.gov/vrdr_demographics_coding_update`, `http://nchs.cdc.gov/vrdr_extraction_error`, `http://nchs.cdc.gov/vrdr_status`, `http://nchs.cdc.gov/vrdr_submission`, `http://nchs.cdc.gov/vrdr_submission_update`, `http://nchs.cdc.gov/vrdr_submission_void`
+- Validates the message is not `ExtractionErrorMessage` messages since NCHS does not support them.  
+- Validates the certificate number is no more than 6 characters.  
+- Validates the message Event Type is a valid type accepted at NCHS: `DeathRecordSubmissionMessage`, `DeathRecordUpdateMessage`, `DeathRecordVoidMessage`, `DeathRecordAliasMessage`, or `AcknowledgementMessage`.  
+- Validates the Destination Endpoint includes a valid nchs endpoint, this check is case insensitive: `http://nchs.cdc.gov/vrdr_acknowledgement`, `http://nchs.cdc.gov/vrdr_alias`, `http://nchs.cdc.gov/vrdr_causeofdeath_coding`, `http://nchs.cdc.gov/vrdr_causeofdeath_coding_update`, `http://nchs.cdc.gov/vrdr_demographics_coding`, `http://nchs.cdc.gov/vrdr_demographics_coding_update`, `http://nchs.cdc.gov/vrdr_extraction_error`, `http://nchs.cdc.gov/vrdr_status`, `http://nchs.cdc.gov/vrdr_submission`, `http://nchs.cdc.gov/vrdr_submission_update`, `http://nchs.cdc.gov/vrdr_submission_void`
 
 | Error Response Code | Validation Check | Error Message |
 |-----|----------------|--------|
