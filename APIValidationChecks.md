@@ -9,7 +9,6 @@ Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_
 | Error Response Code | parameter | Validation Check | Error Message |
 |-----|:------:|----------------|--------|
 | 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
-| 400 | `jurisdictionId` | `if !messageJurisdictionId.Equals(urlParamJurisdictionId)` | Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}. |
 | 400 | `_count` | `if _count < 0` | bad request: _count must not be negative |
 | 400 | `page` | `if page < 1` | bad request: page must not be negative |
 | 400 | `_since` | `if (_since == default(DateTime) && page > 1)` | bad request: Pagination does not support specifying a page without a _since parameter |
@@ -24,6 +23,7 @@ Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_
 | Error Response Code | parameter | Validation Check | Error Message |
 |-----|:------:|----------------|--------|
 | 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
+| 400 | `jurisdictionId` | `if !messageJurisdictionId.Equals(urlParamJurisdictionId)` | Message jurisdiction ID {message.JurisdictionId} in the FHIR message must match the URL parameter jurisdiction ID {jurisdictionId}. |
 
 ## Parsing Validation
 
