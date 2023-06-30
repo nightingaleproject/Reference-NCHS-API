@@ -18,6 +18,13 @@ Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_
 # POST Requests
 Minimal validation is done on the bundle to avoid complexity at the API level. However, we want to make sure the message is parsable and traceable if it will be added to the database for ITB. It must be parsable, have the required headers, and be a valid event type.
 
+## Parameter Validation
+Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_since`
+
+| Error Response Code | parameter | Validation Check | Error Message |
+|-----|:------:|----------------|--------|
+| 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
+
 ## Parsing Validation
 
 | Error Response Code | Validation Check | Error Message |
