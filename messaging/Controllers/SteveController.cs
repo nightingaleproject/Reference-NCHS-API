@@ -21,12 +21,12 @@ namespace messaging.Controllers
 
         protected override IQueryable<OutgoingMessageItem> ExcludeRetrieved(IQueryable<OutgoingMessageItem> source)
         {
-            return source.Where(message => message.SteveRetrievedAt == null);
+            return source.Where(message => message.RetrievedAt == null);
         }
 
         protected override void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
         {
-            omi.SteveRetrievedAt = retrieved;
+            omi.RetrievedAt = retrieved;
         }
 
         protected override string GetMessageSource()

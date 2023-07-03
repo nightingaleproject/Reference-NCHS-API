@@ -28,7 +28,5 @@ namespace messaging.Models
         public string EventType {get; set;}
 
         public DateTime? RetrievedAt { get; set; }
-
-        public DateTime? SteveRetrievedAt { get; set; }
     }
 }
