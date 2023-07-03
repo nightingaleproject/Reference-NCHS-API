@@ -148,7 +148,36 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async Task SteveAndJurisdictionBothRetrieveSteveSubmission()
+        public async Task JurisdictionRetrieveSteveSubmission()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create and submit a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
+
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
+
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
+
+            // Make sure the ACKs made it into the queue before querying the endpoint
+            Assert.Equal(1, await GetTableCount(_context.OutgoingMessageItems, 1));
+
+            // Get the Jurisdiction response (don't need the retries because it is known to be in the queue)
+            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(NY_ENDPOINT);
+            Hl7.Fhir.Model.Bundle response = await JsonResponseHelpers.ParseBundleAsync(jurisdictionResponse);
+            Assert.Single(response.Entry);
+
+            // Get the STEVE response, which should be empty because the jurisdiction/STEVE queue are a single queue.
+            response = await GetQueuedMessages(STEVE_ENDPOINT);
+            Assert.Empty(response.Entry);
+        }
+
+                [Fact]
+        public async Task SteveRetrieveSteveSubmission()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -170,10 +199,10 @@ namespace messaging.tests
             Hl7.Fhir.Model.Bundle response = await GetQueuedMessages(STEVE_ENDPOINT);
             Assert.Single(response.Entry);
 
-            // Get the Jurisdiction response (don't need the retries because it is known to be in the queue)
+            // Get the Jurisdiction response, which should be empty because the jurisdiction/STEVE queue are a single queue.
             HttpResponseMessage jurisdictionResponse = await _client.GetAsync(NY_ENDPOINT);
             response = await JsonResponseHelpers.ParseBundleAsync(jurisdictionResponse);
-            Assert.Single(response.Entry);
+            Assert.Empty(response.Entry);
         }
 
         [Fact]
