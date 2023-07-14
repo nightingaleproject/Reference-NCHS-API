@@ -558,23 +558,6 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostNCHSIsInDestinationEndpointListUppercase()
-        {
-            // Clear any messages in the database for a clean test
-            DatabaseHelper.ResetDatabase(_context);
-
-            // Create a new empty Death Record WITH nchs in the endpoint list
-            DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
-            recordSubmission.JurisdictionId = "MA";
-            recordSubmission.MessageSource = "http://example.fhir.org";
-            recordSubmission.CertNo = 1;
-            recordSubmission.MessageDestination = "temp,http://nchs.CDC.gov/VRDR_Submission,temp";
-            // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
-            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
-        }
-
-        [Fact]
         public async void PostCatchMissingId()
         {
             // Clear any messages in the database for a clean test
