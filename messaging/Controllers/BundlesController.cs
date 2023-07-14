@@ -511,8 +511,7 @@ namespace messaging.Controllers
             List<string> destinationEndpoints = destination.Split(',').ToList();
             foreach (string d in destinationEndpoints)
             {
-                // set the message destination to lowercase to make the url validation case-insensitive
-                switch (d.ToLower())
+                switch (d)
                 {
                     case "http://nchs.cdc.gov/vrdr_acknowledgement":
                     case "http://nchs.cdc.gov/vrdr_alias":
