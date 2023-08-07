@@ -35,6 +35,7 @@ namespace messaging.Controllers
 
         /// <summary>
         /// Retrieves outgoing messages for the jurisdiction
+        /// If the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids.
         /// </summary>
         /// <returns>A Bundle of FHIR messages</returns>
         /// <response code="200">Content retrieved successfully</response>
@@ -44,7 +45,7 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since = default(DateTime), int page = 1)
+        public async Task<ActionResult<Bundle>> GetBundle(string jurisdictionId, int _count, string certificateNumber, int deathYear, DateTime _since = default(DateTime), int page = 1)
         {
             if (_count == 0)
             {
@@ -75,6 +76,19 @@ namespace messaging.Controllers
                 return BadRequest("Pagination does not support specifying a page without a _since parameter");
             }
 
+            if (certificateNumber != null && deathYear != null) {
+                return await GetOutgoingMessageItems(jurisdictionId, _count, _since, page);
+            } else {
+                return await GetMessagesWithBusinessIds(jurisdictionId, certificateNumber, deathYear, _count, _since, page);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves outgoing messages for the jurisdiction
+        /// </summary>
+        /// <returns>A Bundle of FHIR messages</returns>
+        private async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since, int page)
+        {
             try
             {
                 // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
@@ -173,44 +187,8 @@ namespace messaging.Controllers
         /// Retrieves all messages in history that match the given business ids (cert no., death year, jurisdicion id)
         /// </summary>
         /// <returns>A Bundle of FHIR messages</returns>
-        /// <response code="200">Content retrieved successfully</response>
-        /// <response code="400">Bad Request</response>
-        /// <response code="500">Internal Error, token may have expired</response>
-        [HttpGet("{certificateNumber}/{deathYear}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetMessagesWithBusinessIds(string jurisdictionId, string certificateNumber, int deathYear, int _count, DateTime _since = default(DateTime), int page = 1)
+        private async Task<ActionResult<Bundle>> GetMessagesWithBusinessIds(string jurisdictionId, string certificateNumber, int deathYear, int _count, DateTime _since, int page)
         {
-            if (_count == 0)
-            {
-                _count = _settings.PageCount;
-            }
-
-            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
-            {
-                // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
-                _logger.LogError("Rejecting request with invalid jurisdiction ID.");
-                return BadRequest("Invalid jurisdiction ID");
-            }
-
-            if (_count < 0)
-            {
-                _logger.LogError("Rejecting request with invalid count parameter.");
-                return BadRequest("_count must not be negative");
-            }
-            if (page < 1)
-            {
-                _logger.LogError("Rejecting request with invalid page number.");
-                return BadRequest("page must not be negative");
-            }
-            // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
-            if (_since == default(DateTime) && page > 1)
-            {
-                _logger.LogError("Rejecting request with a page number but no _since parameter.");
-                return BadRequest("Pagination does not support specifying a page without a _since parameter");
-            }
-            
             try
             {
                 // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
@@ -258,11 +236,9 @@ namespace messaging.Controllers
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
                 // DateTime retrievedTime = DateTime.UtcNow;   // *** Should this retrieved at be updated??? ***
 
-                Console.WriteLine(messages);
                 // Add messages to the bundle
                 foreach (var message in messages)
                 {
-                    Console.WriteLine(message);
                     responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
                 }
 
@@ -280,33 +256,33 @@ namespace messaging.Controllers
             }
         }
 
-        // POST: Bundles
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        /// <summary>
-        /// Submits a FHIR message to the API for processing
-        /// </summary>
-        /// <returns>If a single FHIR Message was submitted, nothing is returned. If a batch Bundle was submitted, a batch response is returned.</returns>
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     POST
-        ///
-        ///     {
-        ///         "resourceType": "Bundle",
-        ///         "id": "bffdbf2e-c0db-49cf-9f52-59a6459635b9",
-        ///         "type": "message",
-        ///         "timestamp": "2022-07-27T15:30:39.5787234+00:00",
-        ///         "entry": [
-        ///             { ...
-        ///             }
-        ///         ]
-        ///     }
-        ///
-        /// </remarks>
-        /// <response code="204">Content created</response>
-        /// <response code="400">Bad Request</response>
-        /// <response code="500">Internal Error, token may have expired</response>
-        [HttpPost]
+    // POST: Bundles
+    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+    /// <summary>
+    /// Submits a FHIR message to the API for processing
+    /// </summary>
+    /// <returns>If a single FHIR Message was submitted, nothing is returned. If a batch Bundle was submitted, a batch response is returned.</returns>
+    /// <remarks>
+    /// Sample request:
+    ///
+    ///     POST
+    ///
+    ///     {
+    ///         "resourceType": "Bundle",
+    ///         "id": "bffdbf2e-c0db-49cf-9f52-59a6459635b9",
+    ///         "type": "message",
+    ///         "timestamp": "2022-07-27T15:30:39.5787234+00:00",
+    ///         "entry": [
+    ///             { ...
+    ///             }
+    ///         ]
+    ///     }
+    ///
+    /// </remarks>
+    /// <response code="204">Content created</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="500">Internal Error, token may have expired</response>
+    [HttpPost]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

@@ -17,4 +17,8 @@ Usage: #definition
 * rest.resource[=].interaction[0].code = #search-type
 * rest.resource[=].searchParam[0].name = "_since"
 * rest.resource[=].searchParam[=].type = #date
+* rest.resource[=].searchParam[1].name = "certificateNumber"
+* rest.resource[=].searchParam[=].type = #string
+* rest.resource[=].searchParam[2].name = "deathYear"
+* rest.resource[=].searchParam[=].type = #number
 * rest.resource[=].interaction[+].code = #create

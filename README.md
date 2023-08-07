@@ -73,6 +73,11 @@ or
 GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=yyyy-MM-ddTHH:mm:ss.fffffff
 ```
 which returns any message created after the datetime provided in the _since parameter
+or
+```
+GET https://localhost:5001/<jurisdiction-id>/Bundle?certificateNumber=xxx&deathYear=xxx
+```
+which returns any message that matches the given business ids: jurisidicion id, certificate number, and death year.
 
 The API supports GET requests to retrieve responses from NCHS, including:
 
