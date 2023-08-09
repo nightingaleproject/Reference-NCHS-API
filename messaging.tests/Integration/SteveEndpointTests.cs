@@ -20,7 +20,7 @@ namespace messaging.tests
         private readonly ApplicationDbContext _context;
 
         private readonly string STEVE_ENDPOINT = "/STEVE/MA/Bundle";
-        private readonly string MA_ENDPOINT = "/MA/Bundle";
+        private readonly string NY_ENDPOINT = "/NY/Bundle";
 
         public SteveEndpointTests(CustomWebApplicationFactory<messaging.Startup> factory)
         {
@@ -153,7 +153,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             // Create and submit a new empty Death Record
-            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
+            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(BundlesControllerTests.FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
@@ -175,7 +175,7 @@ namespace messaging.tests
             Assert.Empty(response.Entry);
         }
 
-                [Fact]
+        [Fact]
         public async Task SteveRetrieveSteveSubmission()
         {
             // Clear any messages in the database for a clean test
