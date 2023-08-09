@@ -19,7 +19,7 @@ namespace messaging.tests
 
         private readonly ApplicationDbContext _context;
 
-        private readonly string STEVE_ENDPOINT = "/STEVE/MA/Bundle";
+        private readonly string STEVE_ENDPOINT = "/STEVE/NY/Bundle";
         private readonly string NY_ENDPOINT = "/NY/Bundle";
 
         public SteveEndpointTests(CustomWebApplicationFactory<messaging.Startup> factory)
