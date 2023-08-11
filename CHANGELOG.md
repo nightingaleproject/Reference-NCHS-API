@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.1.0-preview17 - 2023-08-11
+* Update library to v4.1.1
+
 ### v1.1.0-preview16 - 2023-07-14
 * Update library to v4.0.9
 
