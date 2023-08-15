@@ -4,10 +4,12 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using messaging.Models;
 using messaging.Services;
+using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Model;
 using VRDR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
@@ -294,14 +296,14 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
                 return BadRequest("Invalid jurisdiction ID");
             }
-
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
             Bundle responseBundle = new Bundle();
             try
             {
-                Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
+
                 // check whether the bundle is a message or a batch
+                Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
                 if (bundle?.Type == Bundle.BundleType.Batch)
                 {
                     responseBundle = new Bundle();
@@ -383,20 +385,6 @@ namespace messaging.Controllers
                 _logger.LogDebug($"An exception occurred while parsing the incoming bundle: {ex}");
                 return BadRequest("Failed to parse bundle. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
             }
-        }
-
-        private bool ValidateJurisdictionId(string messageJurisdictionId, string urlParamJurisdictionId) {
-            if (messageJurisdictionId == null)
-            {
-                _logger.LogError("Rejecting request without a jurisdiction ID in submission.");
-                return false;
-            }
-            if (!messageJurisdictionId.Equals(urlParamJurisdictionId))
-            {
-                _logger.LogError("Rejecting request with non-matching jurisidtion IDs: Message jurisdiction ID [" + messageJurisdictionId + "] and parameter jurisdiction ID [" + urlParamJurisdictionId + "].");
-                return false;
-            }
-            return true;
         }
 
         // InsertBatchMessage handles a single message in a batch upload submission
@@ -531,11 +519,6 @@ namespace messaging.Controllers
             {
                 _logger.LogDebug($"Message Certificate Number number is greater than 6 characters, throw exception");
                 throw new ArgumentException("Message Certificate Number cannot be more than 6 digits long");
-            }
-            if (!ValidateJurisdictionId(message.JurisdictionId, jurisdictionId))
-            {
-                _logger.LogDebug($"The message resource jurisdiction ID {message.JurisdictionId} did not match the parameter jurisdiction ID {jurisdictionId}.");
-                throw new ArgumentException($"Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}.");
             }
 
             IncomingMessageItem item = new IncomingMessageItem();

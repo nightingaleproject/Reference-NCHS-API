@@ -19,16 +19,6 @@ namespace messaging.Controllers
 
         public SteveController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings) : base(logger, context, services, settings) { }
 
-        protected override IQueryable<OutgoingMessageItem> ExcludeRetrieved(IQueryable<OutgoingMessageItem> source)
-        {
-            return source.Where(message => message.RetrievedAt == null);
-        }
-
-        protected override void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
-        {
-            omi.RetrievedAt = retrieved;
-        }
-
         protected override string GetMessageSource()
         {
             return "STV";
