@@ -633,7 +633,7 @@ namespace messaging.tests
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
-        private StreamReader FixtureStream(string filePath)
+        public static StreamReader FixtureStream(string filePath)
         {
             if (!Path.IsPathRooted(filePath))
             {
