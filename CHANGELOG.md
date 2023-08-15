@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.1.0-preview19 - 2023-08-15
+* Update library to v4.1.4
+
+### v1.1.0-preview18 - 2023-08-14
+* Change double queue for STEVE and the backup endpoint to a single queue
+
 ### v1.1.0-preview17 - 2023-08-11
 * Update library to v4.1.1
 
