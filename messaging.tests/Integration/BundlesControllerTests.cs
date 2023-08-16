@@ -112,9 +112,8 @@ namespace messaging.tests
             Console.WriteLine(recordSubmission.CertNo);
 
             Assert.Equal(1, updatedBundle.Entry.Count);
-            BaseMessage parsedMessage = BaseMessage.Parse<DeathRecordSubmissionMessage>((Hl7.Fhir.Model.Bundle)updatedBundle.Entry[0].Resource);
+            BaseMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Hl7.Fhir.Model.Bundle)updatedBundle.Entry[0].Resource);
             Console.WriteLine(parsedMessage.CertNo);
-            Assert.Equal(recordSubmission.MessageSource, parsedMessage.MessageSource);
             Assert.Equal(recordSubmission.CertNo, parsedMessage.CertNo);
             Assert.Equal(recordSubmission.DeathYear, parsedMessage.DeathYear);
         }
