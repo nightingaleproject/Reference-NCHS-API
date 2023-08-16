@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace messaging.Controllers
 {
@@ -78,59 +79,51 @@ namespace messaging.Controllers
                 return BadRequest("Pagination does not support specifying a page without a _since parameter");
             }
 
-            // If both a certificate number and death year are provided, query by business IDs. Otherwise, default to retrieving outgoing messages.
-            return (certificateNumber == null || deathYear == null) ?
-                await GetUnretrievedOutgoingMessageItems(jurisdictionId, _count, _since, page) :
-                await GetMessagesWithBusinessIds(jurisdictionId, certificateNumber, int.Parse(deathYear), _count, _since, page);
-        }
-
-        /// <summary>
-        /// Retrieves outgoing messages for the jurisdiction
-        /// </summary>
-        /// <returns>A Bundle of FHIR messages</returns>
-        private async Task<ActionResult<Bundle>> GetUnretrievedOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since, int page)
-        {
-            // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
-            IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId));
-
-            // Further scope the search to either unretrieved messages (or all since a specific time)
-            // TODO only allow the since param in development
-            // if _since is the default value, then apply the retrieved at logic
-            if (_since == default(DateTime))
+            // If both a certificate number and death year are provided, query by business IDs. Otherwise, default to unretrieved outgoing messages
+            if (certificateNumber == null || deathYear == null)
             {
-                outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
+                // Get unretrieved outgoing message items
+                // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
+                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId));
+                RouteValueDictionary searchParamValues = new RouteValueDictionary
+                {
+                    { "jurisdictionId", jurisdictionId },
+                    { "_count", _count }
+                };
+                return await GetOutgoingMessageItems(outgoingMessagesQuery, searchParamValues, true, _count, _since, page);
             }
             else
             {
-                outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
+                // Search for all outgoing messages by jurisdiction ID, certificate number, and death year
+                // Limit results to the jurisdiction's messages that match the given certificate number and death year; note this just builds the query but doesn't execute until the result set is enumerated
+                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId && message.CertificateNumber.Equals(certificateNumber) && message.EventYear == int.Parse(deathYear)));
+                RouteValueDictionary searchParamValues = new()
+                {
+                    { "jurisdictionId", jurisdictionId },
+                    { "certificateNumber", certificateNumber },
+                    { "deathYear", deathYear },
+                    { "_count", _count }
+                };
+                return await GetOutgoingMessageItems(outgoingMessagesQuery, searchParamValues, false, _count, _since, page);
             }
-
-            return await GetOutgoingMessageItems(outgoingMessagesQuery, new { jurisdictionId = jurisdictionId, _since = _since, _count = _count}, true, _count, _since, page);
         }
 
-        /// <summary>
-        /// Retrieves all messages in history that match the given business ids (cert no., death year, jurisdicion id)
-        /// </summary>
-        /// <returns>A Bundle of FHIR messages</returns>
-        
-        private async Task<ActionResult<Bundle>> GetMessagesWithBusinessIds(string jurisdictionId, string certificateNumber, int deathYear, int _count, DateTime _since, int page)
-        {
-            // Limit results to the jurisdiction's messages that match the given certificate number and death year; note this just builds the query but doesn't execute until the result set is enumerated
-            IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId && message.CertificateNumber.Equals(certificateNumber) && message.EventYear == deathYear));
-
-            // Further scope based on the _since parameter.
-            if (_since != default(DateTime))
-            {
-                outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
-            }
-
-            return await GetOutgoingMessageItems(outgoingMessagesQuery, new { jurisdictionId = jurisdictionId, _since = _since, _count = _count}, false, _count, _since, page);
-        }
-
-        private async Task<ActionResult<Bundle>> GetOutgoingMessageItems(IQueryable<OutgoingMessageItem> outgoingMessagesQuery, object parameterValues, bool updateRetrievedAt, int _count, DateTime _since, int page)
+        private async Task<ActionResult<Bundle>> GetOutgoingMessageItems(IQueryable<OutgoingMessageItem> outgoingMessagesQuery, RouteValueDictionary searchParamValues, bool updateRetrievedAt, int _count, DateTime _since, int page)
         {
             try
             {
+                // Further scope the search to either unretrieved messages (or all since a specific time)
+                // TODO only allow the since param in development
+                // if _since is the default value, then apply the retrieved at logic
+                if (_since == default(DateTime) && updateRetrievedAt)
+                {
+                    outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
+                }
+                else if (_since != default(DateTime))
+                {
+                    outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
+                }
+
                 int totalMessageCount = outgoingMessagesQuery.Count();
 
                 // Convert to list to execute the query, capture the result for re-use
@@ -155,21 +148,29 @@ namespace messaging.Controllers
                     // Only show the next link if there are additional messages beyond the current message set
                     if (totalMessageCount > outgoingMessages.Count())
                     {
-                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetBundle", new { parameterValues }));
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetBundle", searchParamValues));
                     }
                 }
                 else
                 {
                     var sinceFmt = _since.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetBundle", new { parameterValues, _since = sinceFmt, page = 1 }));
+                    searchParamValues.Add("_since", sinceFmt);
+                    searchParamValues.Remove("page");
+                    searchParamValues.Add("page", 1);
+                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetBundle", searchParamValues));
                     // take the total number of the original selected messages, round up, and divide by the count to get the total number of pages
                     int lastPage = (outgoingMessagesQuery.Count() + (_count - 1)) / _count;
-                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetBundle", new { parameterValues, _since = sinceFmt, page = lastPage }));
+                    searchParamValues.Remove("page");
+                    searchParamValues.Add("page", lastPage);
+                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetBundle", searchParamValues));
                     if (page < lastPage)
                     {
-                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetBundle", new { parameterValues, _since = sinceFmt, page = page + 1 }));
+                        searchParamValues.Remove("page");
+                        searchParamValues.Add("page", page + 1);
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetBundle", searchParamValues));
                     }
                 }
+
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
 
                 if (updateRetrievedAt)
