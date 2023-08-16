@@ -87,6 +87,38 @@ namespace messaging.tests
             Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
         }
 
+                [Fact]
+        public async System.Threading.Tasks.Task QueryByBusinessIds()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission = new(new DeathRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 1,
+                DeathYear = 2020
+            };
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundle?certificateNumber=" + recordSubmission.CertNo.ToString().PadLeft(6, '0') + "&deathYear=" + recordSubmission.DeathYear);
+            Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
+
+            Console.WriteLine(recordSubmission.CertNo);
+
+            Assert.Equal(1, updatedBundle.Entry.Count);
+            BaseMessage parsedMessage = BaseMessage.Parse<DeathRecordSubmissionMessage>((Hl7.Fhir.Model.Bundle)updatedBundle.Entry[0].Resource);
+            Console.WriteLine(parsedMessage.CertNo);
+            Assert.Equal(recordSubmission.MessageSource, parsedMessage.MessageSource);
+            Assert.Equal(recordSubmission.CertNo, parsedMessage.CertNo);
+            Assert.Equal(recordSubmission.DeathYear, parsedMessage.DeathYear);
+        }
+
         [Fact]
         public async System.Threading.Tasks.Task UnparsableMessagesCauseAnError() {
             // Clear any messages in the database for a clean test

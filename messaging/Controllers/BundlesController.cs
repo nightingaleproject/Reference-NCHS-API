@@ -47,7 +47,8 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetBundle(string jurisdictionId, int _count, string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1) {
+        public async Task<ActionResult<Bundle>> GetBundle(string jurisdictionId, int _count, string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
+        {
             if (_count == 0)
             {
                 _count = _settings.PageCount;
@@ -77,12 +78,18 @@ namespace messaging.Controllers
                 return BadRequest("Pagination does not support specifying a page without a _since parameter");
             }
 
+            // If both a certificate number and death year are provided, query by business IDs. Otherwise, default to retrieving outgoing messages.
             return (certificateNumber == null || deathYear == null) ?
                 await GetOutgoingMessageItems(jurisdictionId, _count, _since, page) :
-                await GetMessagesWithBusinessIds(jurisdictionId, certificateNumber, Int32.Parse(deathYear), _count, _since, page);
+                await GetMessagesWithBusinessIds(jurisdictionId, certificateNumber, int.Parse(deathYear), _count, _since, page);
         }
 
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since, int page) {
+        /// <summary>
+        /// Retrieves outgoing messages for the jurisdiction
+        /// </summary>
+        /// <returns>A Bundle of FHIR messages</returns>
+        private async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since, int page)
+        {
             try
             {
                 // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
@@ -162,18 +169,25 @@ namespace messaging.Controllers
             }
         }
 
-        private async Task<ActionResult<Bundle>> GetMessagesWithBusinessIds(string jurisdictionId, string certificateNumber, int deathYear, int _count, DateTime _since, int page) {
+        /// <summary>
+        /// Retrieves all messages in history that match the given business ids (cert no., death year, jurisdicion id)
+        /// </summary>
+        /// <returns>A Bundle of FHIR messages</returns>
+        private async Task<ActionResult<Bundle>> GetMessagesWithBusinessIds(string jurisdictionId, string certificateNumber, int deathYear, int _count, DateTime _since, int page)
+        {            
             try
             {
-                // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
-                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId));
+                // Limit results to the jurisdiction's messages that match the given certificate number and death year; note this just builds the query but doesn't execute until the result set is enumerated
+                // NOTE: Should this query outgoing messages, incoming messages, or both?
+                // IQueryable<IncomingMessageItem> outgoingMessagesQuery = _context.IncomingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId && message.CertificateNumber == certificateNumber && message.EventYear == deathYear));
+                IQueryable<IncomingMessageItem> outgoingMessagesQuery = _context.IncomingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId && message.CertificateNumber.Equals(certificateNumber) && message.EventYear == deathYear));
 
                 // Further scope the search to either unretrieved messages (or all since a specific time)
                 // TODO only allow the since param in development
                 // if _since is the default value, then apply the retrieved at logic
                 if (_since == default(DateTime))
                 {
-                    outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
+                    // outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
                 }
                 else
                 {
@@ -184,7 +198,13 @@ namespace messaging.Controllers
 
                 // Convert to list to execute the query, capture the result for re-use
                 int numToSkip = (page - 1) * _count;
-                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.RetrievedAt).Skip(numToSkip).Take(_count);
+
+                // *****
+                // Using IncomingMessageItems instead of OutgoingMessageItems since certificate number and death year seem to be always be null in OutgoingMessageItems, but they probably shouldn't be? When the retrieve endpoint is hit, then IncomingMessageItems for that same message has certno/deathyear populated.
+                // Which is the correct one to check for business IDs in? Both of them? Should OutgoingMessageItems have those fields populated?
+                // *****
+                // IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.RetrievedAt).Skip(numToSkip).Take(_count);
+                IEnumerable<IncomingMessageItem> outgoingMessages = outgoingMessagesQuery.Skip(numToSkip).Take(_count);
 
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
