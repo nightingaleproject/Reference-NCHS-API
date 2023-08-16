@@ -109,11 +109,8 @@ namespace messaging.tests
             HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundle?certificateNumber=" + recordSubmission.CertNo.ToString().PadLeft(6, '0') + "&deathYear=" + recordSubmission.DeathYear);
             Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
 
-            Console.WriteLine(recordSubmission.CertNo);
-
             Assert.Equal(1, updatedBundle.Entry.Count);
             BaseMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Hl7.Fhir.Model.Bundle)updatedBundle.Entry[0].Resource);
-            Console.WriteLine(parsedMessage.CertNo);
             Assert.Equal(recordSubmission.CertNo, parsedMessage.CertNo);
             Assert.Equal(recordSubmission.DeathYear, parsedMessage.DeathYear);
         }

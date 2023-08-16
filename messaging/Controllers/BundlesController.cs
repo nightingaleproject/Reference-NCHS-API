@@ -80,7 +80,7 @@ namespace messaging.Controllers
 
             // If both a certificate number and death year are provided, query by business IDs. Otherwise, default to retrieving outgoing messages.
             return (certificateNumber == null || deathYear == null) ?
-                await GetOutgoingMessageItems(jurisdictionId, _count, _since, page) :
+                await GetUnretrievedOutgoingMessageItems(jurisdictionId, _count, _since, page) :
                 await GetMessagesWithBusinessIds(jurisdictionId, certificateNumber, int.Parse(deathYear), _count, _since, page);
         }
 
@@ -88,117 +88,53 @@ namespace messaging.Controllers
         /// Retrieves outgoing messages for the jurisdiction
         /// </summary>
         /// <returns>A Bundle of FHIR messages</returns>
-        private async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since, int page)
+        private async Task<ActionResult<Bundle>> GetUnretrievedOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since, int page)
         {
-            try
+            // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
+            IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId));
+
+            // Further scope the search to either unretrieved messages (or all since a specific time)
+            // TODO only allow the since param in development
+            // if _since is the default value, then apply the retrieved at logic
+            if (_since == default(DateTime))
             {
-                // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
-                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId));
-
-                // Further scope the search to either unretrieved messages (or all since a specific time)
-                // TODO only allow the since param in development
-                // if _since is the default value, then apply the retrieved at logic
-                if (_since == default(DateTime))
-                {
-                    outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
-                }
-                else
-                {
-                    outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
-                }
-
-                int totalMessageCount = outgoingMessagesQuery.Count();
-
-                // Convert to list to execute the query, capture the result for re-use
-                int numToSkip = (page - 1) * _count;
-                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.RetrievedAt).Skip(numToSkip).Take(_count);
-
-                // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
-                // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
-                IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));
-
-                // create bundle to hold the response
-                Bundle responseBundle = new Bundle();
-                responseBundle.Type = Bundle.BundleType.Searchset;
-                responseBundle.Timestamp = DateTime.Now;
-                // Note that total is total number of matching results, not number being returned (outgoingMessages.Count)
-                responseBundle.Total = totalMessageCount;
-                // For the usual use case (unread only), the "next" page is just a repeated request.
-                // But when using since, we have to actually track pages
-                string baseUrl = GetNextUri();
-                if (_since == default(DateTime))
-                {
-                    // Only show the next link if there are additional messages beyond the current message set
-                    if (totalMessageCount > outgoingMessages.Count())
-                    {
-                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _count = _count }));
-                    }
-                }
-                else
-                {
-                    var sinceFmt = _since.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = 1 }));
-                    // take the total number of the original selected messages, round up, and divide by the count to get the total number of pages
-                    int lastPage = (outgoingMessagesQuery.Count() + (_count - 1)) / _count;
-                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = lastPage }));
-                    if (page < lastPage)
-                    {
-                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = page + 1 }));
-                    }
-                }
-                var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
-                DateTime retrievedTime = DateTime.UtcNow;
-
-                // Add messages to the bundle
-                foreach (var message in messages)
-                {
-                    responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
-                }
-
-                // update each outgoing message's RetrievedAt field
-                foreach(OutgoingMessageItem msgItem in outgoingMessages) {
-                    MarkAsRetrieved(msgItem, retrievedTime);
-                }
-                _context.SaveChanges();
-                return responseBundle;
+                outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogDebug($"An exception occurred while retrieving the response messages: {ex}");
-                return StatusCode(500);
+                outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
             }
+
+            return await GetOutgoingMessageItems(outgoingMessagesQuery, new { jurisdictionId = jurisdictionId, _since = _since, _count = _count}, true, _count, _since, page);
         }
 
         /// <summary>
         /// Retrieves all messages in history that match the given business ids (cert no., death year, jurisdicion id)
         /// </summary>
         /// <returns>A Bundle of FHIR messages</returns>
+        
         private async Task<ActionResult<Bundle>> GetMessagesWithBusinessIds(string jurisdictionId, string certificateNumber, int deathYear, int _count, DateTime _since, int page)
+        {
+            // Limit results to the jurisdiction's messages that match the given certificate number and death year; note this just builds the query but doesn't execute until the result set is enumerated
+            IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId && message.CertificateNumber.Equals(certificateNumber) && message.EventYear == deathYear));
+
+            // Further scope based on the _since parameter.
+            if (_since != default(DateTime))
+            {
+                outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
+            }
+
+            return await GetOutgoingMessageItems(outgoingMessagesQuery, new { jurisdictionId = jurisdictionId, _since = _since, _count = _count}, false, _count, _since, page);
+        }
+
+        private async Task<ActionResult<Bundle>> GetOutgoingMessageItems(IQueryable<OutgoingMessageItem> outgoingMessagesQuery, object parameterValues, bool updateRetrievedAt, int _count, DateTime _since, int page)
         {
             try
             {
-                // Limit results to the jurisdiction's messages that match the given certificate number and death year; note this just builds the query but doesn't execute until the result set is enumerated
-                // NOTE: Should this query outgoing messages, incoming messages, or both?
-                // IQueryable<IncomingMessageItem> outgoingMessagesQuery = _context.IncomingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId && message.CertificateNumber == certificateNumber && message.EventYear == deathYear));
-                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId && message.CertificateNumber.Equals(certificateNumber) && message.EventYear == deathYear));
-
-                // Further scope the search to either unretrieved messages (or all since a specific time)
-                // TODO only allow the since param in development
-                // if _since is the default value, then apply the retrieved at logic
-                if (_since == default(DateTime))
-                {
-                    // outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
-                }
-                else
-                {
-                    outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
-                }
-
                 int totalMessageCount = outgoingMessagesQuery.Count();
 
                 // Convert to list to execute the query, capture the result for re-use
                 int numToSkip = (page - 1) * _count;
-
                 IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.RetrievedAt).Skip(numToSkip).Take(_count);
 
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
@@ -219,23 +155,31 @@ namespace messaging.Controllers
                     // Only show the next link if there are additional messages beyond the current message set
                     if (totalMessageCount > outgoingMessages.Count())
                     {
-                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetMessagesWithBusinessIds", new { jurisdictionId = jurisdictionId, certificateNumber = certificateNumber, deathYear = deathYear, _count = _count }));
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetBundle", new { parameterValues }));
                     }
                 }
                 else
                 {
                     var sinceFmt = _since.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetMessagesWithBusinessIds", new { jurisdictionId = jurisdictionId, certificateNumber = certificateNumber, deathYear = deathYear, _since = sinceFmt, _count = _count, page = 1 }));
+                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetBundle", new { parameterValues, _since = sinceFmt, page = 1 }));
                     // take the total number of the original selected messages, round up, and divide by the count to get the total number of pages
                     int lastPage = (outgoingMessagesQuery.Count() + (_count - 1)) / _count;
-                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetMessagesWithBusinessIds", new { jurisdictionId = jurisdictionId, certificateNumber = certificateNumber, deathYear = deathYear, _since = sinceFmt, _count = _count, page = lastPage }));
+                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetBundle", new { parameterValues, _since = sinceFmt, page = lastPage }));
                     if (page < lastPage)
                     {
-                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetMessagesWithBusinessIds", new { jurisdictionId = jurisdictionId, certificateNumber = certificateNumber, deathYear = deathYear, _since = sinceFmt, _count = _count, page = page + 1 }));
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetBundle", new { parameterValues, _since = sinceFmt, page = page + 1 }));
                     }
                 }
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
-                // DateTime retrievedTime = DateTime.UtcNow;
+
+                if (updateRetrievedAt)
+                {
+                    DateTime retrievedTime = DateTime.UtcNow;
+                    // update each outgoing message's RetrievedAt field
+                    foreach(OutgoingMessageItem msgItem in outgoingMessages) {
+                        MarkAsRetrieved(msgItem, retrievedTime);
+                    }
+                }
 
                 // Add messages to the bundle
                 foreach (var message in messages)
@@ -243,10 +187,6 @@ namespace messaging.Controllers
                     responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
                 }
 
-                // // update each outgoing message's RetrievedAt field
-                // foreach(OutgoingMessageItem msgItem in outgoingMessages) {
-                //     MarkAsRetrieved(msgItem, retrievedTime);
-                // }
                 _context.SaveChanges();
                 return responseBundle;
             }
