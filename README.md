@@ -77,7 +77,7 @@ or
 ```
 GET https://localhost:5001/<jurisdiction-id>/Bundle?certificateNumber=xxxx&deathYear=yyyy
 ```
-which returns any message that matches the given business ids: jurisidicion id, certificate number, and death year.
+which returns any message that matches the given business ids: jurisidicion id, certificate number, and death year. Certificate number and death year are optional parameters, any combination of business IDs will further filter the results. When certificate number or death year are provided, it will not filter out previously retrieved messages.
 
 The API supports GET requests to retrieve responses from NCHS, including:
 
