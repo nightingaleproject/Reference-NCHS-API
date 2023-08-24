@@ -75,7 +75,7 @@ There are 3 optional parameters that can be included in a GET request to this en
 
 `_since` is to retrieve all response messages since a given timestamp. It is useful for seeing ALL message responses created in a specific time window.
 
-`deathYear` and `certificateNumber` can be used together or seperately to retrieve all message responses for the given set of business ids. It is useful for seeing the message response history for a particular record and verifying you successfully retrieved all messages during your testing.
+`deathYear` and `certificateNumber` can be used together or seperately to retrieve all message responses for the given set of business ids. It is useful for seeing the message response history for a particular record and verifying you successfully retrieved all messages during your testing. Currently, these test parameters are only supported by the backup endpoint.
 
 Providing any of these three search parameters may result in multiple pages of results. To make sure you retrieve all of the pages in the HTTP response, you will need to use pagination. See pagination section for details.
 
