@@ -72,8 +72,9 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid page number.");
                 return BadRequest("page must not be negative");
             }
+            bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && deathYear == null);
             // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
-            if (_since == default(DateTime) && page > 1)
+            if (!additionalParamsProvided && page > 1)
             {
                 _logger.LogError("Rejecting request with a page number but no _since parameter.");
                 return BadRequest("Pagination does not support specifying a page without a _since parameter");
@@ -85,6 +86,8 @@ namespace messaging.Controllers
                 { "_count", _count }
             };
             if (certificateNumber != null) {
+                // Pad left with leading zeros if not a 6-digit certificate number.
+                certificateNumber = certificateNumber.PadLeft(6, '0');
                 searchParamValues.Add("certificateNumber", certificateNumber);
             }
             if (deathYear != null) {
@@ -100,12 +103,12 @@ namespace messaging.Controllers
             {
                 // Further scope the search to either unretrieved messages (or all since a specific time)
                 // TODO only allow the since param in development
-                // if _since is the default value, then apply the retrieved at logic
-                if (_since == default(DateTime) && certificateNumber == null && deathYear == null)
+                // if _since is the default value, then apply the retrieved at logic unless certificate number or death year are provided
+                if (!additionalParamsProvided)
                 {
                     outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
                 }
-                else
+                if (_since != default(DateTime))
                 {
                     outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
                 }
@@ -129,7 +132,7 @@ namespace messaging.Controllers
                 // For the usual use case (unread only), the "next" page is just a repeated request.
                 // But when using since, we have to actually track pages
                 string baseUrl = GetNextUri();
-                if (_since == default(DateTime))
+                if (!additionalParamsProvided)
                 {
                     // Only show the next link if there are additional messages beyond the current message set
                     if (totalMessageCount > outgoingMessages.Count())
