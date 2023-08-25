@@ -77,7 +77,7 @@ namespace messaging.Controllers
             if (!additionalParamsProvided && page > 1)
             {
                 _logger.LogError("Rejecting request with a page number but no _since parameter.");
-                return BadRequest("Pagination does not support specifying a page without a _since parameter");
+                return BadRequest("Pagination does not support specifying a page without either a _since, certificateNumber, or deathYear parameter");
             }
 
             RouteValueDictionary searchParamValues = new()
