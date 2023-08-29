@@ -11,7 +11,7 @@ November 17, 2022
 [NCHS Backup Endpoint](#nchs-backup-endpoint)  
 
 ## Introduction
-The NVSS FHIR Modernization effort will implement the exchange of FHIR messages between jurisdiction’s and NCHS for mortality data. NCHS has implemented a test FHIR API server for jurisdictions to submit their mortality data. Each jurisdiction will implement a client that exchanges FHIR data with the NCHS server. A jurisdiction’s client implementation must follow the messaging protocol described in the [FHIR Messaging IG](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/message.html) to ensure reliable message delivery and traceability. The [Reference Client](https://github.com/nightingaleproject/Reference-Client-API) is an open-source example of a C# implementation of the FHIR Messaging IG. Implementers may leverage the Reference Client, tools such as Rhapsody, or develop a custom solution to communicate with the API. In general, each Client implementation should support the following guidelines when deployed to production. Each section species configurable parameters that should be defined in a separate config file.
+The NVSS FHIR Modernization effort will implement the exchange of FHIR messages between jurisdiction’s and NCHS for mortality data. NCHS has implemented a FHIR API server for jurisdictions to submit their mortality data. Each jurisdiction will implement a client that exchanges FHIR data with the NCHS server. A jurisdiction’s client implementation must follow the messaging protocol described in the [FHIR Messaging IG](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/message.html) to ensure reliable message delivery and traceability. The [Reference Client](https://github.com/nightingaleproject/Reference-Client-API) is an open-source example of a C# implementation of the FHIR Messaging IG. Implementers may leverage the Reference Client, tools such as Rhapsody, or develop a custom solution to communicate with the API. In general, each Client implementation should support the following guidelines when deployed to production. Each section specifies configurable parameters that should be defined in a separate config file.
 
 ## Integration with EDRS System
 The client must be integrated with the jurisdiction’s EDRS system so that FHIR Death Records produced by the EDRS system are submitted to the FHIR API by the client.
@@ -32,16 +32,28 @@ The client should support automatic authentication refresh
 - The SAMS auth token expires after 1 hour. Client systems should be capable of auto refreshing their token for uninterrupted communications. 
 
 ### Configurable Parameters
-- STEVE Username
-- STEVE Password
-- STEVE Client Secret
-- STEVE Client Token
-- STEVE Authentication endpoint
-- SAMS Username
-- SAMS Password
-- SAMS Client Secret
-- SAMS Client Token
-- SAMS Authentication endpoint
+The following parameters can be specified as configuration options for a client implementation. The STEVE parameters are required to send data to NCHS via STEVE. The SAMS parameters are required to send data to NCHS via the backup endpoint. The App Settings parameters should be set to the endpoint currently in use.
+
+- Username
+- Password
+- Client Secret
+- Client Token
+- Authentication endpoint
+
+App Settings Ex.
+```
+    "ConnectionStrings": {
+        ...
+        "AuthServer": "https://<authtoken-url>",
+        ...
+    },
+    "Authentication": {
+        "ClientId": "theclientid",
+        "ClientSecret": "theclientsecret",
+        "Username":"user",
+        "Password":"password"
+    },
+```
 
 ## Timeliness
 The client must submit FHIR messages in a timely manner. It is recommended that once a Death Record is entered into the EDRS system, it be submitted as soon as it becomes available, ideally within 1 hour.
@@ -51,6 +63,15 @@ The client must support polling the FHIR API to regularly check for FHIR message
 ### Configurable Parameters
 - Submission interval
 - Polling interval
+
+App Settings Ex.
+```
+{
+    ...
+    "SubmissionInterval" : 5,
+    "PollingInterval" : 5
+}
+```
 
 ## Message Resends
 The client must support resends if a message is not acknowledged within the configured time frame. The resubmission message header must be identical to the initial submission message header. The header date timestamp must be identical to the initial message to preserve the order the submission message and any update messages should be processed by NCHS. It is recommended to save the json bundle to preserve the exact message in case there is a need to resubmit. The current recommended resend window is 5 hours.
@@ -65,6 +86,15 @@ The current recommendation is to implement an “exponential” back off when re
 ### Configurable Parameters
 - Resend interval
 - Maximum retries
+
+App Settings Ex.
+```
+{
+    ...
+    "ResendInterval" : 14400,
+    "MaxRetries" : 3
+}
+```
 
 ## Response Message Handling
 The client must handle the following message response types
@@ -83,10 +113,48 @@ The client should support acknowledging response messages in a timely manner to 
 ### Configurable Parameters
 - Submission interval
 
+App Settings Ex.
+```
+{
+    ...
+    "SubmissionInterval" : 5
+}
+```
+
 ## Message Traceabality
 The client must maintain a persistent store of Death Records submitted to NCHS. It is recommended to make the message ID of past records easily accessible for traceability.
 
-The client must support tracing message responses to their initial submission so they can track the status of that message. Use the message ID of the submitted message and the reference message ID in message responses to implement traceability. 
+The client must support tracing message responses to their initial submission so they can track the status of that message. Use the message ID of the submitted message and the reference message ID in message responses to implement traceability. The example below shows a Message ID and how the reference ID is used in the acknowledgement message to refer to the original message.
+
+Message ID Ex.
+```
+timestamp": "2023-08-29T00:44:35.4271595+00:00",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:22d5e922-4841-4987-8f87-5c475ee1c796",
+      "resource": {
+        "resourceType": "MessageHeader",
+        "id": "22d5e922-4841-4987-8f87-5c475ee1c796",
+        "eventUri": "http://nchs.cdc.gov/vrdr_submission",
+        ...
+```
+
+Reference Message ID Ex.
+```
+"entry": [{
+        "fullUrl": "urn:uuid:761dca08-259b-4dcd-aeb7-bb3c73fa30f2",
+        "resource": {
+            "resourceType": "MessageHeader",
+            "id": "761dca08-259b-4dcd-aeb7-bb3c73fa30f2",
+            "eventUri": "http://nchs.cdc.gov/vrdr_acknowledgement",
+            "destination": [{"endpoint": "nightingale"}],
+            "source": {"endpoint": "http://nchs.cdc.gov/vrdr_submission"},
+            "response": {
+                "identifier": "22d5e922-4841-4987-8f87-5c475ee1c796",
+                "code": "ok"
+            },
+            ...
+```
 
 The client should provide an easy method to see the status of submitted messages and identify records that resulted in an Extraction Error and require modification.
 
@@ -94,7 +162,16 @@ The client should provide an easy method to see the status of submitted messages
 The client must be configured to submit messages to STEVE by default and to NCHS as a backup when STEVE is unavailable. Jurisdictions should only submit messages to the backup endpoint when NCHS directs them to switch from STEVE to the back up endpoint.
 
 ### Configurable Parameters
-- STEVE endpoint
-- NCHS backup endpoint
+- APIServer endpoint
+
+App Settings Ex.
+```
+    "ConnectionStrings": {
+        ...
+        "ApiServer": "https://<bundles-endpoint-url>",
+        ...
+    },
+```
+
 
 
