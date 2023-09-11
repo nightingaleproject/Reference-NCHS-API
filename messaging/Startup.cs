@@ -107,31 +107,36 @@ namespace messaging
             app.UseMiniProfiler();
             app.UseRouting();
 
-            // auth must be added between app.UseRouting and app.UseEndpoints
-            app.UseAuthentication();
-            app.UseAuthorization();
-
+            // require authorization for all endpoints in production
             if (env.IsProduction())
             {
-                // authentication callback for production
-                app.UseMiddleware<ExtractCustomHeaderMiddleware>();
-            }
+                // auth must be added between app.UseRouting and app.UseEndpoints
+                app.UseAuthentication();
+                app.UseAuthorization();
+                app.UseEndpoints(endpoints =>
+                {
+                    // the default redirect when the request is unauthorized is /Account/Login
+                    endpoints.MapGet("/Account/Login", (HttpContext ctx) => 
+                    {   return Results.Challenge(
+                        new AuthenticationProperties()
+                        {
+                            RedirectUri = "https://localhost:5001/TT/metadata"
+                        },
+                        authenticationSchemes: new List<string>() { "github" }
+                        ); 
+                    });
 
-            app.UseEndpoints(endpoints =>
-            {
-                // the default redirect when the request is unauthorized is /Account/Login
-                endpoints.MapGet("/Account/Login", (HttpContext ctx) => 
-                {   return Results.Challenge(
-                    new AuthenticationProperties()
-                    {
-                        RedirectUri = "https://localhost:5001/TT/metadata"
-                    },
-                    authenticationSchemes: new List<string>() { "github" }
-                    ); 
+                    endpoints.MapControllers().RequireAuthorization();
                 });
-                // require authorization for all endpoints
-                endpoints.MapControllers().RequireAuthorization();
-            });
+            }
+            else
+            {    
+                // no auth required
+                app.UseEndpoints(endpoints =>
+                {
+                endpoints.MapControllers();
+                });
+            }
         }
     }
 
