@@ -12,5 +12,5 @@ public class AppSettings
     public string TokenEndpoint {get; set;}
     public string UserInfo {get; set;}
     public string CallbackPath {get; set;}
-    
+    public string RedirectUri {get; set;}    
 }

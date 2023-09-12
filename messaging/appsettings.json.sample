@@ -9,7 +9,8 @@
     "AuthEndpoint" : "",
     "TokenEndpoint" : "",
     "UserInfo" : "",
-    "CallbackPath" : ""
+    "CallbackPath" : "",
+    "RedirectUri" : ""
   },
   "Serilog": {
     "Using": [

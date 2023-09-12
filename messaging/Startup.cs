@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using messaging.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
@@ -18,6 +19,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
 using System.Security.Claims;
+
 
 namespace messaging
 {
@@ -87,7 +89,7 @@ namespace messaging
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory, IOptions<AppSettings> settings)
         {
 
             app.UseHttpLogging();
@@ -120,7 +122,7 @@ namespace messaging
                     {   return Results.Challenge(
                         new AuthenticationProperties()
                         {
-                            RedirectUri = "https://localhost:5001/TT/metadata"
+                            RedirectUri = settings.Value.RedirectUri
                         },
                         authenticationSchemes: new List<string>() { "github" }
                         ); 
