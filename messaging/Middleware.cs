@@ -19,6 +19,7 @@ namespace messaging
 
         public async Task InvokeAsync(HttpContext context)
         {
+  
             const string HeaderKeyName = "MiddlewareHeaderKey";
             context.Request.Headers.TryGetValue(HeaderKeyName, out StringValues headerValue);
             if (context.Items.ContainsKey(HeaderKeyName))
@@ -29,9 +30,9 @@ namespace messaging
             {
                 context.Items.Add(HeaderKeyName, $"{headerValue}-received");
             }
-            foreach (string name in context.Items.Keys)
+            foreach (var header in context.Request.Headers)
             {
-                _logger.LogDebug($"The header value: {name}");            
+                _logger.LogDebug($"Headers: {header.Key} = {header.Value}"); 
             }
 
 
