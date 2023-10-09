@@ -32,7 +32,7 @@ namespace messaging
             }
             foreach (var header in context.Request.Headers)
             {
-                _logger.LogDebug($"Headers: {header.Key} = {header.Value}"); 
+                _logger.LogInformation($"Headers: {header.Key} = {header.Value}"); 
             }
 
 
