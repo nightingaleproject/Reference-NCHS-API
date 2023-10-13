@@ -113,9 +113,10 @@ namespace messaging
             if (env.IsProduction() || env.IsDevelopment())
             {
                 // auth must be added between app.UseRouting and app.UseEndpoints
+                app.UseMiddleware<ExtractCustomHeaderMiddleware>();
                 app.UseAuthentication();
                 app.UseAuthorization();
-                app.UseMiddleware<ExtractCustomHeaderMiddleware>();
+
                 app.UseEndpoints(endpoints =>
                 {
                     // the default redirect when the request is unauthorized is /Account/Login
