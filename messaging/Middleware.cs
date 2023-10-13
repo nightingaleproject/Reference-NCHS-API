@@ -20,8 +20,8 @@ namespace messaging
         public async Task InvokeAsync(HttpContext context)
         {
             // examine headers
-            var access_token = await content.GetTokenAsync("access_token");
-            _logger.LogInformation($"Authorization: {access_token.ToString()}");
+            var access_token = context.Request.Headers["Authorization"];
+            _logger.LogInformation($"Authorization: {access_token}");
             foreach (var header in context.Request.Headers)
             {
                 _logger.LogInformation($"Headers: {header.Key} = {header.Value}"); 
