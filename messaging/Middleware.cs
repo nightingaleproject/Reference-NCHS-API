@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
@@ -20,8 +21,21 @@ namespace messaging
         public async Task InvokeAsync(HttpContext context)
         {
             // examine headers
-            var access_token = context.Request.Headers["Authorization"];
-            _logger.LogInformation($"Authorization: {access_token}");
+            var userid = context.Request.Headers["useraccountid"];
+            _logger.LogInformation($"UserId: {userid}");
+
+            var userinfo = context.Request.Headers["userinfo"];
+            if (!String.IsNullOrEmpty(userinfo))
+            {
+                byte[] data = Convert.FromBase64String(userinfo);
+                string decodedString = System.Text.Encoding.UTF8.GetString(data);
+                _logger.LogInformation($"UserInfo: {decodedString}");
+            }
+            else
+            {
+                _logger.LogInformation($"UserInfo: not found");
+            }
+
             foreach (var header in context.Request.Headers)
             {
                 _logger.LogInformation($"Headers: {header.Key} = {header.Value}"); 
