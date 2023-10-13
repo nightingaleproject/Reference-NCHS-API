@@ -19,17 +19,9 @@ namespace messaging
 
         public async Task InvokeAsync(HttpContext context)
         {
-  
-            const string HeaderKeyName = "MiddlewareHeaderKey";
-            context.Request.Headers.TryGetValue(HeaderKeyName, out StringValues headerValue);
-            if (context.Items.ContainsKey(HeaderKeyName))
-            {
-                context.Items[HeaderKeyName] = headerValue;
-            }
-            else
-            {
-                context.Items.Add(HeaderKeyName, $"{headerValue}-received");
-            }
+            // examine headers
+            var access_token = await content.GetTokenAsync("access_token");
+            _logger.LogInformation($"Authorization: {access_token.ToString()}");
             foreach (var header in context.Request.Headers)
             {
                 _logger.LogInformation($"Headers: {header.Key} = {header.Value}"); 
