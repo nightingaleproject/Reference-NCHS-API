@@ -110,28 +110,28 @@ namespace messaging
             app.UseRouting();
 
             // require authorization for all endpoints in production
-            if (env.IsProduction() || env.IsDevelopment())
+            if (env.IsProduction())
             {
                 // auth must be added between app.UseRouting and app.UseEndpoints
-                app.UseMiddleware<ExtractCustomHeaderMiddleware>();
-                app.UseAuthentication();
-                app.UseAuthorization();
+                app.UseMiddleware<ExtractHeaderMiddleware>();
+                // app.UseAuthentication();
+                // app.UseAuthorization();
 
-                app.UseEndpoints(endpoints =>
-                {
-                    // the default redirect when the request is unauthorized is /Account/Login
-                    endpoints.MapGet("/Account/Login", (HttpContext ctx) => 
-                    {   return Results.Challenge(
-                        new AuthenticationProperties()
-                        {
-                            RedirectUri = settings.Value.RedirectUri
-                        },
-                        authenticationSchemes: new List<string>() { "github" }
-                        ); 
-                    });
+                // app.UseEndpoints(endpoints =>
+                // {
+                //     the default redirect when the request is unauthorized is /Account/Login
+                //     endpoints.MapGet("/Account/Login", (HttpContext ctx) => 
+                //     {   return Results.Challenge(
+                //         new AuthenticationProperties()
+                //         {
+                //             RedirectUri = settings.Value.RedirectUri
+                //         },
+                //         authenticationSchemes: new List<string>() { "github" }
+                //         ); 
+                //     });
 
-                    endpoints.MapControllers().RequireAuthorization();
-                });
+                //     endpoints.MapControllers().RequireAuthorization();
+                // });
             }
             else
             {    
