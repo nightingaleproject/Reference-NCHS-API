@@ -133,14 +133,12 @@ namespace messaging
                 //     endpoints.MapControllers().RequireAuthorization();
                 // });
             }
-            else
-            {    
-                // no auth required
-                app.UseEndpoints(endpoints =>
-                {
-                endpoints.MapControllers();
-                });
-            }
+ 
+            app.UseEndpoints(endpoints =>
+            {
+            endpoints.MapControllers();
+            });
+            
         }
     }
 
