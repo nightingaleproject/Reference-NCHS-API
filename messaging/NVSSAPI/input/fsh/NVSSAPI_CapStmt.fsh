@@ -13,17 +13,8 @@ Usage: #definition
 * fhirVersion = #4.0.1
 * format = #json
 * rest.mode = #server
-* rest.resource[+]
-  * type = #Bundle
-  * interaction[+].code = #search-type
-  * interaction[+].code = #create
-  * searchParam[+]
-    * name = "_since"
-    * type = #date
-  * searchParam[+]
-    * name = "certificateNumber"
-    * type = #string
-  * searchParam[+]
-    * name = "deathYear"
-    * type = #string
-
+* rest.resource[+].type = #Bundle
+* rest.resource[=].interaction[0].code = #search-type
+* rest.resource[=].searchParam[0].name = "_since"
+* rest.resource[=].searchParam[=].type = #date
+* rest.resource[=].interaction[+].code = #create

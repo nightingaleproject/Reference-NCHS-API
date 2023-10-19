@@ -68,24 +68,19 @@ The API supports several types of POST interaction:
 GET https://localhost:5001/<jurisdiction-id>/Bundle
 ```
 which returns any message response that has not been retrieved yet
-
-#### Optional Test Receive Responses GET Parameters
-
-There are 3 optional parameters that can be included in a GET request to this endpoint. They are `_since`, `certificateNumber`, and `deathYear`
-
-`_since` is to retrieve all response messages since a given timestamp. It is useful for seeing ALL message responses created in a specific time window.
-
-`deathYear` and `certificateNumber` can be used together or seperately to retrieve all message responses for the given set of business ids. It is useful for seeing the message response history for a particular record and verifying you successfully retrieved all messages during your testing.
-
-Providing any of these three search parameters may result in multiple pages of results. To make sure you retrieve all of the pages in the HTTP response, you will need to use pagination. See pagination section for details.
-
-#### NCHS API GET Request message types
+or
+```
+GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=yyyy-MM-ddTHH:mm:ss.fffffff
+```
+which returns any message created after the datetime provided in the _since parameter
 
 The API supports GET requests to retrieve responses from NCHS, including:
 
  * Acknowledgment messages acknowledging jurisdiction-submitted submission, update, and void messages
  * Error messages describing problems with jurisdiction-submitted messages
  * Coding response messages coding jurisdiction-submitted data such as cause of death, race, and ethnicity
+
+The API supports a `_since` parameter that will limit the messages returned to only message responses created since the provided timestamp.
 
 Messages flow from NCHS back to jurisdictions by jurisdiction systems polling the API looking for
 new responses. This approach of pulling responses rather than NCHS pushing responses to
