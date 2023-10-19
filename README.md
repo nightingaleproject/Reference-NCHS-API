@@ -75,7 +75,7 @@ There are 3 optional parameters that can be included in a GET request to this en
 
 `_since` is to retrieve all response messages since a given timestamp. It is useful for seeing ALL message responses created in a specific time window.
 
-`deathYear` and `certificateNumber` can be used together or seperately to retrieve all message responses for the given set of business ids. It is useful for seeing the message response history for a particular record and verifying you successfully retrieved all messages during your testing. Currently, these test parameters are only supported by the backup endpoint.
+`deathYear` and `certificateNumber` can be used together or seperately to retrieve all message responses for the given set of business ids. It is useful for seeing the message response history for a particular record and verifying you successfully retrieved all messages during your testing.
 
 Providing any of these three search parameters may result in multiple pages of results. To make sure you retrieve all of the pages in the HTTP response, you will need to use pagination. See pagination section for details.
 
@@ -204,12 +204,14 @@ expected:
   ID of the submission, not on the content of the message, and is the same behavior as expected
   when submitting two duplicate copies of a message to the same API.
 
-* **Response Retrieval Queue**: The NVSS FHIR API keeps track of which messages have been retrieved via
-  GET requests. Subsequent GET requests will not retrieve messages that have already been retrieved 
-  from the queue. If a jurisdiction places a GET request through STEVE and subsequently places a
-  GET request directly to NCHS, the two requests will refer to the same queue. If for any reason a
-  client implementation needs to switch from the STEVE endpoint to the backup endpoint, it will not 
-  receive any duplicate messages when it makes the switch. 
+* **Duplicate Retrievals**: The NVSS FHIR APIs keep track of which messages have been retrieved via
+  GET requests. Subsequent GET requests will not retrieve messages that have already been retrieved.
+  However, the NCHS and STEVE FHIR APIs keep track of which messages have been retrieved separately
+  from each other. If a jurisdiction places a GET request through STEVE and subsequently places a
+  GET request directly to NCHS the two requests will contain duplicate messages. If for any reason a
+  client implementation needs to make requests through both channels the client is responsible for
+  ignoring duplicate messages that come through both channels using the message ID to detect
+  duplicates.
 
 ## Authentication
 ```
