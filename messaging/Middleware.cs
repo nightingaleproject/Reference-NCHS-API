@@ -68,7 +68,7 @@ namespace messaging
         {
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-            await httpContext.HttpContext.Response.WriteAsync("Request Validation Has Failed. Request Access Denied");
+            await httpContext.Response.WriteAsync("Request Validation Has Failed. Request Access Denied");
         }
     }
 }
