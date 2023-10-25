@@ -48,20 +48,18 @@ namespace messaging
                     _logger.LogInformation($"UserInfo: not found");
                     throw new Exception("Unauthorized");
                 }
+
+                foreach (var header in context.Request.Headers)
+                {
+                    _logger.LogInformation($"Headers: {header.Key} = {header.Value}"); 
+                }
+
+                await _next(context);
             }
             catch (Exception e)
             {
                 await HandleExceptionAsync(context, e.Message);
             }
-
-
-            // foreach (var header in context.Request.Headers)
-            // {
-            //     _logger.LogInformation($"Headers: {header.Key} = {header.Value}"); 
-            // }
-
-
-            await _next(context);
         }
 
         private async Task HandleExceptionAsync(HttpContext httpContext, String msg)
