@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace messaging.Controllers
 {
@@ -37,6 +38,7 @@ namespace messaging.Controllers
 
         /// <summary>
         /// Retrieves outgoing messages for the jurisdiction
+        /// If the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids.
         /// </summary>
         /// <returns>A Bundle of FHIR messages</returns>
         /// <response code="200">Content retrieved successfully</response>
@@ -46,7 +48,7 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, DateTime _since = default(DateTime), int page = 1)
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
         {
             if (_count == 0)
             {
@@ -70,26 +72,43 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid page number.");
                 return BadRequest("page must not be negative");
             }
+            bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && deathYear == null);
             // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
-            if (_since == default(DateTime) && page > 1)
+            if (!additionalParamsProvided && page > 1)
             {
                 _logger.LogError("Rejecting request with a page number but no _since parameter.");
                 return BadRequest("Pagination does not support specifying a page without a _since parameter");
             }
 
+            RouteValueDictionary searchParamValues = new()
+            {
+                { "jurisdictionId", jurisdictionId },
+                { "_count", _count }
+            };
+            if (certificateNumber != null) {
+                // Pad left with leading zeros if not a 6-digit certificate number.
+                certificateNumber = certificateNumber.PadLeft(6, '0');
+                searchParamValues.Add("certificateNumber", certificateNumber);
+            }
+            if (deathYear != null) {
+                searchParamValues.Add("deathYear", deathYear);
+            }
+
+            // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
+            IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
+                    && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
+                    && (deathYear == null || message.EventYear == int.Parse(deathYear)));
+
             try
             {
-                // Limit results to the jurisdiction's messages; note this just builds the query but doesn't execute until the result set is enumerated
-                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => (message.JurisdictionId == jurisdictionId));
-
                 // Further scope the search to either unretrieved messages (or all since a specific time)
                 // TODO only allow the since param in development
-                // if _since is the default value, then apply the retrieved at logic
-                if (_since == default(DateTime))
+                // if _since is the default value, then apply the retrieved at logic unless certificate number or death year are provided
+                if (!additionalParamsProvided)
                 {
                     outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
                 }
-                else
+                if (_since != default(DateTime))
                 {
                     outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
                 }
@@ -98,7 +117,7 @@ namespace messaging.Controllers
 
                 // Convert to list to execute the query, capture the result for re-use
                 int numToSkip = (page - 1) * _count;
-                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.RetrievedAt).Skip(numToSkip).Take(_count);
+                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.CreatedDate).Skip(numToSkip).Take(_count);
 
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
@@ -113,28 +132,41 @@ namespace messaging.Controllers
                 // For the usual use case (unread only), the "next" page is just a repeated request.
                 // But when using since, we have to actually track pages
                 string baseUrl = GetNextUri();
-                if (_since == default(DateTime))
+                if (!additionalParamsProvided)
                 {
                     // Only show the next link if there are additional messages beyond the current message set
                     if (totalMessageCount > outgoingMessages.Count())
                     {
-                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _count = _count }));
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
                     }
                 }
                 else
                 {
                     var sinceFmt = _since.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
-                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = 1 }));
+                    searchParamValues.Add("_since", sinceFmt);
+                    searchParamValues.Remove("page");
+                    searchParamValues.Add("page", 1);
+                    responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
                     // take the total number of the original selected messages, round up, and divide by the count to get the total number of pages
                     int lastPage = (outgoingMessagesQuery.Count() + (_count - 1)) / _count;
-                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = lastPage }));
+                    searchParamValues.Remove("page");
+                    searchParamValues.Add("page", lastPage);
+                    responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
                     if (page < lastPage)
                     {
-                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", new { jurisdictionId = jurisdictionId, _since = sinceFmt, _count = _count, page = page + 1 }));
+                        searchParamValues.Remove("page");
+                        searchParamValues.Add("page", page + 1);
+                        responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
                     }
                 }
+
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
+
                 DateTime retrievedTime = DateTime.UtcNow;
+                // update each outgoing message's RetrievedAt field
+                foreach(OutgoingMessageItem msgItem in outgoingMessages) {
+                    MarkAsRetrieved(msgItem, retrievedTime);
+                }
 
                 // Add messages to the bundle
                 foreach (var message in messages)
@@ -142,10 +174,6 @@ namespace messaging.Controllers
                     responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
                 }
 
-                // update each outgoing message's RetrievedAt field
-                foreach(OutgoingMessageItem msgItem in outgoingMessages) {
-                    MarkAsRetrieved(msgItem, retrievedTime);
-                }
                 _context.SaveChanges();
                 return responseBundle;
             }
