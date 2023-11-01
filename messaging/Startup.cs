@@ -60,7 +60,7 @@ namespace messaging
                 context.Response.Headers.Add("Content-Type", "application/json");
                 context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
                 context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
-                context.Response.Headers.Add("Cache-Control", "no-cache");
+                context.Response.Headers.Add("Cache-Control", "no-store");
                 context.Response.Headers.Add("Content-Security-Policy", "default-src");
                 await next.Invoke();
             });
