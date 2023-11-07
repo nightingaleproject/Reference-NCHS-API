@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.1.1 - 2023-11-07
+* Make message header destination validation case insensitive
+
 ### v1.1.0-preview19 - 2023-08-15
 * Update library to v4.1.4
 
