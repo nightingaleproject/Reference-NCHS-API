@@ -14,7 +14,6 @@ namespace messaging.Controllers
     [ApiController]
     public class SteveCapabilityStatement : CapabilityStatement
     {
-        private readonly ApplicationDbContext _context;
         protected readonly ILogger<CapabilityStatement> _logger;
 
         public SteveCapabilityStatement(ILogger<CapabilityStatement> logger, ApplicationDbContext context) : base(logger, context)
