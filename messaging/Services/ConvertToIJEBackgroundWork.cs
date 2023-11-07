@@ -132,10 +132,6 @@ namespace messaging.Services
             return this._context.IncomingMessageLogs.Where(l => l.NCHSIdentifier == NCHSIdentifier).OrderBy(l => l.MessageTimestamp).LastOrDefault();
         }
 
-        private bool IncomingMessageItemExists(long id)
-        {
-            return this._context.IncomingMessageItems.Any(e => e.Id == id);
-        }
     }
   }
 }
