@@ -34,8 +34,13 @@ namespace messaging
                 opt.UseSqlServer(Configuration.GetConnectionString("NVSSMessagingDatabase"))
             );
             services.AddControllers().AddNewtonsoftJson(
-                options => options.SerializerSettings.Converters.Add(new BundleConverter())
-            );
+                options =>
+                {
+                    // Instruct Newtonsoft JSON parsing to just handle dates as strings to avoid the "helpful" conversion
+                    // of all DateTimeOffsets into the time zone where the API is running and instead preserve local time
+                    options.SerializerSettings.DateParseHandling = Newtonsoft.Json.DateParseHandling.None;
+                    options.SerializerSettings.Converters.Add(new BundleConverter());
+                });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1"});
