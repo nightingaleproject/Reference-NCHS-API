@@ -198,7 +198,6 @@ namespace messaging.tests
             return count;
         }
 
-
         [Fact]
         public async System.Threading.Tasks.Task ParseBatchIncomingMessages()
         {
@@ -472,6 +471,26 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/{badJurisdiction}/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+        }
+
+        [Fact]
+        public async void PostPreservesLocalTime()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Use a record with all datetimes set to using an offset that aligns with PST
+            string pstMsg = FixtureStream("fixtures/json/DeathRecordSubmissionMessagePST.json").ReadToEnd();
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/CA/Bundle", pstMsg);
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            // Make sure the record as stored has not had the local times converted from PST
+            // Note: running this test on a system actually in PST could create a false positive!
+            Assert.Equal(1, await GetTableCount(_context.IncomingMessageItems, 1));
+            var messageItem = _context.IncomingMessageItems.First();
+            Assert.Contains("\"timestamp\":\"2021-01-20T00:00:00-08:00\"", messageItem.Message);
         }
 
         [Fact]
