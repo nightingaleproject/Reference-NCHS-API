@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.1.2 - 2024-01-26
+* Fix Newtonsoft configuration to prevent deserializer from changing time zone
+
 ### v1.1.1 - 2023-11-07
 * Make message header destination validation case insensitive
 
