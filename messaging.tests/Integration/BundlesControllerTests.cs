@@ -99,7 +99,8 @@ namespace messaging.tests
                 // Set missing required fields
                 MessageSource = "http://example.fhir.org",
                 CertNo = 1,
-                DeathYear = 2020
+                DeathYear = 2020,
+                JurisdictionId = "MA"
             };
 
             // Submit that Death Record
