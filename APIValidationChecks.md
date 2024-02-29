@@ -24,6 +24,7 @@ Validation for the following URL parameters: `jurisdictionId`
 | Error Response Code | parameter | Validation Check | Error Message |
 |-----|:------:|----------------|--------|
 | 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
+| 400 | `jurisdictionId` | `if !messageJurisdictionId.Equals(urlParamJurisdictionId)` | Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}. |
 
 ## Parsing Validation
 
