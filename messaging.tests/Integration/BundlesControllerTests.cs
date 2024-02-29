@@ -59,7 +59,7 @@ namespace messaging.tests
             // This code does not have access to the background jobs, the best that can
             // be done is checking to see if the response is correct and if it is still
             // incorrect after the specified delay then assuming that something is wrong
-            for (int x = 0; x < 5; ++x) {
+            for (int x = 0; x < 10; ++x) {
                 HttpResponseMessage oneAck = await _client.GetAsync("/NY/Bundle");
                 updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
                 if (updatedBundle.Entry.Count > 0) {
@@ -85,6 +85,131 @@ namespace messaging.tests
             var lastMessageInBundle = updatedBundle.Entry.Last();
             AcknowledgementMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
             Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task QueryByBusinessIdsCerficateNumberAndDeathYear()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission = new(new DeathRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 1,
+                DeathYear = 2020
+            };
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundle?certificateNumber=" + recordSubmission.CertNo + "&deathYear=" + recordSubmission.DeathYear);
+            Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
+
+            Assert.Single(updatedBundle.Entry);
+            BaseMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Bundle)updatedBundle.Entry[0].Resource);
+            Assert.Equal(recordSubmission.CertNo, parsedMessage.CertNo);
+            Assert.Equal(recordSubmission.DeathYear, parsedMessage.DeathYear);
+        }
+
+        public async System.Threading.Tasks.Task QueryByBusinessIdsDeathYearPagination()
+                {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission1 = new(new DeathRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 1,
+                DeathYear = 2020
+            };
+
+            DeathRecordSubmissionMessage recordSubmission2 = new(new DeathRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 2,
+                DeathYear = 2020
+            };
+
+            // Submit the Death Records
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission1.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+            createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundle?deathYear=2020&_count=1");
+            Bundle updatedBundlePage1 = await JsonResponseHelpers.ParseBundleAsync(getBundle);
+            Assert.Single(updatedBundlePage1.Entry);
+            BaseMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Bundle)updatedBundlePage1.Entry[0].Resource);
+            Assert.Equal(recordSubmission1.CertNo, parsedMessage.CertNo);
+            Assert.Equal(recordSubmission1.DeathYear, parsedMessage.DeathYear);
+
+            getBundle = await _client.GetAsync("/MA/Bundle?deathYear=2020&_count=1&page=2");
+            Bundle updatedBundlePage2 = await JsonResponseHelpers.ParseBundleAsync(getBundle);
+            Assert.Single(updatedBundlePage1.Entry);
+            parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Bundle)updatedBundlePage2.Entry[0].Resource);
+            Assert.Equal(recordSubmission2.CertNo, parsedMessage.CertNo);
+            Assert.Equal(recordSubmission2.DeathYear, parsedMessage.DeathYear);
+        }
+
+        public async System.Threading.Tasks.Task QueryByBusinessIdCerficateNumber()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission = new(new DeathRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 1,
+                DeathYear = 2020
+            };
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundle?certificateNumber=" + recordSubmission.CertNo.ToString().PadLeft(6, '0'));
+            Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
+
+            Assert.Single(updatedBundle.Entry);
+            BaseMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Bundle)updatedBundle.Entry[0].Resource);
+            Assert.Equal(recordSubmission.CertNo, parsedMessage.CertNo);
+            Assert.Equal(recordSubmission.DeathYear, parsedMessage.DeathYear);
+        }
+
+        public async System.Threading.Tasks.Task QueryByBusinessIdsDeathYear()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage recordSubmission = new(new DeathRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 1,
+                DeathYear = 2020
+            };
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/MA/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            HttpResponseMessage getBundle = await _client.GetAsync("/MA/Bundle?&deathYear=" + recordSubmission.DeathYear);
+            Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
+
+            Assert.Single(updatedBundle.Entry);
+            BaseMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Bundle)updatedBundle.Entry[0].Resource);
+            Assert.Equal(recordSubmission.CertNo, parsedMessage.CertNo);
+            Assert.Equal(recordSubmission.DeathYear, parsedMessage.DeathYear);
         }
 
         [Fact]
@@ -677,7 +802,7 @@ namespace messaging.tests
             Assert.Equal("400", responseBundle.Entry[0].Response.Status);
             Assert.Equal("400", responseBundle.Entry[1].Response.Status);
         }
-        
+
         [Fact]
         public async void PostCatchInvalidCertNo()
         {

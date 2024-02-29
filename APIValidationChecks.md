@@ -4,14 +4,14 @@ This file documents the API's validation checks along with the returned error co
 # Get Requests
 
 ## Parameter Validation
-Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_since`
+Validation for the following URL parameters: `jurisdictionId` `_count` `page` `_since` `certificateNumber` `deathYear`
 
 | Error Response Code | parameter | Validation Check | Error Message |
 |-----|:------:|----------------|--------|
 | 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
 | 400 | `_count` | `if _count < 0` | bad request: _count must not be negative |
 | 400 | `page` | `if page < 1` | bad request: page must not be negative |
-| 400 | `_since` | `if (_since == default(DateTime) && page > 1)` | bad request: Pagination does not support specifying a page without a _since parameter |
+| 400 | `_since`, `certificateNumber`, `deathYear` | `if ((_since == default(DateTime) \|\| certificateNumber == null \|\| deathYear == null) && page > 1)` | bad request: Pagination does not support specifying a page without either a `_since`, `certicateNumber`, or `deathYear` parameter |
   
    
 # POST Requests
