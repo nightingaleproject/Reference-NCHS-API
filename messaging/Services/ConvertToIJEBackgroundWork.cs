@@ -59,6 +59,9 @@ namespace messaging.Services
                 outgoingMessageItem.Message = errorMessage.ToJSON();
                 outgoingMessageItem.MessageId = errorMessage.MessageId;
                 outgoingMessageItem.MessageType = errorMessage.GetType().Name;
+                outgoingMessageItem.CertificateNumber = errorMessage.CertNo.ToString().PadLeft(6, '0');
+                outgoingMessageItem.EventYear = errorMessage.DeathYear;
+                outgoingMessageItem.EventType = "MOR";
                 this._context.OutgoingMessageItems.Add(outgoingMessageItem);
             }
             await this._context.SaveChangesAsync();
@@ -118,6 +121,9 @@ namespace messaging.Services
             outgoingMessageItem.Message = ackMessage.ToJSON();
             outgoingMessageItem.MessageId = ackMessage.MessageId;
             outgoingMessageItem.MessageType = ackMessage.GetType().Name;
+            outgoingMessageItem.CertificateNumber = ackMessage.CertNo.ToString().PadLeft(6, '0');
+            outgoingMessageItem.EventYear = ackMessage.DeathYear;
+            outgoingMessageItem.EventType = "MOR";
             this._context.OutgoingMessageItems.Add(outgoingMessageItem);
             this._context.SaveChanges();
         }

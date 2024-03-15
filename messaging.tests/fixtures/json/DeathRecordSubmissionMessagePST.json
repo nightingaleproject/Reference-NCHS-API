@@ -47,7 +47,7 @@
         "parameter": [
           {
             "name": "jurisdiction_id",
-            "valueString": "NY"
+            "valueString": "CA"
           },
           {
             "name": "cert_no",
@@ -91,7 +91,7 @@
             }
           ],
           "system": "http://nchs.cdc.gov/vrdr_id",
-          "value": "2020NY000182"
+          "value": "2020CA000182"
         },
         "timestamp": "2020-01-20T14:48:35.401641-08:00",
         "entry": [
