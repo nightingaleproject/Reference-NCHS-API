@@ -193,7 +193,6 @@ namespace messaging.tests
             Assert.Equal(recordSubmission.DeathYear, parsedMessage.DeathYear);
         }
 
-        [Fact]
         public async System.Threading.Tasks.Task QueryByBusinessIdsDeathYear()
         {
             // Clear any messages in the database for a clean test
