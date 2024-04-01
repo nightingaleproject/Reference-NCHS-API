@@ -1,11 +1,11 @@
 Instance: NVSS-API-CS
 InstanceOf: CapabilityStatement
 Usage: #definition
-* version = "v1.1.2"
+* version = "v1.2.0"
 * name = "NVSS_API"
 * title = "NVSS API Server Capability Statement"
 * status = #draft
-* date = "2023-02-22"
+* date = "2024-04-01"
 * publisher = "NCHS"
 * kind = #instance
 * implementation.description = "NVSS API Server"
@@ -13,8 +13,16 @@ Usage: #definition
 * fhirVersion = #4.0.1
 * format = #json
 * rest.mode = #server
-* rest.resource[+].type = #Bundle
-* rest.resource[=].interaction[0].code = #search-type
-* rest.resource[=].searchParam[0].name = "_since"
-* rest.resource[=].searchParam[=].type = #date
-* rest.resource[=].interaction[+].code = #create
+* rest.resource[+]
+  * type = #Bundle
+  * interaction[+].code = #search-type
+  * interaction[+].code = #create
+  * searchParam[+]
+    * name = "_since"
+    * type = #date
+  * searchParam[+]
+    * name = "certificateNumber"
+    * type = #string
+  * searchParam[+]
+    * name = "deathYear"
+    * type = #string

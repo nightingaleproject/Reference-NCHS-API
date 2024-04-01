@@ -1,5 +1,10 @@
 ## Changelog
 
+### v1.2.0 - 2024-04-01
+* Validate url jurisdiction and message header jurisdiction match
+* Add feature to query by business ids; death year, certificate number, and jurisdiction id
+* Update library v4.1.8
+
 ### v1.1.2 - 2024-01-26
 * Fix Newtonsoft configuration to prevent deserializer from changing time zone
 

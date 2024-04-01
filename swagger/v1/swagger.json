@@ -10,7 +10,7 @@
         "tags": [
           "Bundles"
         ],
-        "summary": "Retrieves outgoing messages for the jurisdiction",
+        "summary": "Retrieves outgoing messages for the jurisdiction\r\nIf the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids.",
         "parameters": [
           {
             "name": "jurisdictionId",
@@ -28,6 +28,20 @@
             "schema": {
               "type": "integer",
               "format": "int32"
+            }
+          },
+          {
+            "name": "certificateNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deathYear",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -120,7 +134,7 @@
         "tags": [
           "Bundles"
         ],
-        "summary": "Retrieves outgoing messages for the jurisdiction",
+        "summary": "Retrieves outgoing messages for the jurisdiction\r\nIf the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids.",
         "parameters": [
           {
             "name": "jurisdictionId",
@@ -138,6 +152,20 @@
             "schema": {
               "type": "integer",
               "format": "int32"
+            }
+          },
+          {
+            "name": "certificateNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deathYear",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -254,7 +282,7 @@
         "tags": [
           "Steve"
         ],
-        "summary": "Retrieves outgoing messages for the jurisdiction",
+        "summary": "Retrieves outgoing messages for the jurisdiction\r\nIf the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids.",
         "parameters": [
           {
             "name": "jurisdictionId",
@@ -272,6 +300,20 @@
             "schema": {
               "type": "integer",
               "format": "int32"
+            }
+          },
+          {
+            "name": "certificateNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deathYear",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -364,7 +406,7 @@
         "tags": [
           "Steve"
         ],
-        "summary": "Retrieves outgoing messages for the jurisdiction",
+        "summary": "Retrieves outgoing messages for the jurisdiction\r\nIf the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids.",
         "parameters": [
           {
             "name": "jurisdictionId",
@@ -382,6 +424,20 @@
             "schema": {
               "type": "integer",
               "format": "int32"
+            }
+          },
+          {
+            "name": "certificateNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "deathYear",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           },
           {
