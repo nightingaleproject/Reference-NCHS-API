@@ -102,7 +102,7 @@ These instructions walk through the steps of installing the FHIR API on a Window
 7. Use your file explorer to connect to the remote server's filesystem (`\\ASTV-NVSS-API` for test and dev, `\\ASPV-NVSS-API` for prod) and paste all the files from step 6 to a new folder under `Users > Public`. Name the new folder using the version number of the software, ex. `NVSS-FHIR-API-v1.2.0`. The file transfer will take a few mintues.
 8. Connect to the server via rdp at https://pvwach.cdc.gov
 9. On the remote server, open the file explorer and copy the folder created in step 7. Paste the contents into a new folder under `D:/WebApps/`. If you are deploying dev and test, you will need to create two new folders, `D:/WebApps/NVSS-API-TEST-vx.x.x` and `D:/WebApps/NVSS-API-DEV-vx.x.x` and paste the contents into both folders.
-10. Copy all three `appsettings-X.json` files and the `web.config` file from the `NVSS-API-TEST` folder and paste them in the new `NVSS-API-TEST-vx.x.x` folder. Do the same for `NVSS-API-DEV` and `NVSS-API-DEV-vx.x.x`. The config files are different for dev, test, and prod so make sure you copy from the correct folder.
+10. Copy all three `appsettings.json`, `appsettings.Test.json`, and `appsettings.Development.json` files and the `web.config` file from the `NVSS-API-TEST` folder and paste them in the new `NVSS-API-TEST-vx.x.x` folder. Do the same for `NVSS-API-DEV` and `NVSS-API-DEV-vx.x.x`. The config files are different for dev, test, and prod so make sure you copy from the correct folder.
 11. If you are applying migrations, complete the following steps. Otherwise skip to step 12.
     1. From your local machine, connect to the dev server database in visual studio code using server explorer
        1. Select Microsoft SQL Server
