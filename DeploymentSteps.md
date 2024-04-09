@@ -1,6 +1,14 @@
 # NVSS FHIR API Deployment Steps
 These instructions walk through the steps of installing the FHIR API on a Windows Server. The setup includes intalling a SQL server, running the application using IIS, setting up a domain name, and certificates.
 
+[Initial Install Instructions](#initial-install-on-windows-server)  
+[Update Instructions](#update-deployment-steps)  
+[Update Identity Credentials](#updating-the-identity-credentials)  
+[Log Viewing](#log-viewing)  
+[Potential Issues](#potential-issues)  
+[IIS Resources](#iis-resources)  
+
+
 ## Initial Install On Windows Server 
 
 1. Setting up Windows Server
@@ -80,48 +88,58 @@ These instructions walk through the steps of installing the FHIR API on a Window
    8. Give the account from step 8.3 permissions to access the application folder
    9. Set up HSTS 
 
-## Update Deployment Steps:
+## Update Deployment Steps
 
-1. Pull the latest code from https://github.com/nightingaleproject/Reference-NCHS-API 
-2. Checkout the tagged verion you want to deploy
-3. Run `dotnet ef migrations list` to get a list of past migrations
-4. If there are new migrations to apply run `dotnet ef --project messaging migrations script <name-of-last-applied-migration>` to get the SQL script for all migrations after the last applied migration
-5. Run `dotnet publish —configuration release` on your local machine
-6. Copy the files in messaging > bin > release > net6.0
-7. Connect to the remote server's filesystem (\\ASTV-NVSS-API for test and dev, \\ASPV-NVSS-API for prod)and copy the files to a folder
-8. Copy all three appsettings and web.config from the `NVSS-API-TEST` folder and paste them in the new folder
-9.  If you are applying migrations, connect to the dev server database in visual studio code using server explorer
-   1. Select Microsoft SQL Server
-   2. server name: dstv-infc-1900.cdc.gov, dsdv-infc-1900.cdc.gov
-   3. database name: `NVSSMESSAGING`
-   4. Paste the SQL code from step 2 in a new query and run to apply the migration
-10. Sign into remote server
-11. Run the IIS application, Internet Information Services
+1. In gitbash, or your preferred command line tool, navigate to the Reference-NCHS-API root directory
+2. Use `git fetch` to pull the latest code from https://github.com/nightingaleproject/Reference-NCHS-API 
+3. Use `git checkout <vx.x.x>` to checkout the newest tagged verion on your local machine, see the list of tags [here](https://github.com/nightingaleproject/Reference-NCHS-API/tags)
+4. If there are migrations to apply for this verions, run `dotnet ef migrations list` to get a list of past migrations. Otherwise go to step 5.
+   1. If there are new migrations to apply for this version run `dotnet ef --project messaging migrations script <name-of-last-applied-migration>` to get the SQL script for all migrations after the last applied migration
+5. From the project root directory, run `dotnet publish —-configuration release` on your local machine.
+   1. If you are deploying a debug version, run `dotnet publish --configuration debug` instead. This will enable the debug logging.
+6. Copy the all files in `messaging > bin > release > net6.0`
+   1. If you are deploying a debug version, copy all the files in `messaging > bin > debug > net6.0 instead`
+7. Use your file explorer to connect to the remote server's filesystem (`\\ASTV-NVSS-API` for test and dev, `\\ASPV-NVSS-API` for prod) and paste all the files from step 6 to a new folder under `Users > Public`. Name the new folder using the version number of the software, ex. `NVSS-FHIR-API-v1.2.0`. The file transfer will take a few mintues.
+8. Connect to the server via rdp at https://pvwach.cdc.gov
+9. On the remote server, open the file explorer and copy the folder created in step 7. Paste the contents into a new folder under `D:/WebApps/`. If you are deploying dev and test, you will need to create two new folders, `D:/WebApps/NVSS-API-TEST-vx.x.x` and `D:/WebApps/NVSS-API-DEV-vx.x.x` and paste the contents into both folders.
+10. Copy all three `appsettings.json`, `appsettings.Test.json`, and `appsettings.Development.json` files and the `web.config` file from the `NVSS-API-TEST` folder and paste them in the new `NVSS-API-TEST-vx.x.x` folder. Do the same for `NVSS-API-DEV` and `NVSS-API-DEV-vx.x.x`. The config files are different for dev, test, and prod so make sure you copy from the correct folder.
+11. If you are applying migrations, complete the following steps. Otherwise skip to step 12.
+    1. From your local machine, connect to the dev server database in visual studio code using server explorer
+       1. Select Microsoft SQL Server
+       2. server name: `dstv-infc-1900.cdc.gov`, `dsdv-infc-1900.cdc.gov`
+       3. database name: `NVSSMESSAGING`
+       4. Paste the SQL code from step 4.1 in a new query and run to apply the migration
+12. Before you update the API, double check what the current version is by navigating to the metadata endpoint, ex. for test is `https://test.astv-nvss-api.cdc.gov/MA/metadata`. The API version will be specified in the json response.
+13. On the remote server, run the IIS application (Internet Information Services)
     1.  Select ASTV-NVSS-API
     2.  Expand sites
-    3.  Click on NVSS-FHIR-API-TEST and on the right hand side under Manage Website select "Stop" to stop the server
-12. In the remote desktop, open file explorer and navigate to the d drive
-    1.  Once the copy from step 6 has complete, update the folders in the d drive
-        1.  delete `NVSS-API-TEST-last-release`
-        2.  change the `NVSS-API-TEST` to `NVSS-API-TEST-last-release`
-        3.  change `NVSS-API-TEST-new` to `NVSS-API-TEST`
+    3.  Click on application you are updating, ex. `NVSS-FHIR-API-TEST` and on the right hand side under Manage Website select "Stop" to stop the API.
+14. In the remote desktop, open the file explorer and navigate to `D:/WebApps/`
+    1.  Update the folders in the D drive so IIS will pickup the latest version
+        1.  Rename `NVSS-API-TEST` to `NVSS-API-TEST-vx.x.x` where `vx.x.x` matches the version from step 12.
+        2.  Rename the new version `NVSS-API-TEST-vx.x.x` to `NVSS-API-TEST`
+        3.  Optional, clean up any old API folder versions in `D:/WebApps/` that are no longer needed.
+15. In the remote desktop, go to IIS and select "Start" to restart the API.
+16. Test the API is up and running
+    1.  Check the metadata endpoint, ex. for test it is `https://test.astv-nvss-api.cdc.gov/MA/metadata`, to confirm the API is up and running.
+    2. FOR DEV AND TEST ONLY, execute POST and GET test messages using either curl or Postmann to confirm the API is working as expected.
 
-Updating the Identity Credentials
+## Update Identity Credentials
 1. RDP into the server, dev and test are on ASTV-NVSS-API.cdc.gov
 2. Open Internet Information Services
 3. Go to the Application pool and click advanced settings
 4. Click Identity and enter the new credentials in the Custom Identity field
 
-Log viewing:
+## Log viewing
 To write logs to the log folder on the server:
 1. uncomment the logging line at the bottom of StartUp.cs
 2. uncomment the package in messaging.csproj to enable logging
 3. rebuild the release and deploy the code
 
-Potential issues:
+## Potential issues
 Might get error for dotnet 6 extension when trying to access the server with the new version update. To resolve the issue, install the extension on the pbi server.
 
 
-IIS resources:
+## IIS resources
 1. Install .NET Core Hosting Bundle Installer to add dotnet support to IIS https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-6.0 
 2. Configure the site in IIS https://docs.microsoft.com/en-us/aspnet/core/tutorials/publish-to-iis?view=aspnetcore-6.0&tabs=visual-studio 
