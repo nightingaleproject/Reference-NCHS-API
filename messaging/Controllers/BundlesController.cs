@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Routing;
 using System.Linq.Expressions;
 using Hl7.Fhir.Utility;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Threading;
 
 namespace messaging.Controllers
 {
@@ -567,10 +568,15 @@ namespace messaging.Controllers
             await _context.IncomingMessageItems.AddAsync(item);
             await _context.SaveChangesAsync();
 
-            // Queue Natality for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on"
+            // Queue Natality messages for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on" for testing
             if (item.EventType == "NAT" || _settings.AckAndIJEConversion)
             {
                 queue.QueueConvertToIJE(item.Id);
+            }
+            // If we are in test mode, give the worker thread 1 extra second to insert the outgoing message, this helps our tests avoid race condition failures
+            if (_settings.AckAndIJEConversion)
+            {
+                Thread.Sleep(new TimeSpan(0,0,1));
             }
         }
 
@@ -594,7 +600,8 @@ namespace messaging.Controllers
                 case "http://nchs.cdc.gov/vrdr_submission_void":
                     return "MOR";
                 case "http://nchs.cdc.gov/bfdr_submission":
-                case "http://nchs.cdc.gov/bfdr_acknowledgement": 
+                case "http://nchs.cdc.gov/bfdr_acknowledgement":
+                case "http://nchs.cdc.gov/bfdr_submission_update": 
                 case "http://nchs.cdc.gov/bfdr_demographics_coding":
                 case "http://nchs.cdc.gov/bfdr_extraction_error":
                 case "http://nchs.cdc.gov/bfdr_status":
@@ -668,6 +675,7 @@ namespace messaging.Controllers
                 switch (messageType)
                 {
                     case "BirthRecordSubmissionMessage":
+                    case "BirthRecordUpdateMessage":
                     case "BirthRecordAcknowledgementMessage": 
                     case "BirthRecordVoidMessage":
                         return true;
