@@ -318,7 +318,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async System.Threading.Tasks.Task UpdateMessagesAreSuccessfullyAcknowledged()
+        public async System.Threading.Tasks.Task UpdateDeathMessagesAreSuccessfullyAcknowledged()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -366,7 +366,63 @@ namespace messaging.tests
                 }
             }
 
-            // Even though the message is a duplicate, it is still ACK'd
+            // Both the original and update submission should receive an ACK
+            Assert.Equal(2, updatedBundle.Entry.Count);
+
+            // Should receive the initial submission message and then an update messaage
+            Assert.Equal(2, await GetTableCount(_context.IJEItems, 2));
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task UpdateBirthMessagesAreSuccessfullyAcknowledged()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Get the current time
+            DateTime currentTime = DateTime.UtcNow;
+            // Create a new Birth Record
+            BirthRecordSubmissionMessage recordSubmission = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
+
+            // Submit that Death Record
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
+
+            BirthRecordUpdateMessage recordUpdate = new BirthRecordUpdateMessage(recordSubmission.BirthRecord);
+            
+            // Set missing required fields
+            recordUpdate.MessageSource = "http://example.fhir.org";
+            recordUpdate.CertNo = 1;
+
+            // Submit update message
+            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", recordUpdate.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
+
+            // Make sure the ACKs made it into the queue before querying the endpoint
+            Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
+
+            Hl7.Fhir.Model.Bundle updatedBundle = null;
+            // This code does not have access to the background jobs, the best that can
+            // be done is checking to see if the response is correct and if it is still
+            // incorrect after the specified delay then assuming that something is wrong
+            // use the since parameter to make sure we get both messages
+            string since = currentTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+            for (int x = 0; x < 3; ++x) {
+                HttpResponseMessage getBundle = await _client.GetAsync("/UT/Bundle?_since=" + since);
+                updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
+                // Waiting for 2 messages to appear
+                if (updatedBundle.Entry.Count > 1) {
+                    break;
+                } else {
+                    await System.Threading.Tasks.Task.Delay(x * 500);
+                }
+            }
+
+            // Both the original and update submission should receive an ACK
             Assert.Equal(2, updatedBundle.Entry.Count);
 
             // Should receive the initial submission message and then an update messaage
@@ -374,7 +430,7 @@ namespace messaging.tests
         }
 
         // Gets the number of items in the table; retries with cooldown if the expected number is not yet present
-        protected async Task<int> GetTableCount<T>(IQueryable<T> table, int expectedCount, int retries = 10, int cooldown = 500) where T : class
+        protected async Task<int> GetTableCount<T>(IQueryable<T> table, int expectedCount, int retries = 5, int cooldown = 500) where T : class
         {
             int count = table.Count();
             while (count < expectedCount && --retries > 0)

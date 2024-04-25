@@ -79,10 +79,10 @@ namespace messaging.Services
                     switch(parsedMessage) {
                         case BirthRecordUpdateMessage update:
                             HandleBirthUpdateMessage(update, item);
-                        break;
+                            break;
                         case BirthRecordSubmissionMessage submission:
                             HandleBirthSubmissionMessage(submission, item);
-                        break;
+                            break;
                     }
                 } catch {
                     BirthRecordErrorMessage errorMessage = new BirthRecordErrorMessage(parsedMessage);
