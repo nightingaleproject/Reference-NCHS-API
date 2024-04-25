@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.2.1 - 2024-04-25
+* Update library v4.1.9
+
 ### v1.2.0 - 2024-04-01
 * Validate url jurisdiction and message header jurisdiction match
 * Add feature to query by business ids; death year, certificate number, and jurisdiction id
