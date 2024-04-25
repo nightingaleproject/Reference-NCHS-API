@@ -13,6 +13,7 @@ using System.Net;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Model;
 using VRDR;
+using BFDR;
 
 
 namespace messaging.tests
@@ -39,7 +40,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async System.Threading.Tasks.Task NewSubmissionMessagePostCreatesNewAcknowledgement()
+        public async System.Threading.Tasks.Task NewDeathSubmissionMessagePostCreatesNewAcknowledgement()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -84,6 +85,55 @@ namespace messaging.tests
             // Extract the message from the bundle and ensure it is an ACK for the appropritae message
             var lastMessageInBundle = updatedBundle.Entry.Last();
             AcknowledgementMessage parsedMessage = BaseMessage.Parse<AcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
+            Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task NewBirthSubmissionMessagePostCreatesNewAcknowledgement()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new Birth Record
+            BirthRecordSubmissionMessage recordSubmission = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            Hl7.Fhir.Model.Bundle updatedBundle = null;
+            // This code does not have access to the background jobs, the best that can
+            // be done is checking to see if the response is correct and if it is still
+            // incorrect after the specified delay then assuming that something is wrong
+            for (int x = 0; x < 10; ++x) {
+                HttpResponseMessage oneAck = await _client.GetAsync("/UT/Bundle");
+                updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
+                if (updatedBundle.Entry.Count > 0) {
+                    break;
+                } else {
+                    await System.Threading.Tasks.Task.Delay(x * 500);
+                }
+            }
+            // with the new retrievedAt column, only one message should be returned
+            Assert.Single(updatedBundle.Entry);
+
+            // Check to see if the results returned for a jurisdiction other than NY does not return NY entries
+            HttpResponseMessage noMessages = await _client.GetAsync("/FL/Bundle");
+            var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
+            Assert.Empty(noMessagesBundle.Entry);
+
+            // Check that the retrievedAt column filters out the ACK message if we place another request
+            HttpResponseMessage noNewMsgs = await _client.GetAsync("/UT/Bundle");
+            Hl7.Fhir.Model.Bundle emptyBundle = await JsonResponseHelpers.ParseBundleAsync(noNewMsgs);
+            Assert.Empty(emptyBundle.Entry);
+
+            // Extract the message from the bundle and ensure it is an ACK for the appropritae message
+            var lastMessageInBundle = updatedBundle.Entry.Last();
+            BirthRecordAcknowledgementMessage parsedMessage = BirthRecordBaseMessage.Parse<BirthRecordAcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
             Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
         }
 
@@ -192,7 +242,8 @@ namespace messaging.tests
             Assert.Equal(recordSubmission.CertNo, parsedMessage.CertNo);
             Assert.Equal(recordSubmission.DeathYear, parsedMessage.DeathYear);
         }
-
+        
+        [Fact]
         public async System.Threading.Tasks.Task QueryByBusinessIdsDeathYear()
         {
             // Clear any messages in the database for a clean test
@@ -321,7 +372,7 @@ namespace messaging.tests
         }
 
         // Gets the number of items in the table; retries with cooldown if the expected number is not yet present
-        protected async Task<int> GetTableCount<T>(IQueryable<T> table, int expectedCount, int retries = 3, int cooldown = 500) where T : class
+        protected async Task<int> GetTableCount<T>(IQueryable<T> table, int expectedCount, int retries = 10, int cooldown = 500) where T : class
         {
             int count = table.Count();
             while (count < expectedCount && --retries > 0)
@@ -372,6 +423,20 @@ namespace messaging.tests
             Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
 
             HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/MA/Bundle", batchJson);
+            Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task ParseBatchIncomingSingleBirthMessage()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            string batchJson = FixtureStream("fixtures/json/BatchSingleBirthMessage.json").ReadToEnd();
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", batchJson);
+            Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+
+            HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, "/STEVE/UT/Bundle", batchJson);
             Assert.Equal(HttpStatusCode.OK, submissionMessage2.StatusCode);
         }
 
@@ -597,7 +662,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             string badJurisdiction = "AB";
-            Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
+            Assert.False(VR.IJEData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
             // Create a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -833,7 +898,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             string badJurisdiction = "AB";
-            Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
+            Assert.False(VR.IJEData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
             HttpResponseMessage response = await _client.GetAsync($"/{badJurisdiction}/Bundle");
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
