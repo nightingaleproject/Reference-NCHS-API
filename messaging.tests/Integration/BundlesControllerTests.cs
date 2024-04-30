@@ -14,6 +14,7 @@ using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Model;
 using VRDR;
 using BFDR;
+using VR;
 
 
 namespace messaging.tests
@@ -733,7 +734,16 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/{badJurisdiction}/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/{badJurisdiction}/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
+
+        
 
         [Fact]
         public async void PostPreservesLocalTime()
@@ -768,6 +778,14 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record with an empty source
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+            Assert.Null(recordSubmission2.MessageSource);
+
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
         [Fact]
@@ -785,6 +803,16 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record with an empty source
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+            recordSubmission2.MessageSource = "http://example.fhir.org";
+            recordSubmission2.CertNo = 1;
+            recordSubmission2.MessageDestination = null;
+
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
 
@@ -802,6 +830,15 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record WITHOUT nchs as a destination endpoint
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+            recordSubmission2.MessageSource = "http://example.fhir.org";
+            recordSubmission2.CertNo = 1;
+            recordSubmission2.MessageDestination = "http://notnchs.cdc.gov/bfdr_submission";
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
 
@@ -819,6 +856,15 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record WITHOUT nchs in endpoint list
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+            recordSubmission2.MessageSource = "http://example.fhir.org";
+            recordSubmission2.CertNo = 1;
+            recordSubmission2.MessageDestination = "http://notnchs.cdc.gov/bfdr_submission,http://steve.org/bfdr_submission";
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
 
@@ -837,6 +883,16 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/NY/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            // Create a new Birth Record WITH nchs in the endpoint list
+            BirthRecordSubmissionMessage recordSubmission2 = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+
+            recordSubmission2.MessageSource = "http://example.fhir.org";
+            recordSubmission2.CertNo = 1;
+            recordSubmission2.MessageDestination = "http://notnchs.cdc.gov/bfdr_submission,http://nchs.cdc.gov/bfdr_submission";
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage2.StatusCode);
         }
 
         [Fact]
@@ -854,6 +910,16 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record WITH nchs in the endpoint list
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+            recordSubmission2.JurisdictionId = "MA";
+            recordSubmission2.MessageSource = "http://example.fhir.org";
+            recordSubmission2.CertNo = 1;
+            recordSubmission2.MessageDestination = "temp,http://nchs.CDC.gov/BFDR_Submission,temp";
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage2.StatusCode);
         }
 
         [Fact]
@@ -871,6 +937,16 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record with an empty message id
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+            recordSubmission2.MessageSource = "http://example.fhir.org";
+            recordSubmission2.CertNo = 1;
+            recordSubmission2.MessageId = null;
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
         [Fact]
@@ -888,6 +964,16 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record with an empty message type
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+            recordSubmission2.MessageSource = "http://example.fhir.org";
+            recordSubmission2.CertNo = 1;
+            recordSubmission2.MessageType = null;
+
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
         [Fact]
@@ -903,6 +989,14 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record with a missing cert number
+            BirthRecordSubmissionMessage recordSubmission2 = new BirthRecordSubmissionMessage(new BirthRecord());
+            recordSubmission2.MessageSource = "http://example.fhir.org";
+
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
         [Fact]
@@ -920,6 +1014,13 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/{jurisdictionParameter}/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new Birth Record
+            BirthRecordSubmissionMessage recordSubmission2 = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/{jurisdictionParameter}/Bundle", recordSubmission2.ToJson());
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
         [Fact]
@@ -938,6 +1039,13 @@ namespace messaging.tests
             Bundle responseBundle = await JsonResponseHelpers.ParseBundleAsync(submissionMessage);
             Assert.Equal("400", responseBundle.Entry[0].Response.Status);
             Assert.Equal("400", responseBundle.Entry[1].Response.Status);
+
+            // Create a new batch message
+            string batchJson2 = FixtureStream("fixtures/json/BatchSingleBirthMessage.json").ReadToEnd();
+            HttpResponseMessage submissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/{jurisdictionParameter}/Bundles", batchJson2);
+            Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+            Bundle responseBundle2 = await JsonResponseHelpers.ParseBundleAsync(submissionMessage2);
+            Assert.Equal("400", responseBundle2.Entry[0].Response.Status);
         }
 
         [Fact]
@@ -952,6 +1060,13 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", invalidCertMsg);
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
+
+            // Create a new empty Birth Record with an invalid cert number
+            string invalidCertMsg2= FixtureStream("fixtures/json/BirthRecordSubmissionMessageInvalidCertNo.json").ReadToEnd();
+
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", invalidCertMsg2);
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
         [Fact]
