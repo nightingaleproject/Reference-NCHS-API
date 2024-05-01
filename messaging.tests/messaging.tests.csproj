@@ -22,6 +22,7 @@
     <None Update="fixtures/json/BatchWithOneErrorMessage.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/BirthRecordSubmissionMessage.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/DeathRecordSubmissionMessage.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="fixtures/json/DeathRecordSubmissionMessageUT.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/DeathRecordSubmissionMessageInvalidCertNo.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/BirthRecordSubmissionMessageInvalidCertNo.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/DeathRecordSubmissionMessagePST.json" CopyToOutputDirectory="PreserveNewest" />
