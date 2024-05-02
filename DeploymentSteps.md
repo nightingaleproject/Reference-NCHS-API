@@ -139,7 +139,11 @@ To write logs to the log folder on the server:
 ## Potential issues
 Might get error for dotnet 6 extension when trying to access the server with the new version update. To resolve the issue, install the extension on the pbi server.
 
-
 ## IIS resources
 1. Install .NET Core Hosting Bundle Installer to add dotnet support to IIS https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-6.0 
-2. Configure the site in IIS https://docs.microsoft.com/en-us/aspnet/core/tutorials/publish-to-iis?view=aspnetcore-6.0&tabs=visual-studio 
+2. Configure the site in IIS https://docs.microsoft.com/en-us/aspnet/core/tutorials/publish-to-iis?view=aspnetcore-6.0&tabs=visual-studio
+
+## Security Scans for Production Updates
+All updates to the production API should go through the proper NCHS security scans.
+1. Go to the OCIO Software Assurance Homepage and navigate to the "Common Forms" section to request a security scan for the API. The API scan should already be configured so you can quickly make new requests.
+2. The software should also be scanned using the Fortify Scan Wizard. The Fortify Scan Wizard must be intalled locally. The Wizard will guide you through the scan process to scan the source code of the project. See CDC Fortify SSC and SCA quick guides for instructions.
