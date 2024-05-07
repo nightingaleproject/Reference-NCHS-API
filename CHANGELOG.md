@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.3.0 - 2024-05-07
+* Add support for Natality Messaging
+* Add POST and GET route handling for vital record type and IG version number, ex. MA/Bundle/BFDR/v2.0
+  * Validate the record aligns with the url vital record type on POST
+  * Return record submissions based on record type on GET
+
 ### v1.2.1 - 2024-04-25
 * Update library v4.1.9
 
