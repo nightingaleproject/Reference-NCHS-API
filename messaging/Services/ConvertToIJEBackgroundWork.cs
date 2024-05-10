@@ -145,7 +145,7 @@ namespace messaging.Services
             CreateBirthAckMessage(message, databaseMessage);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             // Log the message whether or not it is a duplicate
-            LogMessage(message, databaseMessage);
+            LogCommonMessage(message, databaseMessage);
             // Only save non-duplicate submission messages
             if(!duplicateMessage) {
                 this._context.IJEItems.Add(ijeItem);
@@ -162,7 +162,7 @@ namespace messaging.Services
             IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
             if(!duplicateMessage) {
                 // Only log messages that are not duplicates
-                LogMessage(message, databaseMessage);
+                LogCommonMessage(message, databaseMessage);
                 // Only save if this is not a message with a duplicate ID and the previousMessage either does not exist or
                 // has an older timestamp than the message we are currently dealing with
                 if(previousMessage == null || message.MessageTimestamp > previousMessage.MessageTimestamp) {
@@ -172,7 +172,21 @@ namespace messaging.Services
             }
         }
 
-        private void LogMessage(CommonMessage message, IncomingMessageItem databaseMessage) {
+        private void LogCommonMessage(CommonMessage message, IncomingMessageItem databaseMessage) {
+            IncomingMessageLog entry = new IncomingMessageLog();
+            entry.MessageTimestamp = message.MessageTimestamp;
+            entry.MessageId = message.MessageId;
+            entry.JurisdictionId = databaseMessage.JurisdictionId;
+            //entry.NCHSIdentifier = message.NCHSIdentifier;
+            // TODO NCHS identifier isn't defined in CommonMessage, does it make sense to add it so we can use it here?
+            entry.NCHSIdentifier = "placeholder";
+            entry.StateAuxiliaryIdentifier = message.StateAuxiliaryId;
+            this._context.IncomingMessageLogs.Add(entry);
+            this._context.SaveChanges();
+        }
+
+        // TODO: once we move to VRDR STU3 and the common library version of VRDR, we can deprecate this function
+        private void LogMessage(DeathRecordSubmissionMessage message, IncomingMessageItem databaseMessage) {
             IncomingMessageLog entry = new IncomingMessageLog();
             entry.MessageTimestamp = message.MessageTimestamp;
             entry.MessageId = message.MessageId;

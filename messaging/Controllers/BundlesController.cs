@@ -483,14 +483,13 @@ namespace messaging.Controllers
 
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, Bundle bundle)
         {
-            //Bundle bundle = CommonMessage.ParseGenericBundle(text.ToString(), true);
-            CommonMessage message;
+            //CommonMessage message;
             // try parsing as a bfdr message if the vitalType is either unknown or explicitly BFDR
             if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("BFDR") )
             {
                 try
                 {
-                    message = BirthRecordBaseMessage.Parse(bundle);
+                    CommonMessage message = BirthRecordBaseMessage.Parse(bundle);
                     return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
                 }
                 catch(BFDR.MessageParseException ex)
@@ -506,12 +505,12 @@ namespace messaging.Controllers
 
 
             // try parsing as a vrdr message if the vitalType is either unknown or explicitly VRDR
-            if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("BFDR") )
+            if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("VRDR") )
             {
                 try
                 {
-                    message = BaseMessage.Parse(bundle);
-                    return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
+                    BaseMessage message = BaseMessage.Parse(bundle);
+                    return ValidateAndCreateIncomingVRDRMessageItem(message, jurisdictionId);
                 }
                 catch(VRDR.MessageParseException ex)
                 {
@@ -586,11 +585,11 @@ namespace messaging.Controllers
             {
                 item.EventYear = ((BirthRecordBaseMessage)message).BirthYear;
             }
-            else if(vrdrMessageType(message.GetType().Name))
-            {
-                item.EventYear = ((BaseMessage)message).DeathYear;
-            }
-            
+            // TODO add this check once we move to the monorepo version of VRDR STU 3.0
+            // else if(vrdrMessageType(message.GetType().Name))
+            // {
+            //     item.EventYear = ((BaseMessage)message).DeathYear;
+            // }
 
             // format the certificate number
             uint certNo = (uint)message.CertNo;
@@ -598,6 +597,70 @@ namespace messaging.Controllers
             item.CertificateNumber = certNoFmt;
             
             item.EventType = getEventType(message);
+
+            return item;
+        }
+
+        // TODO: Once we move to VRDR STU 3.0 and the monorepo version of VRDR, we can delete this function
+        protected IncomingMessageItem ValidateAndCreateIncomingVRDRMessageItem(BaseMessage message, string jurisdictionId)
+        {
+            // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
+            // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
+            // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
+            if (String.IsNullOrWhiteSpace(message.MessageSource))
+            {
+                _logger.LogDebug($"Message is missing source endpoint, throw exception");
+                throw new ArgumentException("Message source endpoint cannot be null");
+            }
+            if (String.IsNullOrWhiteSpace(message.MessageDestination))
+            {
+                _logger.LogDebug($"Message is missing destination endpoint, throw exception");
+                throw new ArgumentException("Message destination endpoint cannot be null");
+            }
+            if (!validateNCHSDestination(message.MessageDestination))
+            {
+                _logger.LogDebug($"Message destination endpoint does not include a valid NCHS endpoint, throw exception");
+                throw new ArgumentException("Message destination endpoint does not include a valid NCHS endpoint");
+            }
+            if (String.IsNullOrWhiteSpace(message.MessageId))
+            {
+                _logger.LogDebug($"Message is missing Message ID, throw exception");
+                throw new ArgumentException("Message ID cannot be null");
+            }
+            if (String.IsNullOrWhiteSpace(message.GetType().Name))
+            {
+                _logger.LogDebug($"Message is missing Message Event Type, throw exception");
+                throw new ArgumentException("Message Event Type cannot be null");
+            }
+            if (message.CertNo == null)
+            {
+                _logger.LogDebug($"Message is missing Certificate Number, throw exception");
+                throw new ArgumentException("Message Certificate Number cannot be null");
+            }
+            if ((uint)message.CertNo.ToString().Length > 6)
+            {
+                _logger.LogDebug($"Message Certificate Number number is greater than 6 characters, throw exception");
+                throw new ArgumentException("Message Certificate Number cannot be more than 6 digits long");
+            }
+            if (!ValidateJurisdictionId(message.JurisdictionId, jurisdictionId))
+            {
+                _logger.LogDebug($"The message resource jurisdiction ID {message.JurisdictionId} did not match the parameter jurisdiction ID {jurisdictionId}.");
+                throw new ArgumentException($"Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}.");
+            }
+
+            IncomingMessageItem item = new IncomingMessageItem();
+            item.Message = message.ToJSON(); 
+            item.MessageId = message.MessageId;
+            item.MessageType = message.GetType().Name;
+            item.JurisdictionId = jurisdictionId;
+            item.EventYear = message.DeathYear;
+
+            // format the certificate number
+            uint certNo = (uint)message.CertNo;
+            string certNoFmt = certNo.ToString("D6");
+            item.CertificateNumber = certNoFmt;
+            
+            item.EventType = "MOR";
 
             return item;
         }

@@ -29,6 +29,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\vital-records-dotnet\projects\VitalRecord.Messaging\VitalRecord.Messaging.csproj" />
-    <ProjectReference Include="..\..\vital-records-dotnet\projects\VRDR.Messaging\VRDR.Messaging.csproj" />
+    <!-- <ProjectReference Include="..\..\vital-records-dotnet\projects\VRDR.Messaging\VRDR.Messaging.csproj" /> -->
   </ItemGroup>
 </Project>
