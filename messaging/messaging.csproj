@@ -13,7 +13,7 @@
     <PackageReference Include="MiniProfiler.AspNetCore.Mvc" Version="4.2.22"/>
     <PackageReference Include="MiniProfiler.EntityFrameworkCore" Version="4.2.22"/>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
-    <!-- <PackageReference Include="VRDR.Messaging" Version="4.1.9"/> -->
+    <PackageReference Include="VRDR.Messaging" Version="4.1.10"/>
     <PackageReference Include="BFDR.Messaging" Version="1.0.0-preview"/>
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0"/>
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.3.1-dev-00337"/>
@@ -29,6 +29,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\vital-records-dotnet\projects\VitalRecord.Messaging\VitalRecord.Messaging.csproj" />
-    <ProjectReference Include="..\..\vital-records-dotnet\projects\VRDR.Messaging\VRDR.Messaging.csproj" />
+    <!-- <ProjectReference Include="..\..\vital-records-dotnet\projects\VRDR.Messaging\VRDR.Messaging.csproj" /> -->
   </ItemGroup>
 </Project>

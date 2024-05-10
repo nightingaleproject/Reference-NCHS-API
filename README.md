@@ -22,6 +22,8 @@ library for parsing and constructing messages.
 This implementation describes the NVSS API hosted by NCHS and the compatible implementation hosted
 via the STEVE 2.0 system.
 
+This version of the API uses [VRDR.Messaging 4.1.10](https://www.nuget.org/packages/VRDR.Messaging/4.1.10) and [BFDR.Messaging 1.0.0-preview](https://www.nuget.org/packages/BFDR.Messaging/1.0.0-preview)
+
 # The NVSS API
 
 The NVSS API can be accessed by vital records jurisdictions in order to submit mortality data to
