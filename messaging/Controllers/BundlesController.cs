@@ -494,7 +494,7 @@ namespace messaging.Controllers
                 }
                 catch(BFDR.MessageParseException ex)
                 {
-                    _logger.LogDebug($"The message could not be parsed as a bfdr message: {ex}");
+                    _logger.LogDebug($"The message could not be parsed as a bfdr message. {ex} Trying to parse as a vrdr message...");
                 }
                 catch(ArgumentException aex)
                 {
