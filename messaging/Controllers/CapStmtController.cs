@@ -30,7 +30,7 @@ namespace messaging.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCapabilityStatement(string jurisdictionId)
         {
-            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
+            if (!VR.IJEData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
             {
                 // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
