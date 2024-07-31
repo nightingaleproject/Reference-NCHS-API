@@ -671,7 +671,7 @@ namespace messaging.Controllers
             await _context.SaveChangesAsync();
 
             // Queue Natality messages for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on" for testing
-            if (item.EventType == "NAT" || _settings.AckAndIJEConversion)
+            if (_settings.AckAndIJEConversion)
             {
                 queue.QueueConvertToIJE(item.Id);
             }
