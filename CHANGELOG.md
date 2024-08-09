@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.3.0-preview.1 - 2024-08-09
+* Update BFDR to v1.0.0-preview.7 and VRDR to v4.2.2
+
 ### v1.3.0 - 2024-05-07
 * Add support for Natality Messaging
 * Add POST and GET route handling for vital record type and IG version number, ex. MA/Bundle/BFDR/v2.0

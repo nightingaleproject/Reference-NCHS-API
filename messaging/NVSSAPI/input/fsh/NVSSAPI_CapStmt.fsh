@@ -1,7 +1,7 @@
 Instance: NVSS-API-CS
 InstanceOf: CapabilityStatement
 Usage: #definition
-* version = "v1.3.0-preview"
+* version = "v1.3.0-preview.1"
 * name = "NVSS_API"
 * title = "NVSS API Server Capability Statement"
 * status = #draft
