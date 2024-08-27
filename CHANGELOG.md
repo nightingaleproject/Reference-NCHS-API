@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.2.2 - 2024-08-27
+* Update library v4.2.2
+
 ### v1.2.1 - 2024-04-25
 * Update library v4.1.9
 
