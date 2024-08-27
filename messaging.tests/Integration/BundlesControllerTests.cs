@@ -183,6 +183,7 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/" + recordSubmission.JurisdictionId + "/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+            await System.Threading.Tasks.Task.Delay(1000);
 
             HttpResponseMessage getBundle = await _client.GetAsync("/" + recordSubmission.JurisdictionId + "/Bundle?certificateNumber=" + recordSubmission.CertNo);
             Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
@@ -211,6 +212,7 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/" + recordSubmission.JurisdictionId + "/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+            await System.Threading.Tasks.Task.Delay(1000);
 
             HttpResponseMessage getBundle = await _client.GetAsync("/" + recordSubmission.JurisdictionId + "/Bundle?deathYear=" + recordSubmission.DeathYear);
             Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
@@ -492,6 +494,8 @@ namespace messaging.tests
           string batchJson = batchMsg.ToJson();
           HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/NY/Bundle", batchJson);
           Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+
+          await System.Threading.Tasks.Task.Delay(1500);
           Assert.Equal(50, await GetTableCount(_context.IncomingMessageItems, 50));
 
           // wait for acknowledgement generation
@@ -565,6 +569,9 @@ namespace messaging.tests
           string batchJson = batchMsg.ToJson();
           HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/NY/Bundle", batchJson);
           Assert.Equal(HttpStatusCode.OK, submissionMessage.StatusCode);
+
+          await System.Threading.Tasks.Task.Delay(1500);
+          
           Assert.Equal(18, await GetTableCount(_context.IncomingMessageItems, 18));
 
           // wait for acknowledgement generation
