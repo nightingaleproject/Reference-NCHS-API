@@ -94,7 +94,16 @@ namespace messaging.Controllers
                 }
                 else if (vitalType.Equals("BFDR"))
                 {
-                    recordType = "NAT";
+                    if (_settings.BFDREnabled)
+                    {
+                        recordType = "NAT";
+                    }
+                    else
+                    {
+                        _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
+                        return BadRequest("BFDR messaging is not enabled.");
+                    }
+
                 }
             }
 
@@ -332,6 +341,11 @@ namespace messaging.Controllers
                         _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
                         return BadRequest($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
                     }
+                    catch (MessageRuleException mrx)
+                    {
+                        _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
+                        return BadRequest($"Message was missing reqiured header fields: {mrx.Message}");
+                    }
                     catch (ArgumentException aEx)
                     {
                         _logger.LogDebug($"Rejecting message with missing required field: {aEx}");
@@ -427,6 +441,14 @@ namespace messaging.Controllers
             //     entry.Response.Outcome = OperationOutcome.ForMessage($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
             //     return entry;
             // }
+            catch (MessageRuleException mrx)
+            {
+                _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
+                entry.Response = new Bundle.ResponseComponent();
+                entry.Response.Status = "400";
+                entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required header field. {mrx.Message}.", OperationOutcome.IssueType.Exception);
+                return entry;
+            }
             catch (ArgumentException aEx)
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {aEx}");
@@ -485,23 +507,27 @@ namespace messaging.Controllers
         {
             //CommonMessage message;
             // try parsing as a bfdr message if the vitalType is either unknown or explicitly BFDR
-            if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("BFDR") )
+            if (_settings.BFDREnabled)
             {
-                try
+                if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("BFDR") )
                 {
-                    CommonMessage message = BirthRecordBaseMessage.Parse(bundle);
-                    return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
-                }
-                catch(BFDR.MessageParseException ex)
-                {
-                    _logger.LogDebug($"The message could not be parsed as a bfdr message. {ex} Trying to parse as a vrdr message...");
-                }
-                catch(ArgumentException aex)
-                {
-                    // pass exception thrown by our validation to calling function
-                    throw aex;
+                    try
+                    {
+                        CommonMessage message = BirthRecordBaseMessage.Parse(bundle);
+                        return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
+                    }
+                    catch(BFDR.MessageParseException ex)
+                    {
+                        _logger.LogDebug($"The message could not be parsed as a bfdr message. Trying to parse as a vrdr message...");
+                    }
+                    catch(ArgumentException aex)
+                    {
+                        // pass exception thrown by our validation to calling function
+                        throw aex;
+                    }
                 }
             }
+
 
 
             // try parsing as a vrdr message if the vitalType is either unknown or explicitly VRDR
@@ -510,7 +536,12 @@ namespace messaging.Controllers
                 try
                 {
                     BaseMessage message = BaseMessage.Parse(bundle);
+                    BaseMessage.ValidateMessageHeader(message);
                     return ValidateAndCreateIncomingVRDRMessageItem(message, jurisdictionId);
+                }
+                catch(MessageRuleException mrx)
+                {   
+                    throw mrx;
                 }
                 catch(VRDR.MessageParseException ex)
                 {
