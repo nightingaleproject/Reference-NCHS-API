@@ -1,10 +1,10 @@
 ## Changelog
 
-### v1.3.0-preview.1 - 2024-08-09
-* Update BFDR to v1.0.0-preview.7 and VRDR to v4.2.2
-
-### v1.3.0 - 2024-05-07
+### v1.3.0 - 2024-08-29
 * Add support for Natality Messaging
+* Add configuration to enable or disable Natality Messaging
+* Update BFDR to v1.0.0-preview.7 and VRDR to v4.3.0
+* Use message header validation from vrdr-dotnet library
 * Add POST and GET route handling for vital record type and IG version number, ex. MA/Bundle/BFDR/v2.0
   * Validate the record aligns with the url vital record type on POST
   * Return record submissions based on record type on GET
