@@ -972,6 +972,7 @@ namespace messaging.tests
             recordSubmission.JurisdictionId = "MA";
             recordSubmission.MessageSource = "http://example.fhir.org";
             recordSubmission.CertNo = 1;
+            recordSubmission.DeathYear = 2024;
             recordSubmission.MessageDestination = "temp,http://nchs.CDC.gov/VRDR_Submission,temp";
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission.ToJson());
@@ -982,6 +983,7 @@ namespace messaging.tests
             recordSubmission2.JurisdictionId = "MA";
             recordSubmission2.MessageSource = "http://example.fhir.org";
             recordSubmission2.CertNo = 1;
+            recordSubmission.DeathYear = 2024;
             recordSubmission2.MessageDestination = "temp,http://nchs.CDC.gov/BFDR_Submission,temp";
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());

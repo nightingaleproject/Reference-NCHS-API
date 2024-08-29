@@ -189,6 +189,7 @@ namespace messaging.tests
             recordSubmission.MessageSource = "http://example.fhir.org";
             recordSubmission.CertNo = 1;
             recordSubmission.JurisdictionId = "NY";
+            recordSubmission.DeathYear = 2024;
 
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
