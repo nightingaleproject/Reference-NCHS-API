@@ -22,7 +22,7 @@ library for parsing and constructing messages.
 This implementation describes the NVSS API hosted by NCHS and the compatible implementation hosted
 via the STEVE 2.0 system.
 
-This version of the API uses [VRDR.Messaging 4.1.10](https://www.nuget.org/packages/VRDR.Messaging/4.1.10) and [BFDR.Messaging 1.0.0-preview](https://www.nuget.org/packages/BFDR.Messaging/1.0.0-preview)
+This version of the API uses [VRDR.Messaging 4.3.0](https://www.nuget.org/packages/VRDR.Messaging/4.3.0) and [BFDR.Messaging 1.0.0-preview.7](https://www.nuget.org/packages/BFDR.Messaging/1.0.0-preview.7)
 
 # The NVSS API
 
