@@ -189,6 +189,7 @@ namespace messaging.tests
             recordSubmission.MessageSource = "http://example.fhir.org";
             recordSubmission.CertNo = 1;
             recordSubmission.JurisdictionId = "NY";
+            recordSubmission.DeathYear = 2024;
 
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
@@ -213,7 +214,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             string badJurisdiction = "AB";
-            Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
+            Assert.False(VR.IJEData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
             // Create a new empty Death Record
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
@@ -227,7 +228,7 @@ namespace messaging.tests
         public async void GetWithInvalidJurisdictionGetsError()
         {
             string badJurisdiction = "AB";
-            Assert.False(VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
+            Assert.False(VR.IJEData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
             HttpResponseMessage response = await _client.GetAsync($"/STEVE/{badJurisdiction}/Bundle");
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

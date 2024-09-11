@@ -1,6 +1,7 @@
 {
   "AppSettings": {
     "AckAndIJEConversion": true,
+    "BFDREnabled" : false,
     "SAMS" : "https://apigw.cdc.gov/OSELS/NCHS/NVSSFHIRAPI",
     "STEVE" : "https://ingress.devfhir.steve.naphsis.us",
     "PageCount" : 100
