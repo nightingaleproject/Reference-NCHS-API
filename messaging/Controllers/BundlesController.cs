@@ -6,15 +6,22 @@ using messaging.Models;
 using messaging.Services;
 using Hl7.Fhir.Model;
 using VRDR;
+using BFDR;
+using VR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using System.Linq.Expressions;
+using Hl7.Fhir.Utility;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Threading;
 
 namespace messaging.Controllers
 {
     [Route("{jurisdictionId:length(2)}/Bundle")]
+    [Route("{jurisdictionId:length(2)}/Bundle/{vitalType:length(4)}/{igVersion}")]
     [Route("{jurisdictionId:length(2)}/Bundles")] // Historical endpoint for backwards compatibility
     [Produces("application/json")]
     [ApiController]
@@ -46,14 +53,14 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count,string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
         {
             if (_count == 0)
             {
                 _count = _settings.PageCount;
             }
 
-            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
+            if (!VR.IJEData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
             {
                 // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
@@ -70,6 +77,36 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid page number.");
                 return BadRequest("page must not be negative");
             }
+
+            // if a vitalType is provided in the url, it must be a valid vital type and ig version
+            if (!String.IsNullOrEmpty(vitalType) && !validIGVersion(vitalType, igVersion))
+            {
+                _logger.LogError($"Rejecting request with invalid url path. {vitalType}");
+                return BadRequest("Invalid url path provided");
+            }
+
+            string recordType = "";
+            if (!String.IsNullOrEmpty(vitalType))
+            {
+                if (vitalType.Equals("VRDR"))
+                {
+                    recordType = "MOR";
+                }
+                else if (vitalType.Equals("BFDR"))
+                {
+                    if (_settings.BFDREnabled)
+                    {
+                        recordType = "NAT";
+                    }
+                    else
+                    {
+                        _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
+                        return BadRequest("BFDR messaging is not enabled.");
+                    }
+
+                }
+            }
+
             bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && deathYear == null);
             // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
             if (!additionalParamsProvided && page > 1)
@@ -95,6 +132,7 @@ namespace messaging.Controllers
 
             // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
             IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
+                    && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType))
                     && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
                     && (deathYear == null || message.EventYear == int.Parse(deathYear)));
 
@@ -120,7 +158,7 @@ namespace messaging.Controllers
 
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
-                IEnumerable<System.Threading.Tasks.Task<VRDR.BaseMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => BaseMessage.ParseGenericMessage(message.Message, true)));
+                IEnumerable<System.Threading.Tasks.Task<VR.CommonMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => CommonMessage.ParseGenericMessage(message.Message, true)));
 
                 // create bundle to hold the response
                 Bundle responseBundle = new Bundle();
@@ -226,21 +264,28 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> PostIncomingMessageItem(string jurisdictionId, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
+        public async Task<ActionResult<Bundle>> PostIncomingMessageItem(string jurisdictionId, string vitalType, string igVersion, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
-            if (!VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
+            if (!VR.IJEData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
             {
                 // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
                 return BadRequest("Invalid jurisdiction ID");
             }
+            // if a vitalType is provided in the url, it must be a valid vital type and ig version
+            if (!String.IsNullOrEmpty(vitalType) && !validIGVersion(vitalType, igVersion))
+            {
+                _logger.LogError($"Rejecting request with invalid url path. {vitalType}");
+                return BadRequest("Invalid url, IG version was not recognized");
+            }
+
             // Check page 35 of the messaging document for full flow
             // Change over to 1 entry in the database per message
             Bundle responseBundle = new Bundle();
             try
             {
 
-                Bundle bundle = BaseMessage.ParseGenericBundle(text.ToString(), true);
+                Bundle bundle = CommonMessage.ParseGenericBundle(text.ToString(), true);
                 // check whether the bundle is a message or a batch
                 if (bundle?.Type == Bundle.BundleType.Batch)
                 {
@@ -255,7 +300,7 @@ namespace messaging.Controllers
                     // Capture the each messsage's result in an entry and add to the response bundle.
                     foreach (var entry in bundle.Entry)
                     {
-                        Bundle.EntryComponent respEntry = await InsertBatchMessage(entry, jurisdictionId, queue);
+                        Bundle.EntryComponent respEntry = await InsertBatchMessage(entry, jurisdictionId, vitalType, igVersion, queue);
                         responseBundle.Entry.Add(respEntry);
                     }
                     return responseBundle;
@@ -266,11 +311,16 @@ namespace messaging.Controllers
                     IncomingMessageItem item;
                     try
                     {
-                        item = ParseIncomingMessageItem(jurisdictionId, text);
+                        item = ParseIncomingMessageItem(jurisdictionId, vitalType, bundle);
                         // Send a special message for extraction errors to report the error manually
                         if (item.MessageType == nameof(ExtractionErrorMessage))
                         {
                             _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
+                            return BadRequest($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.");
+                        }
+                        if (item.MessageType == nameof(BirthRecordErrorMessage))
+                        {
+                            _logger.LogDebug($"Error: Unsupported message type bfdr_extraction_error found");
                             return BadRequest($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.");
                         }
                         // check this is a valid message type
@@ -279,7 +329,7 @@ namespace messaging.Controllers
                         // void message
                         // alias message
                         // acknowledgement message
-                        if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))
+                        if (!(bfdrMessageType(item.MessageType) || vrdrMessageType(item.MessageType)))
                         {
                             _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
                             return BadRequest($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}");
@@ -290,6 +340,11 @@ namespace messaging.Controllers
                     {
                         _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
                         return BadRequest($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
+                    }
+                    catch (MessageRuleException mrx)
+                    {
+                        _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
+                        return BadRequest($"Message was missing reqiured header fields: {mrx.Message}");
                     }
                     catch (ArgumentException aEx)
                     {
@@ -342,15 +397,17 @@ namespace messaging.Controllers
         // InsertBatchMessage handles a single message in a batch upload submission
         // Each message is handled independent of the other messages. A status code is generated for
         // each message and is returned in the response bundle
-        private async Task<Bundle.EntryComponent> InsertBatchMessage(Bundle.EntryComponent msgBundle, string jurisdictionId, IBackgroundTaskQueue queue)
+        private async Task<Bundle.EntryComponent> InsertBatchMessage(Bundle.EntryComponent msgBundle, string jurisdictionId, string vitalType, string igVersion, IBackgroundTaskQueue queue)
         {
             Bundle.EntryComponent entry = new Bundle.EntryComponent();
             IncomingMessageItem item;
 
             try
             {
-                BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
-                item = ParseIncomingMessageItem(jurisdictionId, message.ToJSON());
+                //BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
+                // get the bundle in the bundle
+                Bundle bundle = (Hl7.Fhir.Model.Bundle)msgBundle.Resource;
+                item = ParseIncomingMessageItem(jurisdictionId, vitalType, bundle);
                 if (item.MessageType == "ExtractionErrorMessage")
                 {
                     _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
@@ -359,7 +416,15 @@ namespace messaging.Controllers
                     entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.", OperationOutcome.IssueType.Exception);
                     return entry;
                 }
-                if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))
+                if (item.MessageType == nameof(BirthRecordErrorMessage))
+                {
+                    _logger.LogDebug($"Error: Unsupported message type bfdr_extraction_error found");
+                    entry.Response = new Bundle.ResponseComponent();
+                    entry.Response.Status = "400";
+                    entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.", OperationOutcome.IssueType.Exception);
+                    return entry;
+                }
+                if (!(bfdrMessageType(item.MessageType) || vrdrMessageType(item.MessageType)))
                 {
                     _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
                     entry.Response = new Bundle.ResponseComponent();
@@ -368,12 +433,20 @@ namespace messaging.Controllers
                     return entry;
                 }
             }
-            catch (VRDR.MessageParseException ex)
+            // catch (VRDR.MessageParseException ex)
+            // {
+            //     _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
+            //     entry.Response = new Bundle.ResponseComponent();
+            //     entry.Response.Status = "400";
+            //     entry.Response.Outcome = OperationOutcome.ForMessage($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
+            //     return entry;
+            // }
+            catch (MessageRuleException mrx)
             {
-                _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
+                _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Outcome = OperationOutcome.ForMessage($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
+                entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required header field. {mrx.Message}.", OperationOutcome.IssueType.Exception);
                 return entry;
             }
             catch (ArgumentException aEx)
@@ -430,10 +503,138 @@ namespace messaging.Controllers
             return (_settings.SAMS);
         }
 
-        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, object text)
+        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, Bundle bundle)
         {
-            BaseMessage message = BaseMessage.Parse(text.ToString());
+            //CommonMessage message;
+            // try parsing as a bfdr message if the vitalType is either unknown or explicitly BFDR
+            if (_settings.BFDREnabled)
+            {
+                if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("BFDR") )
+                {
+                    try
+                    {
+                        CommonMessage message = BirthRecordBaseMessage.Parse(bundle);
+                        return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
+                    }
+                    catch(BFDR.MessageParseException ex)
+                    {
+                        _logger.LogDebug($"The message could not be parsed as a bfdr message. Trying to parse as a vrdr message...");
+                    }
+                    catch(ArgumentException aex)
+                    {
+                        // pass exception thrown by our validation to calling function
+                        throw aex;
+                    }
+                }
+            }
 
+
+
+            // try parsing as a vrdr message if the vitalType is either unknown or explicitly VRDR
+            if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("VRDR") )
+            {
+                try
+                {
+                    BaseMessage message = BaseMessage.Parse(bundle);
+                    BaseMessage.ValidateMessageHeader(message);
+                    return ValidateAndCreateIncomingVRDRMessageItem(message, jurisdictionId);
+                }
+                catch(MessageRuleException mrx)
+                {   
+                    throw mrx;
+                }
+                catch(VRDR.MessageParseException ex)
+                {
+                    _logger.LogDebug($"The message could not be parsed as a vrdr message: {ex}");
+                }
+                catch(ArgumentException aex)
+                {
+                    // pass exception thrown by our validation to calling function
+                    throw aex;
+                }
+            }
+
+
+
+            // if we make it here, the message wasn't parsed successfully, throw an error
+            _logger.LogDebug($"Message type not recognized, throw exception");
+            throw new ArgumentException("Failed to parse message, message type unrecognized");
+        }
+
+        protected IncomingMessageItem ValidateAndCreateIncomingMessageItem(CommonMessage message, string jurisdictionId)
+        {
+            // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
+            // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
+            // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
+            if (String.IsNullOrWhiteSpace(message.MessageSource))
+            {
+                _logger.LogDebug($"Message is missing source endpoint, throw exception");
+                throw new ArgumentException("Message source endpoint cannot be null");
+            }
+            if (String.IsNullOrWhiteSpace(message.MessageDestination))
+            {
+                _logger.LogDebug($"Message is missing destination endpoint, throw exception");
+                throw new ArgumentException("Message destination endpoint cannot be null");
+            }
+            if (!validateNCHSDestination(message.MessageDestination))
+            {
+                _logger.LogDebug($"Message destination endpoint does not include a valid NCHS endpoint, throw exception");
+                throw new ArgumentException("Message destination endpoint does not include a valid NCHS endpoint");
+            }
+            if (String.IsNullOrWhiteSpace(message.MessageId))
+            {
+                _logger.LogDebug($"Message is missing Message ID, throw exception");
+                throw new ArgumentException("Message ID cannot be null");
+            }
+            if (String.IsNullOrWhiteSpace(message.GetType().Name))
+            {
+                _logger.LogDebug($"Message is missing Message Event Type, throw exception");
+                throw new ArgumentException("Message Event Type cannot be null");
+            }
+            if (message.CertNo == null)
+            {
+                _logger.LogDebug($"Message is missing Certificate Number, throw exception");
+                throw new ArgumentException("Message Certificate Number cannot be null");
+            }
+            if ((uint)message.CertNo.ToString().Length > 6)
+            {
+                _logger.LogDebug($"Message Certificate Number number is greater than 6 characters, throw exception");
+                throw new ArgumentException("Message Certificate Number cannot be more than 6 digits long");
+            }
+            if (!ValidateJurisdictionId(message.JurisdictionId, jurisdictionId))
+            {
+                _logger.LogDebug($"The message resource jurisdiction ID {message.JurisdictionId} did not match the parameter jurisdiction ID {jurisdictionId}.");
+                throw new ArgumentException($"Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}.");
+            }
+
+            IncomingMessageItem item = new IncomingMessageItem();
+            item.Message = message.ToJSON(); 
+            item.MessageId = message.MessageId;
+            item.MessageType = message.GetType().Name;
+            item.JurisdictionId = jurisdictionId;
+            if(bfdrMessageType(message.GetType().Name))
+            {
+                item.EventYear = ((BirthRecordBaseMessage)message).BirthYear;
+            }
+            // TODO add this check once we move to the monorepo version of VRDR STU 3.0
+            // else if(vrdrMessageType(message.GetType().Name))
+            // {
+            //     item.EventYear = ((BaseMessage)message).DeathYear;
+            // }
+
+            // format the certificate number
+            uint certNo = (uint)message.CertNo;
+            string certNoFmt = certNo.ToString("D6");
+            item.CertificateNumber = certNoFmt;
+            
+            item.EventType = getEventType(message);
+
+            return item;
+        }
+
+        // TODO: Once we move to VRDR STU 3.0 and the monorepo version of VRDR, we can delete this function
+        protected IncomingMessageItem ValidateAndCreateIncomingVRDRMessageItem(BaseMessage message, string jurisdictionId)
+        {
             // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
             // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
             // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
@@ -490,7 +691,7 @@ namespace messaging.Controllers
             string certNoFmt = certNo.ToString("D6");
             item.CertificateNumber = certNoFmt;
             
-            item.EventType = getEventType(message);
+            item.EventType = "MOR";
 
             return item;
         }
@@ -500,16 +701,22 @@ namespace messaging.Controllers
             await _context.IncomingMessageItems.AddAsync(item);
             await _context.SaveChangesAsync();
 
+            // Queue Natality messages for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on" for testing
             if (_settings.AckAndIJEConversion)
             {
                 queue.QueueConvertToIJE(item.Id);
+            }
+            // If we are in test mode, give the worker thread 1 extra second to insert the outgoing message, this helps our tests avoid race condition failures
+            if (_settings.AckAndIJEConversion)
+            {
+                Thread.Sleep(new TimeSpan(0,0,1));
             }
         }
 
         // getEventType generates an EventType string "MOR", "NAT", or "FET"
         // for debugging and tracking records in the db
         // For now we only have "MOR" records but we could add "NAT" and "FET" here later
-        private string getEventType(BaseMessage message)
+        private string getEventType(CommonMessage message)
         {
             switch (message.MessageType)
             {
@@ -525,6 +732,14 @@ namespace messaging.Controllers
                 case "http://nchs.cdc.gov/vrdr_submission_update":
                 case "http://nchs.cdc.gov/vrdr_submission_void":
                     return "MOR";
+                case "http://nchs.cdc.gov/bfdr_submission":
+                case "http://nchs.cdc.gov/bfdr_acknowledgement":
+                case "http://nchs.cdc.gov/bfdr_submission_update": 
+                case "http://nchs.cdc.gov/bfdr_demographics_coding":
+                case "http://nchs.cdc.gov/bfdr_extraction_error":
+                case "http://nchs.cdc.gov/bfdr_status":
+                case "http://nchs.cdc.gov/bfdr_submission_void":
+                    return "NAT";
                 default:
                     return "UNK";
             }
@@ -552,10 +767,72 @@ namespace messaging.Controllers
                     case "http://nchs.cdc.gov/vrdr_submission":
                     case "http://nchs.cdc.gov/vrdr_submission_update":
                     case "http://nchs.cdc.gov/vrdr_submission_void":
+                    case "http://nchs.cdc.gov/bfdr_submission":
+                    case "http://nchs.cdc.gov/bfdr_acknowledgement": 
+                    case "http://nchs.cdc.gov/bfdr_demographics_coding":
+                    case "http://nchs.cdc.gov/bfdr_extraction_error":
+                    case "http://nchs.cdc.gov/bfdr_status":
+                    case "http://nchs.cdc.gov/bfdr_submission_void":
                         return true;
                     default:
                         break;
                 }
+            }
+            return false;
+        }
+
+        // validateMessageType checks that the message type is accepted at NCHS
+        private bool vrdrMessageType(string messageType)
+        {
+            {
+                // set the message type to lowercase to make case-insensitive
+                switch (messageType)
+                {
+                    case "AcknowledgementMessage":
+                    case "DeathRecordAliasMessage":
+                    case "DeathRecordSubmissionMessage":
+                    case "DeathRecordUpdateMessage":
+                    case "DeathRecordVoidMessage":
+                        return true;
+                    default:
+                        break;
+                }
+            }
+            return false;
+        }
+
+        // validateMessageType checks that the message type is accepted at NCHS
+        private bool bfdrMessageType(string messageType)
+        {
+            {
+                // set the message type to lowercase to make case-insensitive
+                switch (messageType)
+                {
+                    case "BirthRecordSubmissionMessage":
+                    case "BirthRecordUpdateMessage":
+                    case "BirthRecordAcknowledgementMessage": 
+                    case "BirthRecordVoidMessage":
+                        return true;
+                    default:
+                        break;
+                }
+            }
+            return false;
+        }
+
+        // validIGVersion will return true if the vitalType and igVersion align with a real IG STU version
+        private bool validIGVersion(string vitalType, string igVersion)
+        {
+            string[] BFDRIgs = {"v2.0"};
+            string[] VRDRIgs = {"v2.2"};
+
+            if (vitalType == "BFDR")
+            {
+                return BFDRIgs.Contains(igVersion);
+            }
+            else if (vitalType == "VRDR")
+            {
+                return VRDRIgs.Contains(igVersion);
             }
             return false;
         }

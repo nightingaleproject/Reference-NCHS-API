@@ -1,0 +1,1049 @@
+{
+    "resourceType": "Bundle",
+    "id": "9750e180-e24b-4946-abcf-e9b730965826",
+    "type": "message",
+    "timestamp": "2024-01-09T17:36:45.264648-05:00",
+    "entry": [
+      {
+        "fullUrl": "urn:uuid:c36cfa0d-f3d4-4b1a-9df4-410f640b50c3",
+        "resource": {
+          "resourceType": "MessageHeader",
+          "id": "c36cfa0d-f3d4-4b1a-9df4-410f640b50c3",
+          "eventUri": "http://nchs.cdc.gov/bfdr_submission",
+          "destination": [
+            {
+              "endpoint": "http://nchs.cdc.gov/bfdr_submission"
+            }
+          ],
+          "source": {
+            "endpoint": "http://mitre.org/bfdr"
+          },
+          "focus": [
+            {
+              "reference": "urn:uuid:f731ac90-1e21-4744-9a02-f996c7a967b5"
+            }
+          ]
+        }
+      },
+      {
+        "fullUrl": "urn:uuid:18cf3dbd-6cab-413f-9074-9462c66a3ce1",
+        "resource": {
+          "resourceType": "Parameters",
+          "id": "18cf3dbd-6cab-413f-9074-9462c66a3ce1",
+          "parameter": [
+            {
+              "name": "cert_no",
+              "valueUnsignedInt": 488583453
+            },
+            {
+              "name": "state_auxiliary_id",
+              "valueString": "000000000042"
+            },
+            {
+              "name": "birth_year",
+              "valueUnsignedInt": 2019
+            },
+            {
+              "name": "jurisdiction_id",
+              "valueString": "UT"
+            }
+          ]
+        }
+      },
+      {
+        "fullUrl": "urn:uuid:f731ac90-1e21-4744-9a02-f996c7a967b5",
+        "resource": {
+          "resourceType": "Bundle",
+          "id": "f731ac90-1e21-4744-9a02-f996c7a967b5",
+          "meta": {
+            "profile": [
+              "http://hl7.org/fhir/us/bfdr/StructureDefinition/bfdr-birth-certificate-document"
+            ]
+          },
+          "identifier": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/us/bfdr/StructureDefinition/CertificateNumber",
+                "valueString": "48858"
+              },
+              {
+                "url": "http://hl7.org/fhir/us/bfdr/StructureDefinition/AuxiliaryStateIdentifier1",
+                "valueString": "000000000042"
+              }
+            ],
+            "system": "http://nchs.cdc.gov/bfdr_id",
+            "value": "2019UT48858"
+          },
+          "type": "document",
+          "timestamp": "2023-10-25T09:53:34.356012-04:00",
+          "entry": [
+            {
+              "fullUrl": "urn:uuid:2b03f731-a589-4190-b907-6fe6eddcec60",
+              "resource": {
+                "resourceType": "Composition",
+                "id": "2b03f731-a589-4190-b907-6fe6eddcec60",
+                "meta": {
+                  "profile": [
+                    "http://build.fhir.org/ig/HL7/bfdr/StructureDefinition-bfdr-birth-certificate.html"
+                  ]
+                },
+                "status": "final",
+                "type": {
+                  "coding": [
+                    {
+                      "system": "http://loinc.org",
+                      "code": "71230-7",
+                      "display": "Birth certificate"
+                    }
+                  ]
+                },
+                "subject": {
+                  "reference": "urn:uuid:9b0abc88-167d-460e-9a02-af7524198930"
+                },
+                "title": "Birth Certificate",
+                "attester": [
+                  {
+                    "mode": "legal"
+                  }
+                ],
+                "event": [
+                  {
+                    "code": [
+                      {
+                        "coding": [
+                          {
+                            "system": "http://snomed.info/sct",
+                            "code": "103693007",
+                            "display": "Diagnostic procedure (procedure)"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "section": [
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vrdr/CodeSystem/vrdr-document-section-cs",
+                          "code": "ChildDemographics"
+                        }
+                      ]
+                    },
+                    "entry": [
+                      {
+                        "reference": "urn:uuid:9b0abc88-167d-460e-9a02-af7524198930"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "fullUrl": "urn:uuid:9b0abc88-167d-460e-9a02-af7524198930",
+              "resource": {
+                "resourceType": "Patient",
+                "id": "patient-child-babyg-quinn",
+                "meta": {
+                  "profile": [
+                    "http://hl7.org/fhir/us/vr-common-library/StructureDefinition/Patient-child-vr"
+                  ]
+                },
+                "text": {
+                  "status": "generated",
+                  "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\"><b>Baby G Quinn </b> female, DoB: 2019-02-12 ( Medical Record Number: 9932702 (use: USUAL))</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Known multipleBirth status of Patient\">Multiple Birth:</td><td colspan=\"3\">1</td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Concepts classifying the person into a named category of humans sharing common history, traits, geographical origin or nationality.  The ethnicity codes used to represent these concepts are based upon the [CDC ethnicity and Ethnicity Code Set Version 1.0](http://www.cdc.gov/phin/resources/vocabulary/index.html) which includes over 900 concepts for representing race and ethnicity of which 43 reference ethnicity.  The ethnicity concepts are grouped by and pre-mapped to the 2 OMB ethnicity categories: - Hispanic or Latino - Not Hispanic or Latino.\">US Core Ethnicity Extension:</td><td colspan=\"3\"><ul><li>ombCategory: <a href=\"http://hl7.org/fhir/us/core/STU3.1.1/CodeSystem-cdcrec.html#cdcrec-2186-5\">Race &amp; Ethnicity - CDC</a> 2186-5: Not Hispanic or Latino</li><li>text: Not Hispanic or Latino</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The registered place of birth of the patient. A sytem may use the address.text if they don't store the birthPlace address in discrete elements.\"><a href=\"http://hl7.org/fhir/R4/extension-patient-birthplace.html\">Birth Place:</a></td><td colspan=\"3\"><ul><li>Salt Lake City UT </li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"A code classifying the person's sex assigned at birth  as specified by the [Office of the National Coordinator for Health IT (ONC)](https://www.healthit.gov/newsroom/about-onc). This extension aligns with the C-CDA Birth Sex Observation (LOINC 76689-9).\"><a href=\"http://hl7.org/fhir/us/core/STU5.0.1/StructureDefinition-us-core-birthsex.html\">US Core Birth Sex Extension:</a></td><td colspan=\"3\"><ul><li>F</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Concepts classifying the person into a named category of humans sharing common history, traits, geographical origin or nationality.  The race codes used to represent these concepts are based upon the [CDC Race and Ethnicity Code Set Version 1.0](http://www.cdc.gov/phin/resources/vocabulary/index.html) which includes over 900 concepts for representing race and ethnicity of which 921 reference race.  The race concepts are grouped by and pre-mapped to the 5 OMB race categories:\n\n - American Indian or Alaska Native\n - Asian\n - Black or African American\n - Native Hawaiian or Other Pacific Islander\n - White.\">US Core Race Extension:</td><td colspan=\"3\"><ul><li>ombCategory: <a href=\"http://hl7.org/fhir/us/core/STU3.1.1/CodeSystem-cdcrec.html#cdcrec-2106-3\">Race &amp; Ethnicity - CDC</a> 2106-3: White</li><li>text: White</li></ul></td></tr></table></div>"
+                },
+                "extension": [
+                  {
+                    "extension": [
+                      {
+                        "url": "ombCategory",
+                        "valueCoding": {
+                          "system": "urn:oid:2.16.840.1.113883.6.238",
+                          "code": "2106-3",
+                          "display": "White"
+                        }
+                      },
+                      {
+                        "url": "text",
+                        "valueString": "White"
+                      }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+                  },
+                  {
+                    "extension": [
+                      {
+                        "url": "ombCategory",
+                        "valueCoding": {
+                          "system": "urn:oid:2.16.840.1.113883.6.238",
+                          "code": "2186-5",
+                          "display": "Not Hispanic or Latino"
+                        }
+                      },
+                      {
+                        "url": "text",
+                        "valueString": "Not Hispanic or Latino"
+                      }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+                    "valueCode": "F"
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/patient-birthPlace",
+                    "valueAddress": {
+                      "city": "Salt Lake City",
+                      "district": "Salt Lake",
+                      "state": "UT"
+                    }
+                  }
+                ],
+                "identifier": [
+                  {
+                    "use": "usual",
+                    "type": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                          "code": "MR",
+                          "display": "Medical Record Number"
+                        }
+                      ]
+                    },
+                    "system": "http://hospital.smarthealthit.org",
+                    "value": "9932702"
+                  }
+                ],
+                "name": [
+                  {
+                    "use": "official",
+                    "family": "Quinn",
+                    "given": [
+                      "Baby",
+                      "G"
+                    ],
+                    "suffix": [
+                      "III"
+                    ]
+                  }
+                ],
+                "gender": "female",
+                "birthDate": "2019-02-25",
+                "_birthDate": {
+                  "extension": [
+                    {
+                      "url": "http://hl7.org/fhir/StructureDefinition/patient-birthTime",
+                      "valueDateTime": "2019-02-25T13:00:00-07:00"
+                    }
+                  ]
+                },
+                "multipleBirthInteger": 1
+              }
+            },
+            {
+              "fullUrl": "urn:uuid:9b0abc88-167d-460e-9a02-af7524198930-mother",
+              "resource": {
+                "resourceType": "Patient",
+                "id": "patient-mother-vr-jada-ann-quinn-common",
+                "meta": {
+                  "profile": [
+                    "http://build.fhir.org/ig/HL7/vr-common-library/StructureDefinition-Patient-mother-vr"
+                  ]
+                },
+                "text": {
+                  "status": "generated",
+                  "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p style=\"border: 1px #661aff solid; background-color: #e6e6ff; padding: 10px;\"><b>Jada Ann Quinn (OFFICIAL)</b> female, DoB: 1985-01-15 ( Social Security number: <a href=\"http://terminology.hl7.org/5.0.0/NamingSystem-ssn.html\">#</a>132225986 (use: USUAL))</p><hr/><table class=\"grid\"><tr><td style=\"background-color: #f3f5da\" title=\"Other Ids (see the one above)\">Other Id:</td><td colspan=\"3\">Medical Record Number: 1032702 (use: USUAL)</td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Alternate names (see the one above)\">Alt. Name:</td><td colspan=\"3\">Jada Ann King (MAIDEN)</td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Ways to contact the Patient\">Contact Details:</td><td colspan=\"3\"><ul><li>ph: 1-(404)555-1212(HOME)</li><li><a href=\"mailto:jadaann.quinn@example.com\">jadaann.quinn@example.com</a></li><li>1875 West Morton Avenue Salt Lake City UT 84116 US (HOME)</li><li>1848 South 1300 East Salt Lake City UT 84401 US (BILLING)</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Concepts classifying the person into a named category of humans sharing common history, traits, geographical origin or nationality.  The ethnicity codes used to represent these concepts are based upon the [CDC ethnicity and Ethnicity Code Set Version 1.0](http://www.cdc.gov/phin/resources/vocabulary/index.html) which includes over 900 concepts for representing race and ethnicity of which 43 reference ethnicity.  The ethnicity concepts are grouped by and pre-mapped to the 2 OMB ethnicity categories: - Hispanic or Latino - Not Hispanic or Latino.\">US Core Ethnicity Extension:</td><td colspan=\"3\"><ul><li>ombCategory: <a href=\"http://terminology.hl7.org/5.0.0/CodeSystem-CDCREC.html#CDCREC-2186-5\">CDC Race and Ethnicity</a> 2186-5: Not Hispanic or Latino</li><li>text: Not Hispanic or Latino</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"The registered place of birth of the patient. A sytem may use the address.text if they don't store the birthPlace address in discrete elements.\"><a href=\"http://hl7.org/fhir/R4/extension-patient-birthplace.html\">Birth Place:</a></td><td colspan=\"3\"><ul><li>UT </li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"A code classifying the person's sex assigned at birth  as specified by the [Office of the National Coordinator for Health IT (ONC)](https://www.healthit.gov/newsroom/about-onc). This extension aligns with the C-CDA Birth Sex Observation (LOINC 76689-9).\"><a href=\"http://hl7.org/fhir/us/core/STU5.0.1/StructureDefinition-us-core-birthsex.html\">US Core Birth Sex Extension:</a></td><td colspan=\"3\"><ul><li>F</li></ul></td></tr><tr><td style=\"background-color: #f3f5da\" title=\"Concepts classifying the person into a named category of humans sharing common history, traits, geographical origin or nationality.  The race codes used to represent these concepts are based upon the [CDC Race and Ethnicity Code Set Version 1.0](http://www.cdc.gov/phin/resources/vocabulary/index.html) which includes over 900 concepts for representing race and ethnicity of which 921 reference race.  The race concepts are grouped by and pre-mapped to the 5 OMB race categories:\n\n - American Indian or Alaska Native\n - Asian\n - Black or African American\n - Native Hawaiian or Other Pacific Islander\n - White.\">US Core Race Extension:</td><td colspan=\"3\"><ul><li>ombCategory: <a href=\"http://terminology.hl7.org/5.0.0/CodeSystem-CDCREC.html#CDCREC-1002-5\">CDC Race and Ethnicity</a> 1002-5: American Indian or Alaska Native</li><li>text: White, American Indian or Alaska Native</li></ul></td></tr></table></div>"
+                },
+                "extension": [
+                  {
+                    "extension": [
+                      {
+                        "url": "ombCategory",
+                        "valueCoding": {
+                          "system": "urn:oid:2.16.840.1.113883.6.238",
+                          "code": "1002-5",
+                          "display": "American Indian or Alaska Native"
+                        }
+                      },
+                      {
+                        "url": "text",
+                        "valueString": "White, American Indian or Alaska Native"
+                      }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+                  },
+                  {
+                    "extension": [
+                      {
+                        "url": "ombCategory",
+                        "valueCoding": {
+                          "system": "urn:oid:2.16.840.1.113883.6.238",
+                          "code": "2186-5",
+                          "display": "Not Hispanic or Latino"
+                        }
+                      },
+                      {
+                        "url": "text",
+                        "valueString": "Not Hispanic or Latino"
+                      }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-birthsex",
+                    "valueCode": "F"
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/StructureDefinition/patient-birthPlace",
+                    "valueAddress": {
+                      "state": "UT"
+                    }
+                  }
+                ],
+                "identifier": [
+                  {
+                    "use": "usual",
+                    "type": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                          "code": "SS",
+                          "display": "Social Security number"
+                        }
+                      ]
+                    },
+                    "system": "http://hl7.org/fhir/sid/us-ssn",
+                    "value": "132225986"
+                  },
+                  {
+                    "use": "usual",
+                    "type": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                          "code": "MR",
+                          "display": "Medical Record Number"
+                        }
+                      ]
+                    },
+                    "system": "http://hospital.smarthealthit.org",
+                    "value": "1032702"
+                  }
+                ],
+                "name": [
+                  {
+                    "use": "official",
+                    "family": "Quinn",
+                    "given": [
+                      "Jada",
+                      "Ann"
+                    ]
+                  },
+                  {
+                    "use": "maiden",
+                    "family": "King",
+                    "given": [
+                      "Jada",
+                      "Ann"
+                    ]
+                  }
+                ],
+                "telecom": [
+                  {
+                    "system": "phone",
+                    "value": "1-(404)555-1212",
+                    "use": "home"
+                  },
+                  {
+                    "system": "email",
+                    "value": "jadaann.quinn@example.com"
+                  }
+                ],
+                "gender": "female",
+                "birthDate": "1985-01-15",
+                "address": [
+                  {
+                    "extension": [
+                      {
+                        "url": "http://hl7.org/fhir/us/vr-common-library/StructureDefinition/Extension-within-city-limits-indicator-vr",
+                        "valueCoding": {
+                          "system": "http://terminology.hl7.org/CodeSystem/v2-0136",
+                          "code": "Y",
+                          "display": "Yes"
+                        }
+                      }
+                    ],
+                    "use": "home",
+                    "line": [
+                      "1875 West Morton Avenue"
+                    ],
+                    "city": "Salt Lake City",
+                    "district": "Salt Lake",
+                    "state": "UT",
+                    "postalCode": "84116",
+                    "country": "US"
+                  },
+                  {
+                    "use": "billing",
+                    "line": [
+                      "1848 South 1300 East"
+                    ],
+                    "city": "Salt Lake City",
+                    "state": "UT",
+                    "postalCode": "84401",
+                    "country": "US"
+                  }
+                ]
+              }
+            },
+            {
+              "fullUrl": "urn:uuid:9b0abc88-167d-460e-9a02-af7524198930-father",
+              "resource": {
+                "resourceType": "RelatedPerson",
+                "id": "relatedperson-father-natural-vr-james-brandon-quinn-common",
+                "meta": {
+                  "profile": [
+                    "http://build.fhir.org/ig/HL7/vr-common-library/StructureDefinition-RelatedPerson-father-natural-vr"
+                  ]
+                },
+                "text": {
+                  "status": "extensions",
+                  "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: RelatedPerson</b><a name=\"relatedperson-father-natural-vr-james-brandon-quinn-common\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource RelatedPerson &quot;relatedperson-father-natural-vr-james-brandon-quinn-common&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"StructureDefinition-RelatedPerson-father-natural-vr.html\">RelatedPerson - Father Natural Vital Records</a></p></div><blockquote><p><b>US Core Race Extension</b></p><blockquote><p><b>url</b></p><code>ombCategory</code></blockquote><p><b>value</b>: White (Details: urn:oid:2.16.840.1.113883.6.238 code 2106-3 = '2106-3', stated as 'White')</p><blockquote><p><b>url</b></p><code>text</code></blockquote><p><b>value</b>: White</p></blockquote><blockquote><p><b>US Core Ethnicity Extension</b></p><blockquote><p><b>url</b></p><code>ombCategory</code></blockquote><p><b>value</b>: Not Hispanic or Latino (Details: urn:oid:2.16.840.1.113883.6.238 code 2186-5 = '2186-5', stated as 'Not Hispanic or Latino')</p><blockquote><p><b>url</b></p><code>text</code></blockquote><p><b>value</b>: Not Hispanic or Latino</p></blockquote><p><b>Extension - RelatedPerson Birth Place Vital Records</b>: NY </p><p><b>identifier</b>: Social Security number: <a href=\"http://terminology.hl7.org/5.0.0/NamingSystem-ssn.html\">#</a>132225987</p><p><b>active</b>: true</p><p><b>patient</b>: <a href=\"Patient-patient-child-vr-babyg-quinn-common.html\">Patient/patient-child-vr-babyg-quinn-common</a> &quot; QUINN&quot;</p><p><b>relationship</b>: Natural Father <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://terminology.hl7.org/5.0.0/CodeSystem-v3-RoleCode.html\">RoleCode</a>#NFTH &quot;natural father&quot;)</span></p><p><b>name</b>: James Brandon Quinn (OFFICIAL)</p><p><b>gender</b>: male</p><p><b>birthDate</b>: 1972-11-24</p></div>"
+                },
+                "extension": [
+                  {
+                    "extension": [
+                      {
+                        "url": "ombCategory",
+                        "valueCoding": {
+                          "system": "urn:oid:2.16.840.1.113883.6.238",
+                          "code": "2106-3",
+                          "display": "White"
+                        }
+                      },
+                      {
+                        "url": "text",
+                        "valueString": "White"
+                      }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-race"
+                  },
+                  {
+                    "extension": [
+                      {
+                        "url": "ombCategory",
+                        "valueCoding": {
+                          "system": "urn:oid:2.16.840.1.113883.6.238",
+                          "code": "2186-5",
+                          "display": "Not Hispanic or Latino"
+                        }
+                      },
+                      {
+                        "url": "text",
+                        "valueString": "Not Hispanic or Latino"
+                      }
+                    ],
+                    "url": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity"
+                  },
+                  {
+                    "url": "http://hl7.org/fhir/us/vr-common-library/StructureDefinition/Extension-relatedperson-birthplace-vr",
+                    "valueAddress": {
+                      "state": "NY"
+                    }
+                  }
+                ],
+                "identifier": [
+                  {
+                    "type": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+                          "code": "SS"
+                        }
+                      ]
+                    },
+                    "system": "http://hl7.org/fhir/sid/us-ssn",
+                    "value": "132225987"
+                  }
+                ],
+                "active": true,
+                "patient": {
+                  "reference": "Patient/patient-child-vr-babyg-quinn-common"
+                },
+                "relationship": [
+                  {
+                    "coding": [
+                      {
+                        "system": "http://terminology.hl7.org/CodeSystem/v3-RoleCode",
+                        "code": "NFTH",
+                        "display": "natural father"
+                      }
+                    ],
+                    "text": "Natural Father"
+                  }
+                ],
+                "name": [
+                  {
+                    "use": "official",
+                    "family": "Quinn",
+                    "given": [
+                      "James",
+                      "Brandon"
+                    ]
+                  }
+                ],
+                "gender": "male",
+                "birthDate": "1972-11-24"
+              }
+            },
+            {
+              "fullUrl": "urn:uuid:9b0abc88-167d-460e-9a02-af7524198932",
+              "resource": {
+                "resourceType": "Observation",
+                "id": "observation-input-race-and-ethnicity-carmen-teresa-lee",
+                "meta": {
+                  "profile": [
+                    "http://hl7.org/fhir/us/vr-common-library/StructureDefinition/input-race-and-ethnicity-vr"
+                  ]
+                },
+                "text": {
+                  "status": "generated",
+                  "div": "<div xmlns=\"http://www.w3.org/1999/xhtml\"><p><b>Generated Narrative: Observation</b><a name=\"observation-input-race-and-ethnicity-carmen-teresa-lee\"> </a></p><div style=\"display: inline-block; background-color: #d9e0e7; padding: 6px; margin: 4px; border: 1px solid #8da1b4; border-radius: 5px; line-height: 60%\"><p style=\"margin-bottom: 0px\">Resource Observation &quot;observation-input-race-and-ethnicity-carmen-teresa-lee&quot; </p><p style=\"margin-bottom: 0px\">Profile: <a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/StructureDefinition-input-race-and-ethnicity-vr.html\">Observation - Input Race and Ethnicity Vital Records</a></p></div><p><b>status</b>: final</p><p><b>code</b>: Race and Ethnicity Data submitted by Jurisdictions to NCHS <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-CodeSystem-local-observation-codes-vr.html\">CodeSystem - Local Observation Codes Vital Records</a>#inputraceandethnicityMother)</span></p><p><b>subject</b>: <a href=\"Patient-patient-mother-carmen-teresa-lee.html\">Patient/patient-mother-carmen-teresa-lee: Patient - Mother (Carmen Teresa Lee)</a> &quot; LEE&quot;</p><blockquote><p><b>component</b></p><p><b>code</b>: White <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#White)</span></p><p><b>value</b>: true</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Black Or African American <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#BlackOrAfricanAmerican)</span></p><p><b>value</b>: true</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: American Indian Or Alaska Native <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#AmericanIndianOrAlaskanNative)</span></p><p><b>value</b>: true</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Asian Indian <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#AsianIndian)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Chinese <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#Chinese)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Filipino <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#Filipino)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Japanese <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#Japanese)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Korean <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#Korean)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Vietnamese <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#Vietnamese)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Other Asian <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#OtherAsian)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Native Hawaiian <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#NativeHawaiian)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Guamanian Or Chamorro <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#GuamanianOrChamorro)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Samoan <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#Samoan)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Other Pacific Islander <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#OtherPacificIslander)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Other Race <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#OtherRace)</span></p><p><b>value</b>: false</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: First Other Asian Literal <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#FirstOtherAsianLiteral)</span></p><p><b>value</b>: Malaysian</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: First American Indian Or Alaska Native Literal <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#FirstAmericanIndianOrAlaskanNativeLiteral)</span></p><p><b>value</b>: Arikara</p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Hispanic Mexican <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#HispanicMexican)</span></p><p><b>value</b>: Yes <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/R4/v2/0136/index.html\">v2 Y/N Indicator</a>#Y)</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Hispanic Cuban <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#HispanicCuban)</span></p><p><b>value</b>: Yes <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/R4/v2/0136/index.html\">v2 Y/N Indicator</a>#Y)</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Hispanic Puerto Rican <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#HispanicPuertoRican)</span></p><p><b>value</b>: Yes <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/R4/v2/0136/index.html\">v2 Y/N Indicator</a>#Y)</span></p></blockquote><blockquote><p><b>component</b></p><p><b>code</b>: Hispanic Other <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/us/vr-common-library/2024Jan/CodeSystem-codesystem-vr-component.html\">Local Component Codes</a>#HispanicOther)</span></p><p><b>value</b>: No <span style=\"background: LightGoldenRodYellow; margin: 4px; border: 1px solid khaki\"> (<a href=\"http://hl7.org/fhir/R4/v2/0136/index.html\">v2 Y/N Indicator</a>#N)</span></p></blockquote></div>"
+                },
+                "status": "final",
+                "code": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/CodeSystem-local-observation-codes-vr",
+                      "code": "inputraceandethnicityMother"
+                    }
+                  ]
+                },
+                "subject": {
+                  "reference": "Patient/patient-mother-carmen-teresa-lee",
+                  "display": "Patient - Mother (Carmen Teresa Lee)"
+                },
+                "component": [
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "White"
+                        }
+                      ]
+                    },
+                    "valueBoolean": true
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "BlackOrAfricanAmerican"
+                        }
+                      ]
+                    },
+                    "valueBoolean": true
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "AmericanIndianOrAlaskanNative"
+                        }
+                      ]
+                    },
+                    "valueBoolean": true
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "AsianIndian"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Chinese"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Filipino"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Japanese"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Korean"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Vietnamese"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "OtherAsian"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "NativeHawaiian"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "GuamanianOrChamorro"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Samoan"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "OtherPacificIslander"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "OtherRace"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "HispanicMexican"
+                        }
+                      ]
+                    },
+                    "valueCodeableConcept": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v2-0136",
+                          "code": "Y",
+                          "display": "Yes"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "HispanicCuban"
+                        }
+                      ]
+                    },
+                    "valueCodeableConcept": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+                          "code": "UNK",
+                          "display": "Unknown"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "HispanicPuertoRican"
+                        }
+                      ]
+                    },
+                    "valueCodeableConcept": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+                          "code": "UNK",
+                          "display": "Unknown"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "HispanicOther"
+                        }
+                      ]
+                    },
+                    "valueCodeableConcept": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+                          "code": "UNK",
+                          "display": "Unknown"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "fullUrl": "urn:uuid:9b0abc88-167d-460e-9a02-af7524198936",
+              "resource": {
+                "resourceType": "Observation",
+                "id": "observation-input-race-and-ethnicity-bob-ray-lee",
+                "meta": {
+                  "profile": [
+                    "http://hl7.org/fhir/us/vr-common-library/StructureDefinition/input-race-and-ethnicity-vr"
+                  ]
+                },
+                "status": "final",
+                "code": {
+                  "coding": [
+                    {
+                      "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/CodeSystem-local-observation-codes-vr",
+                      "code": "inputraceandethnicityFather"
+                    }
+                  ]
+                },
+                "subject": {
+                  "reference": "Patient/patient-father-bob-ray-lee",
+                  "display": "Patient - Father (Bob Ray Lee)"
+                },
+                "component": [
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "White"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "BlackOrAfricanAmerican"
+                        }
+                      ]
+                    },
+                    "valueBoolean": true
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "AmericanIndianOrAlaskanNative"
+                        }
+                      ]
+                    },
+                    "valueBoolean": true
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "AsianIndian"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Chinese"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Filipino"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Japanese"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Korean"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Vietnamese"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "OtherAsian"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "NativeHawaiian"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "GuamanianOrChamorro"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "Samoan"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "OtherPacificIslander"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "OtherRace"
+                        }
+                      ]
+                    },
+                    "valueBoolean": false
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "HispanicMexican"
+                        }
+                      ]
+                    },
+                    "valueCodeableConcept": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v2-0136",
+                          "code": "Y",
+                          "display": "Yes"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "HispanicCuban"
+                        }
+                      ]
+                    },
+                    "valueCodeableConcept": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+                          "code": "UNK",
+                          "display": "Unknown"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "HispanicPuertoRican"
+                        }
+                      ]
+                    },
+                    "valueCodeableConcept": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+                          "code": "UNK",
+                          "display": "Unknown"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "code": {
+                      "coding": [
+                        {
+                          "system": "http://hl7.org/fhir/us/vr-common-library/CodeSystem/codesystem-vr-component",
+                          "code": "HispanicOther"
+                        }
+                      ]
+                    },
+                    "valueCodeableConcept": {
+                      "coding": [
+                        {
+                          "system": "http://terminology.hl7.org/CodeSystem/v3-NullFlavor",
+                          "code": "UNK",
+                          "display": "Unknown"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+  
+  

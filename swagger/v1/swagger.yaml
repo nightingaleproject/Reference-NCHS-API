@@ -16,6 +16,16 @@ paths:
             maxLength: 2
             minLength: 2
             type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
+            type: string
         - name: _count
           in: query
           schema:
@@ -64,6 +74,119 @@ paths:
           schema:
             maxLength: 2
             minLength: 2
+            type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json-patch+json:
+            schema: { }
+          application/json:
+            schema: { }
+          text/json:
+            schema: { }
+          application/*+json:
+            schema: { }
+      responses:
+        '204':
+          description: Content created
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+  '/{jurisdictionId}/Bundle/{vitalType}/{igVersion}':
+    get:
+      tags:
+        - Bundles
+      summary: "Retrieves outgoing messages for the jurisdiction\r\nIf the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids."
+      parameters:
+        - name: jurisdictionId
+          in: path
+          required: true
+          schema:
+            maxLength: 2
+            minLength: 2
+            type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            maxLength: 4
+            minLength: 4
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: _count
+          in: query
+          schema:
+            type: integer
+            format: int32
+        - name: certificateNumber
+          in: query
+          schema:
+            type: string
+        - name: deathYear
+          in: query
+          schema:
+            type: string
+        - name: _since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 1
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { }
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+    post:
+      tags:
+        - Bundles
+      summary: Submits a FHIR message to the API for processing
+      description: "Sample request:\r\n            \r\n    POST\r\n            \r\n    {\r\n        \"resourceType\": \"Bundle\",\r\n        \"id\": \"bffdbf2e-c0db-49cf-9f52-59a6459635b9\",\r\n        \"type\": \"message\",\r\n        \"timestamp\": \"2022-07-27T15:30:39.5787234+00:00\",\r\n        \"entry\": [\r\n            { ...\r\n            }\r\n        ]\r\n    }"
+      parameters:
+        - name: jurisdictionId
+          in: path
+          required: true
+          schema:
+            maxLength: 2
+            minLength: 2
+            type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            maxLength: 4
+            minLength: 4
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
             type: string
       requestBody:
         content:
@@ -95,6 +218,16 @@ paths:
             maxLength: 2
             minLength: 2
             type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
+            type: string
         - name: _count
           in: query
           schema:
@@ -143,6 +276,16 @@ paths:
           schema:
             maxLength: 2
             minLength: 2
+            type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
             type: string
       requestBody:
         content:
@@ -189,6 +332,16 @@ paths:
             maxLength: 2
             minLength: 2
             type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
+            type: string
         - name: _count
           in: query
           schema:
@@ -237,6 +390,119 @@ paths:
           schema:
             maxLength: 2
             minLength: 2
+            type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json-patch+json:
+            schema: { }
+          application/json:
+            schema: { }
+          text/json:
+            schema: { }
+          application/*+json:
+            schema: { }
+      responses:
+        '204':
+          description: Content created
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+  '/STEVE/{jurisdictionId}/Bundle/{vitalType}/{igVersion}':
+    get:
+      tags:
+        - Steve
+      summary: "Retrieves outgoing messages for the jurisdiction\r\nIf the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids."
+      parameters:
+        - name: jurisdictionId
+          in: path
+          required: true
+          schema:
+            maxLength: 2
+            minLength: 2
+            type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            maxLength: 4
+            minLength: 4
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: _count
+          in: query
+          schema:
+            type: integer
+            format: int32
+        - name: certificateNumber
+          in: query
+          schema:
+            type: string
+        - name: deathYear
+          in: query
+          schema:
+            type: string
+        - name: _since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            default: 1
+      responses:
+        '200':
+          description: Content retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: { }
+        '400':
+          description: Bad Request
+        '500':
+          description: 'Internal Error, token may have expired'
+    post:
+      tags:
+        - Steve
+      summary: Submits a FHIR message to the API for processing
+      description: "Sample request:\r\n            \r\n    POST\r\n            \r\n    {\r\n        \"resourceType\": \"Bundle\",\r\n        \"id\": \"bffdbf2e-c0db-49cf-9f52-59a6459635b9\",\r\n        \"type\": \"message\",\r\n        \"timestamp\": \"2022-07-27T15:30:39.5787234+00:00\",\r\n        \"entry\": [\r\n            { ...\r\n            }\r\n        ]\r\n    }"
+      parameters:
+        - name: jurisdictionId
+          in: path
+          required: true
+          schema:
+            maxLength: 2
+            minLength: 2
+            type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            maxLength: 4
+            minLength: 4
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
             type: string
       requestBody:
         content:
@@ -268,6 +534,16 @@ paths:
             maxLength: 2
             minLength: 2
             type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
+            type: string
         - name: _count
           in: query
           schema:
@@ -316,6 +592,16 @@ paths:
           schema:
             maxLength: 2
             minLength: 2
+            type: string
+        - name: vitalType
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: igVersion
+          in: path
+          required: true
+          schema:
             type: string
       requestBody:
         content:
