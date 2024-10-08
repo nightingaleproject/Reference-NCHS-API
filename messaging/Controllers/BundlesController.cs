@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Hl7.Fhir.ElementModel.Types;
 
 namespace messaging.Controllers
 {
@@ -46,7 +47,7 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count,string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count,string certificateNumber, string deathYear, System.DateTime _since = default(System.DateTime), int page = 1)
         {
             if (_count == 0)
             {
@@ -70,7 +71,7 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid page number.");
                 return BadRequest("page must not be negative");
             }
-            bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && deathYear == null);
+            bool additionalParamsProvided = !(_since == default(System.DateTime) && certificateNumber == null && deathYear == null);
             // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
             if (!additionalParamsProvided && page > 1)
             {
@@ -107,7 +108,7 @@ namespace messaging.Controllers
                 {
                     outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
                 }
-                if (_since != default(DateTime))
+                if (_since != default(System.DateTime))
                 {
                     outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
                 }
@@ -125,7 +126,7 @@ namespace messaging.Controllers
                 // create bundle to hold the response
                 Bundle responseBundle = new Bundle();
                 responseBundle.Type = Bundle.BundleType.Searchset;
-                responseBundle.Timestamp = DateTime.Now;
+                responseBundle.Timestamp = System.DateTime.Now;
                 // Note that total is total number of matching results, not number being returned (outgoingMessages.Count)
                 responseBundle.Total = totalMessageCount;
                 // For the usual use case (unread only), the "next" page is just a repeated request.
@@ -159,7 +160,7 @@ namespace messaging.Controllers
                     }
                 }
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
-                DateTime retrievedTime = DateTime.UtcNow;
+                System.DateTime retrievedTime = System.DateTime.UtcNow;
                 // update each outgoing message's RetrievedAt field
                 foreach(OutgoingMessageItem msgItem in outgoingMessages) {
                     MarkAsRetrieved(msgItem, retrievedTime);
@@ -191,7 +192,7 @@ namespace messaging.Controllers
         }
 
         // Allows overriding by STEVE controller to mark different field
-        protected virtual void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
+        protected virtual void MarkAsRetrieved(OutgoingMessageItem omi, System.DateTime retrieved)
         {
             omi.RetrievedAt = retrieved;
         }
@@ -246,7 +247,7 @@ namespace messaging.Controllers
                 {
                     responseBundle = new Bundle();
                     responseBundle.Type = Bundle.BundleType.BatchResponse;
-                    responseBundle.Timestamp = DateTime.Now;
+                    responseBundle.Timestamp = System.DateTime.Now;
 
                     // For Batch Processing: 
                     // Process each entry as an individual BaseMessage.
@@ -345,6 +346,7 @@ namespace messaging.Controllers
         private async Task<Bundle.EntryComponent> InsertBatchMessage(Bundle.EntryComponent msgBundle, string jurisdictionId, IBackgroundTaskQueue queue)
         {
             Bundle.EntryComponent entry = new Bundle.EntryComponent();
+            entry.Response = new Bundle.ResponseComponent();
             IncomingMessageItem item;
 
             try
@@ -354,24 +356,23 @@ namespace messaging.Controllers
                 if (item.MessageType == "ExtractionErrorMessage")
                 {
                     _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
-                    entry.Response = new Bundle.ResponseComponent();
                     entry.Response.Status = "400";
                     entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.", OperationOutcome.IssueType.Exception);
+                    AddResponseExtensions(entry, item);
                     return entry;
                 }
                 if (item.MessageType != nameof(DeathRecordSubmissionMessage) && item.MessageType != nameof(DeathRecordUpdateMessage) && item.MessageType != nameof(DeathRecordVoidMessage) && item.MessageType != nameof(DeathRecordAliasMessage) && item.MessageType != nameof(AcknowledgementMessage))
                 {
                     _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
-                    entry.Response = new Bundle.ResponseComponent();
                     entry.Response.Status = "400";
                     entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}", OperationOutcome.IssueType.Exception);
+                    AddResponseExtensions(entry, item);
                     return entry;
                 }
             }
             catch (VRDR.MessageParseException ex)
             {
                 _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
-                entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
                 entry.Response.Outcome = OperationOutcome.ForMessage($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
                 return entry;
@@ -379,7 +380,6 @@ namespace messaging.Controllers
             catch (ArgumentException aEx)
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {aEx}");
-                entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
                 entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required field. {aEx.Message}.", OperationOutcome.IssueType.Exception);
                 return entry;
@@ -387,7 +387,6 @@ namespace messaging.Controllers
             catch (Exception ex)
             {
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {ex}");
-                entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
                 entry.Response.Outcome = OperationOutcome.ForMessage("Failed to parse message. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
                 return entry;
@@ -401,14 +400,14 @@ namespace messaging.Controllers
             catch (Exception ex)
             {
                 _logger.LogDebug($"An error occurred while saving the incoming message: {ex}");
-                entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "500";
                 entry.Response.Outcome = OperationOutcome.ForMessage("An error occurred while saving the incoming message", OperationOutcome.IssueType.Exception);
+                AddResponseExtensions(entry, item);
                 return entry;
             }
 
-            entry.Response = new Bundle.ResponseComponent();
             entry.Response.Status = "201";
+            AddResponseExtensions(entry, item);
             return entry;
         }
 
@@ -437,12 +436,12 @@ namespace messaging.Controllers
             // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
             // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
             // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
-            if (String.IsNullOrWhiteSpace(message.MessageSource))
+            if (string.IsNullOrWhiteSpace(message.MessageSource))
             {
                 _logger.LogDebug($"Message is missing source endpoint, throw exception");
                 throw new ArgumentException("Message source endpoint cannot be null");
             }
-            if (String.IsNullOrWhiteSpace(message.MessageDestination))
+            if (string.IsNullOrWhiteSpace(message.MessageDestination))
             {
                 _logger.LogDebug($"Message is missing destination endpoint, throw exception");
                 throw new ArgumentException("Message destination endpoint cannot be null");
@@ -452,12 +451,12 @@ namespace messaging.Controllers
                 _logger.LogDebug($"Message destination endpoint does not include a valid NCHS endpoint, throw exception");
                 throw new ArgumentException("Message destination endpoint does not include a valid NCHS endpoint");
             }
-            if (String.IsNullOrWhiteSpace(message.MessageId))
+            if (string.IsNullOrWhiteSpace(message.MessageId))
             {
                 _logger.LogDebug($"Message is missing Message ID, throw exception");
                 throw new ArgumentException("Message ID cannot be null");
             }
-            if (String.IsNullOrWhiteSpace(message.GetType().Name))
+            if (string.IsNullOrWhiteSpace(message.GetType().Name))
             {
                 _logger.LogDebug($"Message is missing Message Event Type, throw exception");
                 throw new ArgumentException("Message Event Type cannot be null");
@@ -493,6 +492,26 @@ namespace messaging.Controllers
             item.EventType = getEventType(message);
 
             return item;
+        }
+
+        protected void AddResponseExtensions(Bundle.EntryComponent entry, IncomingMessageItem item)
+        {
+            Extension messageIdExtension = new Extension();
+            messageIdExtension.Url = "messageId";
+            messageIdExtension.Value = new FhirString(item.MessageId);
+            entry.Response.Extension.Add(messageIdExtension);
+            Extension jurisdictionIdExtension = new Extension();
+            jurisdictionIdExtension.Url = "jurisdictionId";
+            jurisdictionIdExtension.Value = new FhirString(item.JurisdictionId);
+            entry.Response.Extension.Add(jurisdictionIdExtension);
+            Extension eventYearExtension = new Extension();
+            eventYearExtension.Url = "eventYear";
+            eventYearExtension.Value = new UnsignedInt((int?)item.EventYear);
+            entry.Response.Extension.Add(eventYearExtension);
+            Extension certificateNumberExtension = new Extension();
+            certificateNumberExtension.Url = "certificateNumber";
+            certificateNumberExtension.Value = new FhirString(item.CertificateNumber);
+            entry.Response.Extension.Add(certificateNumberExtension);
         }
 
         protected async System.Threading.Tasks.Task SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
