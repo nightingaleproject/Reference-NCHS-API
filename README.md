@@ -515,6 +515,8 @@ This section documents information useful for developers of the API itself and i
 
 See [GettingStarted.md](GettingStarted.md).
 
+Note: On an Apple silicon Mac you may need to add `--platform=linux/amd64` to the docker run command above.
+
 ## Deploying in Production
 
 See [DeploymentSteps.md](DeploymentSteps.md).
