@@ -97,8 +97,8 @@ namespace messaging.Controllers
                 {
                     processedCount,
                     queuedCount,
-                    oldestQueued = oldestQueued == default(DateTime) ? null : oldestQueued,
-                    newestQueued = newestQueued == default(DateTime) ? null : newestQueued,
+                    oldestQueued,
+                    newestQueued,
                     processedCountFiveMinutes,
                     processedCountOneHour,
                     queuedCountFiveMinutes,
