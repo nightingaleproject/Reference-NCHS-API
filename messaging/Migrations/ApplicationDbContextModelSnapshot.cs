@@ -180,9 +180,6 @@ namespace messaging.Migrations
                     b.Property<DateTime?>("RetrievedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("SteveRetrievedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("datetime2");
 
