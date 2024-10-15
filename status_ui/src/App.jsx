@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Paper, Button } from '@mui/material';
+import { Paper, Button, CircularProgress } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import moment from 'moment';
 import './App.css'
@@ -7,14 +7,18 @@ import './App.css'
 function App() {
 
   const [statusData, setStatusData] = useState();
+  const [fetching, setFetching] = useState(false);
 
   const fetchData = () => {
+    setFetching(true);
     fetch('/status').then((result) => {
       return result.json();
     }).then((json) => {
       setStatusData(json);
     }).catch((e) => {
       console.log(e);
+    }).finally(() => {
+      setFetching(false);
     });
   }
 
@@ -50,7 +54,7 @@ function App() {
 
   return (
     <>
-      <Button variant="contained" sx={{ mb: 5 }} onClick={() => fetchData()}>Refresh</Button>
+      <Button disabled={fetching} variant="contained" sx={{ mb: 5 }} onClick={() => fetchData()}>Refresh {fetching && <CircularProgress size={15} sx={{ ml: 1 }}/>}</Button>
       
       <Paper sx={{ width: '100%', mb: 5 }}>
         <DataGrid
