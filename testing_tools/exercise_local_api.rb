@@ -5,15 +5,9 @@
 messages_per_minute = (ARGV.shift || 10).to_i
 number_of_jurisdictions = (ARGV.shift || 10).to_i
 
-# NEVER IN REAL LIFE!!!
-#require 'openssl'
-#OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
-
-require 'active_support/all'
 require 'securerandom'
 require 'time'
 require 'json'
-require 'parallel'
 require 'uri'
 require 'net/http'
 

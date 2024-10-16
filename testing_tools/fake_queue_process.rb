@@ -5,12 +5,10 @@ require 'tiny_tds'
 require 'json'
 
 # Takes one argument: messages per minute (defaults to 10)
-
 messages_per_minute = (ARGV.shift || 10).to_i
 
 # Load DB information from appsettings
-
-settings = JSON.parse(File.read('../messaging/appsettings.Development.json'))
+settings = JSON.parse(File.read(File.join(__dir__, '..', 'messaging', 'appsettings.Development.json')))
 connection_string = settings['ConnectionStrings']['NVSSMessagingDatabase']
 credentials = connection_string.split(';').map { |f| f.split('=') }.to_h
 
@@ -28,6 +26,8 @@ query = "UPDATE IncomingMessageItems SET ProcessedStatus='PROCESSED', UpdatedDat
 
 while true do
   client.execute(query)
-  puts "Processed a message"
+  if client.execute('SELECT @@ROWCOUNT AS count').first['count'] > 0
+    puts "Processed a message"
+  end
   sleep 60 / messages_per_minute.to_f
 end
