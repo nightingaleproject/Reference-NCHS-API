@@ -39,11 +39,11 @@ function App() {
   const columns = [
     { field: 'jurisdictionId', headerName: 'Jurisdiction', width: 121 },
     { field: 'messageCount', headerName: '# Messages', type: 'number', valueGetter: (value, row) => row.processedCount + row.queuedCount, width: 130 },
-    { field: 'receivedFiveMinutes', headerName: 'Received last 5min', type: 'number', valueGetter: (value, row) => row.processedCountFiveMinutes + row.queuedCountFiveMinutes, width: 140 },
     { field: 'receivedOneHour', headerName: 'Received last 1hr', type: 'number', valueGetter: (value, row) => row.processedCountOneHour + row.queuedCountOneHour, width: 140 },
+    { field: 'receivedFiveMinutes', headerName: 'Received last 5min', type: 'number', valueGetter: (value, row) => row.processedCountFiveMinutes + row.queuedCountFiveMinutes, width: 140 },
     { field: 'processedCount', headerName: '# Processed', type: 'number', width: 130 },
-    { field: 'processedCountFiveMinutes', headerName: 'Processed last 5min', type: 'number', width: 150 },
     { field: 'processedCountOneHour', headerName: 'Processed last 1hr', type: 'number', width: 140 },
+    { field: 'processedCountFiveMinutes', headerName: 'Processed last 5min', type: 'number', width: 150 },
     { field: 'queuedCount', headerName: '# Queued', type: 'number', width: 110 },
     { field: 'oldest', headerName: 'Oldest Queued', sortable: false, valueGetter: (value, row) => relativeDate(row.oldestQueued), width: 140 },
     { field: 'newest', headerName: 'Newest Queued', sortable: false, valueGetter: (value, row) => relativeDate(row.newestQueued), width: 140 },
