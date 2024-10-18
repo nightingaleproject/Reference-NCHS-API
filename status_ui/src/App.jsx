@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Paper, Button, CircularProgress } from '@mui/material';
+import { Container, Box, Typography, Paper, Button, CircularProgress } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import moment from 'moment';
 import './App.css'
@@ -53,35 +53,42 @@ function App() {
   const jurisdictionRows = statusData?.jurisdictionResults || [];
 
   return (
-    <>
-      <Button disabled={fetching} variant="contained" sx={{ mb: 5 }} onClick={() => fetchData()}>Refresh {fetching && <CircularProgress size={15} sx={{ ml: 1 }}/>}</Button>
-      
-      <Paper sx={{ width: '100%', mb: 5 }}>
-        <DataGrid
-          rows={allJurisdictionRows}
-          getRowId={(row) => row.jurisdictionId }
-          columns={columns}
-          initialState={{
-            sorting: {
-              sortModel: [{ field: 'jurisdictionId', sort: 'asc' }],
-            },
-          }}
-        />
-      </Paper>
+    <Container disableGutters>
 
-      <Paper sx={{ width: '100%' }}>
-        <DataGrid
-          rows={jurisdictionRows}
-          getRowId={(row) => row.jurisdictionId }
-          columns={columns}
-          initialState={{
-            sorting: {
-              sortModel: [{ field: 'jurisdictionId', sort: 'asc' }],
-            },
-          }}
-        />
-      </Paper>
-    </>
+      <Box sx={{ width: '100%', mb: 2 }}>
+        <Button disabled={fetching} variant="contained" sx={{ float: 'right' }} onClick={() => fetchData()}>Refresh {fetching && <CircularProgress size={15} sx={{ ml: 1 }}/>}</Button>
+        <Typography variant="h4">FHIR API Status</Typography>
+      </Box>
+      
+      <DataGrid
+        sx={{ width: '100%', mb: 3 }}
+        rows={allJurisdictionRows}
+        getRowId={(row) => row.jurisdictionId }
+        columns={columns}
+        initialState={{
+          sorting: {
+            sortModel: [{ field: 'jurisdictionId', sort: 'asc' }],
+          },
+        }}
+      />
+
+      <Box sx={{ width: '100%', mb: 2 }}>
+        <Typography variant="h4">Status By Jurisdiction</Typography>
+      </Box>
+
+      <DataGrid
+        sx={{ width: '100%' }}
+        rows={jurisdictionRows}
+        getRowId={(row) => row.jurisdictionId }
+        columns={columns}
+        initialState={{
+          sorting: {
+            sortModel: [{ field: 'jurisdictionId', sort: 'asc' }],
+          },
+        }}
+      />
+
+    </Container>
   )
 }
 
