@@ -28,6 +28,8 @@ while true do
   client.execute(query)
   if client.execute('SELECT @@ROWCOUNT AS count').first['count'] > 0
     puts "Processed a message"
+  else
+    puts "No messages to process"
   end
   sleep 60 / messages_per_minute.to_f
 end
