@@ -23,6 +23,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NVSSAPI\fsh-generated\resources\CapabilityStatement-NVSS-API-CS.json" />
+    <EmbeddedResource Include="StatusUI/index.html" />
+    <EmbeddedResource Include="StatusUI/assets/index-uSXOUBRu.css" />
+    <EmbeddedResource Include="StatusUI/assets/index-NpCbxQFF.js" />
   </ItemGroup>
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
