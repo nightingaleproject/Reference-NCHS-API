@@ -4,10 +4,16 @@ import { DataGrid } from '@mui/x-data-grid';
 import moment from 'moment';
 import './App.css'
 
+// Show actual seconds
+moment.relativeTimeThreshold('s', 60);
+moment.relativeTimeThreshold('ss', 0);
+
 function App() {
 
   const [statusData, setStatusData] = useState();
   const [fetching, setFetching] = useState(false);
+  const [lastFetch, setLastFetch] = useState();
+  const [lastFetchDisplay, setLastFetchDisplay] = useState();
 
   const fetchData = () => {
     setFetching(true);
@@ -15,6 +21,7 @@ function App() {
       return result.json();
     }).then((json) => {
       setStatusData(json);
+      setLastFetch(moment());
     }).catch((e) => {
       console.log(e);
     }).finally(() => {
@@ -26,6 +33,15 @@ function App() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Update the display of how long ago the last fetch happened every second
+  useEffect(() => {
+    setLastFetchDisplay('0 seconds ago');
+    const intervalId = setInterval(() => {
+      setLastFetchDisplay(moment(lastFetch).fromNow());
+    }, 1000); // Update every 1 second
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [lastFetch]);
 
   // Instead of showing dates and times show "N minutes ago" or similar
   const relativeDate = (date) => {
@@ -53,10 +69,11 @@ function App() {
   const jurisdictionRows = statusData?.jurisdictionResults || [];
 
   return (
-    <Container disableGutters>
+    <Container maxWidth={false}>
 
       <Box sx={{ width: '100%', mb: 2 }}>
         <Button disabled={fetching} variant="contained" sx={{ float: 'right' }} onClick={() => fetchData()}>Refresh {fetching && <CircularProgress size={15} sx={{ ml: 1 }}/>}</Button>
+        <Typography variant="h6" sx={{ float: 'right', mr: 2, mt: 0.5, fontSize: '1.1em' }}>Last refreshed {lastFetchDisplay}</Typography>
         <Typography variant="h4">FHIR API Status</Typography>
       </Box>
       
