@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using messaging.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.FileProviders;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
@@ -64,16 +65,25 @@ namespace messaging
             app.UseHttpsRedirection();
             app.Use(async (context, next) =>
             {
-                context.Response.Headers.Add("Content-Type", "application/json");
                 context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
                 context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
                 context.Response.Headers.Add("Cache-Control", "no-store");
-                context.Response.Headers.Add("Content-Security-Policy", "default-src");
                 // null check the MaxRequestBodySizeFeature, this feature is null in the dotnet test instance and will throw a null error in our testing framework
                 IHttpMaxRequestBodySizeFeature feat = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
                 if (feat != null)
                 {
                     feat.MaxRequestBodySize = Int32.Parse(Configuration.GetSection("AppSettings").GetSection("MaxPayloadSize").Value);
+                }
+                // We change the default headers based on whether it's StatusUI or not
+                if (context.Request.Path.StartsWithSegments("/StatusUI"))
+                {
+                    // StatusUI is a small JS app where we want to serve a few files
+                    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline';");
+                }
+                else
+                {
+                    context.Response.Headers.Add("Content-Type", "application/json");
+                    context.Response.Headers.Add("Content-Security-Policy", "default-src");
                 }
                 await next.Invoke();
             });
@@ -95,6 +105,12 @@ namespace messaging
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+            // Serve the StatusUI static files from the appropriate location
+            app.UseFileServer(new FileServerOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "StatusUI")),
+                RequestPath = "/StatusUI"
             });
         }
     }
