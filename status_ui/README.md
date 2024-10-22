@@ -1,8 +1,15 @@
-# React + Vite
+# NVSS API Status UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This subdirectory contains a simple single page Status UI, built with React, that displays information pulled from the NVSS API Status API.
 
-Currently, two official plugins are available:
+For deployment simplicity the results of building the React app are just checked into source control as part of the API and the API serves those generated files.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+If changes are needed to the UI, follow the following steps:
+
+1. Make updates to the React code in the src subdirectory
+
+2. Run `npm run build` to generate the static HTML, JS, and CSS files for the Status IP; these files will be placed in the StatusUI subdirectory of the API implementation (`../messaging/StatusUI`)
+
+3. Check both the updates to the UI source code and the generated static files into source control
+
+4. Update the names of the generated files in the EmbeddedResource references in the messaging project file (`../messaging/messaging.cspro`)
