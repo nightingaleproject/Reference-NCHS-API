@@ -4,10 +4,6 @@ import { DataGrid } from '@mui/x-data-grid';
 import moment from 'moment';
 import './App.css'
 
-// Show actual seconds
-moment.relativeTimeThreshold('s', 60);
-moment.relativeTimeThreshold('ss', 0);
-
 function App() {
 
   const [statusData, setStatusData] = useState();
@@ -36,7 +32,6 @@ function App() {
 
   // Update the display of how long ago the last fetch happened every second
   useEffect(() => {
-    setLastFetchDisplay('0 seconds ago');
     const intervalId = setInterval(() => {
       setLastFetchDisplay(moment(lastFetch).fromNow());
     }, 1000); // Update every 1 second
