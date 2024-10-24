@@ -505,33 +505,22 @@ namespace messaging.Controllers
 
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, Bundle bundle)
         {
-            //CommonMessage message;
-            // try parsing as a bfdr message if the vitalType is either unknown or explicitly BFDR
-            if (_settings.BFDREnabled)
+
+            if (_settings.BFDREnabled && (String.IsNullOrEmpty(vitalType) || vitalType.Equals("BFDR")))
             {
-                if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("BFDR") )
+                try
                 {
-                    try
-                    {
-                        CommonMessage message = BirthRecordBaseMessage.Parse(bundle);
-                        return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
-                    }
-                    catch(BFDR.MessageParseException ex)
-                    {
-                        _logger.LogDebug($"The message could not be parsed as a bfdr message. Trying to parse as a vrdr message...");
-                    }
-                    catch(ArgumentException aex)
-                    {
-                        // pass exception thrown by our validation to calling function
-                        throw aex;
-                    }
+                    CommonMessage message = BirthRecordBaseMessage.Parse(bundle);
+                    return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
+                }
+                catch (BFDR.MessageParseException) { }
+                catch (ArgumentException aex)
+                {
+                    throw aex;
                 }
             }
 
-
-
-            // try parsing as a vrdr message if the vitalType is either unknown or explicitly VRDR
-            if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("VRDR") )
+            if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("VRDR"))
             {
                 try
                 {
@@ -539,25 +528,18 @@ namespace messaging.Controllers
                     BaseMessage.ValidateMessageHeader(message);
                     return ValidateAndCreateIncomingVRDRMessageItem(message, jurisdictionId);
                 }
-                catch(MessageRuleException mrx)
-                {   
+                catch (MessageRuleException mrx)
+                {
                     throw mrx;
                 }
-                catch(VRDR.MessageParseException ex)
+                catch (VRDR.MessageParseException) { }
+                catch (ArgumentException aex)
                 {
-                    _logger.LogDebug($"The message could not be parsed as a vrdr message: {ex}");
-                }
-                catch(ArgumentException aex)
-                {
-                    // pass exception thrown by our validation to calling function
                     throw aex;
                 }
             }
 
-
-
-            // if we make it here, the message wasn't parsed successfully, throw an error
-            _logger.LogDebug($"Message type not recognized, throw exception");
+            _logger.LogDebug("The message could not be parsed as a BFDR or VRDR message. Throw exception.");
             throw new ArgumentException("Failed to parse message, message type unrecognized");
         }
 
