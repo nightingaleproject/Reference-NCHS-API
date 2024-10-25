@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
 using System;
+using Microsoft.AspNetCore.Http.Features;
 
 
 namespace messaging
@@ -28,6 +29,7 @@ namespace messaging
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+
             services.AddMemoryCache();
             services.AddMiniProfiler(options => options.RouteBasePath = "/profiler").AddEntityFramework();
             services.AddDbContext<ApplicationDbContext>(opt =>
@@ -67,6 +69,12 @@ namespace messaging
                 context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
                 context.Response.Headers.Add("Cache-Control", "no-store");
                 context.Response.Headers.Add("Content-Security-Policy", "default-src");
+                // null check the MaxRequestBodySizeFeature, this feature is null in the dotnet test instance and will throw a null error in our testing framework
+                IHttpMaxRequestBodySizeFeature feat = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
+                if (feat != null)
+                {
+                    feat.MaxRequestBodySize = Int32.Parse(Configuration.GetSection("AppSettings").GetSection("MaxPayloadSize").Value);
+                }
                 await next.Invoke();
             });
             if (env.IsDevelopment())

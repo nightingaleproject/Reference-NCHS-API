@@ -7,4 +7,5 @@ public class AppSettings
     public string SAMS {get; set;}
     public string STEVE {get; set;}
     public int PageCount {get; set;}
+    public int MaxPayloadSize {get; set;}
 }
