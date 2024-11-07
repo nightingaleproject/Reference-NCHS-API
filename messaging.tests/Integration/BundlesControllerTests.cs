@@ -107,7 +107,7 @@ namespace messaging.tests
             Assert.Equal(HttpStatusCode.NoContent, createDeathSubmissionMessage.StatusCode);
 
             // Create a new Birth Record
-            BirthRecordSubmissionMessage recordSubmission = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+            BirthRecordSubmissionMessage recordSubmission = BFDRBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
@@ -150,7 +150,7 @@ namespace messaging.tests
 
             // Extract the message from the bundle and ensure it is an ACK for the appropritae message
             var lastMessageInBundle = updatedBundle.Entry.Last();
-            BirthRecordAcknowledgementMessage parsedMessage = BirthRecordBaseMessage.Parse<BirthRecordAcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
+            BirthRecordAcknowledgementMessage parsedMessage = BFDRBaseMessage.Parse<BirthRecordAcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
             Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
         }
 
@@ -161,7 +161,7 @@ namespace messaging.tests
             DatabaseHelper.ResetDatabase(_context);
 
             // Create a new Birth Record
-            BirthRecordSubmissionMessage recordSubmission = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+            BirthRecordSubmissionMessage recordSubmission = BFDRBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
@@ -200,7 +200,7 @@ namespace messaging.tests
 
             // Extract the message from the bundle and ensure it is an ACK for the appropritae message
             var lastMessageInBundle = updatedBundle.Entry.Last();
-            BirthRecordAcknowledgementMessage parsedMessage = BirthRecordBaseMessage.Parse<BirthRecordAcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
+            BirthRecordAcknowledgementMessage parsedMessage = BFDRBaseMessage.Parse<BirthRecordAcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
             Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
         }
 
@@ -449,7 +449,7 @@ namespace messaging.tests
             // Get the current time
             DateTime currentTime = DateTime.UtcNow;
             // Create a new Birth Record
-            BirthRecordSubmissionMessage recordSubmission = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+            BirthRecordSubmissionMessage recordSubmission = BFDRBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
 
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
@@ -951,7 +951,7 @@ namespace messaging.tests
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
             // Create a new Birth Record WITH nchs in the endpoint list
-            BirthRecordSubmissionMessage recordSubmission2 = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+            BirthRecordSubmissionMessage recordSubmission2 = BFDRBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
 
             recordSubmission2.MessageSource = "http://example.fhir.org";
             recordSubmission2.CertNo = 1;
@@ -1084,7 +1084,7 @@ namespace messaging.tests
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
 
             // Create a new Birth Record
-            BirthRecordSubmissionMessage recordSubmission2 = BirthRecordBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
+            BirthRecordSubmissionMessage recordSubmission2 = BFDRBaseMessage.Parse<BirthRecordSubmissionMessage>(FixtureStream("fixtures/json/BirthRecordSubmissionMessage.json"));
 
             // Submit that Birth Record
             HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/{jurisdictionParameter}/Bundle", recordSubmission2.ToJson());

@@ -1,5 +1,11 @@
 ## Changelog
 
+### v1.4.0 - 2024-11-07
+* Update BFDR to v1.0.0-preview.9 and VRDR to v4.4.1
+* Add validation for maximum payload size
+* Add required web config headers for security 
+* Clean up logs when parsing bfdr and vrdr messages
+
 ### v1.3.0 - 2024-08-29
 * Add support for Natality Messaging
 * Add configuration to enable or disable Natality Messaging
