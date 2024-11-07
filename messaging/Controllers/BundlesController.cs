@@ -510,7 +510,7 @@ namespace messaging.Controllers
             {
                 try
                 {
-                    CommonMessage message = BirthRecordBaseMessage.Parse(bundle);
+                    CommonMessage message = BFDRBaseMessage.Parse(bundle);
                     return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
                 }
                 catch (BFDR.MessageParseException) { }
@@ -596,7 +596,7 @@ namespace messaging.Controllers
             item.JurisdictionId = jurisdictionId;
             if(bfdrMessageType(message.GetType().Name))
             {
-                item.EventYear = ((BirthRecordBaseMessage)message).BirthYear;
+                item.EventYear = ((BFDRBaseMessage)message).EventYear;
             }
             // TODO add this check once we move to the monorepo version of VRDR STU 3.0
             // else if(vrdrMessageType(message.GetType().Name))
@@ -714,13 +714,13 @@ namespace messaging.Controllers
                 case "http://nchs.cdc.gov/vrdr_submission_update":
                 case "http://nchs.cdc.gov/vrdr_submission_void":
                     return "MOR";
-                case "http://nchs.cdc.gov/bfdr_submission":
-                case "http://nchs.cdc.gov/bfdr_acknowledgement":
-                case "http://nchs.cdc.gov/bfdr_submission_update": 
-                case "http://nchs.cdc.gov/bfdr_demographics_coding":
-                case "http://nchs.cdc.gov/bfdr_extraction_error":
-                case "http://nchs.cdc.gov/bfdr_status":
-                case "http://nchs.cdc.gov/bfdr_submission_void":
+                case "http://nchs.cdc.gov/birth_submission":
+                case "http://nchs.cdc.gov/birth_acknowledgement":
+                case "http://nchs.cdc.gov/birth_submission_update": 
+                case "http://nchs.cdc.gov/birth_demographics_coding":
+                case "http://nchs.cdc.gov/birth_extraction_error":
+                case "http://nchs.cdc.gov/birth_status":
+                case "http://nchs.cdc.gov/birth_submission_void":
                     return "NAT";
                 default:
                     return "UNK";

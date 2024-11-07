@@ -72,7 +72,7 @@ namespace messaging.Services
             }
             else if (item.EventType == "NAT")
             {
-                BirthRecordBaseMessage parsedMessage = BirthRecordBaseMessage.Parse(item.Message.ToString(), true);
+                BFDRBaseMessage parsedMessage = BFDRBaseMessage.Parse(item.Message.ToString(), true);
                 OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
                 outgoingMessageItem.JurisdictionId = item.JurisdictionId;
                 try {
@@ -90,7 +90,7 @@ namespace messaging.Services
                     outgoingMessageItem.MessageId = errorMessage.MessageId;
                     outgoingMessageItem.MessageType = errorMessage.GetType().Name;
                     outgoingMessageItem.CertificateNumber = errorMessage.CertNo.ToString().PadLeft(6, '0');
-                    outgoingMessageItem.EventYear = errorMessage.BirthYear;
+                    outgoingMessageItem.EventYear = errorMessage.EventYear;
                     outgoingMessageItem.EventType = "NAT";
                     this._context.OutgoingMessageItems.Add(outgoingMessageItem);
                 }
@@ -213,7 +213,7 @@ namespace messaging.Services
             this._context.SaveChanges();
         }
 
-        private void CreateBirthAckMessage(BirthRecordBaseMessage message, IncomingMessageItem databaseMessage) {
+        private void CreateBirthAckMessage(BFDRBaseMessage message, IncomingMessageItem databaseMessage) {
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
             BirthRecordAcknowledgementMessage ackMessage = new BirthRecordAcknowledgementMessage(message);
             outgoingMessageItem.JurisdictionId = databaseMessage.JurisdictionId;
@@ -221,7 +221,7 @@ namespace messaging.Services
             outgoingMessageItem.MessageId = ackMessage.MessageId;
             outgoingMessageItem.MessageType = ackMessage.GetType().Name;
             outgoingMessageItem.CertificateNumber = ackMessage.CertNo.ToString().PadLeft(6, '0');
-            outgoingMessageItem.EventYear = ackMessage.BirthYear;
+            outgoingMessageItem.EventYear = ackMessage.EventYear;
             outgoingMessageItem.EventType = "NAT";
             this._context.OutgoingMessageItems.Add(outgoingMessageItem);
             this._context.SaveChanges();
