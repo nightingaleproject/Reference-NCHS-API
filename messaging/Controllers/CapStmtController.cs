@@ -44,7 +44,10 @@ namespace messaging.Controllers
                 {
                     using (StreamReader r = new StreamReader(stream))
                     {
-                        string str = r.ReadToEnd();
+                        // the capability statement is approximately 1 kb
+                        char[] buffer = new char[2000];
+                        int size = r.ReadBlock(buffer, 0, 2000);
+                        string str = new string(buffer);
                         string customStmt = str.Replace("XX", jurisdictionId);
                         JObject json = JObject.Parse(customStmt);
                         return Ok(json);

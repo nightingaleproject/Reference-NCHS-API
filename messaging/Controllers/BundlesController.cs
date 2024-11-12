@@ -505,21 +505,26 @@ namespace messaging.Controllers
 
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, Bundle bundle)
         {
-
-            if (_settings.BFDREnabled && (String.IsNullOrEmpty(vitalType) || vitalType.Equals("BFDR")))
+            // the vital type must be specified as BFDR to post BFDR records
+            if (_settings.BFDREnabled && !String.IsNullOrEmpty(vitalType) && vitalType.Equals("BFDR"))
             {
                 try
                 {
                     CommonMessage message = BFDRBaseMessage.Parse(bundle);
                     return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
                 }
-                catch (BFDR.MessageParseException) { }
+                catch (BFDR.MessageParseException mpex) 
+                { 
+                    _logger.LogDebug($"The message could not be parsed as a BFDR message. {mpex}");
+                    throw new ArgumentException($"Failed to parse input as a BFDR message, message type unrecognized.");
+                }
                 catch (ArgumentException aex)
                 {
                     throw aex;
                 }
             }
 
+            // null vital type is considered VRDR by default
             if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("VRDR"))
             {
                 try
@@ -532,15 +537,18 @@ namespace messaging.Controllers
                 {
                     throw mrx;
                 }
-                catch (VRDR.MessageParseException) { }
+                catch (VRDR.MessageParseException mpex) 
+                { 
+                    _logger.LogDebug($"The message could not be parsed as a VRDR message. {mpex}");
+                    throw new ArgumentException($"Failed to parse input as a VRDR message, message type unrecognized.");
+                }
                 catch (ArgumentException aex)
                 {
                     throw aex;
                 }
             }
 
-            _logger.LogDebug("The message could not be parsed as a BFDR or VRDR message. Throw exception.");
-            throw new ArgumentException("Failed to parse message, message type unrecognized");
+            throw new ArgumentException($"Failed to parse input as a VRDR or BFDR message, message type unrecognized.");
         }
 
         protected IncomingMessageItem ValidateAndCreateIncomingMessageItem(CommonMessage message, string jurisdictionId)
