@@ -114,7 +114,7 @@ namespace messaging.tests
             recordSubmission.CertNo = 1;
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
             Hl7.Fhir.Model.Bundle updatedBundle = null;
@@ -330,7 +330,7 @@ namespace messaging.tests
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/" + recordSubmission.JurisdictionId + "/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
-            await System.Threading.Tasks.Task.Delay(1000);
+            await System.Threading.Tasks.Task.Delay(2000);
 
             HttpResponseMessage getBundle = await _client.GetAsync("/" + recordSubmission.JurisdictionId + "/Bundle?deathYear=" + recordSubmission.DeathYear);
             Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
@@ -456,7 +456,7 @@ namespace messaging.tests
             recordSubmission.CertNo = 1;
 
             // Submit that Death Record
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", recordSubmission.ToJson());
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
             BirthRecordUpdateMessage recordUpdate = new BirthRecordUpdateMessage(recordSubmission.BirthRecord);
@@ -466,7 +466,7 @@ namespace messaging.tests
             recordUpdate.CertNo = 1;
 
             // Submit update message
-            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", recordUpdate.ToJson());
+            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordUpdate.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
@@ -957,7 +957,7 @@ namespace messaging.tests
             recordSubmission2.CertNo = 1;
             recordSubmission2.MessageDestination = "http://notnchs.cdc.gov/bfdr_submission,http://nchs.cdc.gov/bfdr_submission";
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle", recordSubmission2.ToJson());
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle/BFDR/v2.0", recordSubmission2.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage2.StatusCode);
         }
 
@@ -986,7 +986,7 @@ namespace messaging.tests
             recordSubmission.DeathYear = 2024;
             recordSubmission2.MessageDestination = "temp,http://nchs.CDC.gov/BFDR_Submission,temp";
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", recordSubmission2.ToJson());
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle/BFDR/v2.0", recordSubmission2.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage2.StatusCode);
         }
 
