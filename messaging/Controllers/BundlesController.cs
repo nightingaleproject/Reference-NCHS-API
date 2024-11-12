@@ -506,7 +506,7 @@ namespace messaging.Controllers
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, Bundle bundle)
         {
             // the vital type must be specified as BFDR to post BFDR records
-            if (_settings.BFDREnabled && vitalType.Equals("BFDR"))
+            if (_settings.BFDREnabled && !String.IsNullOrEmpty(vitalType) && vitalType.Equals("BFDR"))
             {
                 try
                 {
