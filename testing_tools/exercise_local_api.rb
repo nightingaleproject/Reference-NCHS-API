@@ -4,6 +4,7 @@
 
 messages_per_minute = (ARGV.shift || 10).to_i
 number_of_jurisdictions = (ARGV.shift || 10).to_i
+jurisdictions = ARGV if ARGV.length > 0
 
 require 'securerandom'
 require 'time'
@@ -64,7 +65,7 @@ def send_message(jurisdiction)
   end
 end
 
-jurisdictions = [
+jurisdictions ||= [
   "AK", "AL", "AR", "AS", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "GU", "HI", "IA", "ID", "IL", "IN", "KS",
   "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MP", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY",
   "OH", "OK", "OR", "PA", "PR", "RI", "SC", "SD", "TN", "TX", "UT", "VA", "VI", "VT", "WA", "WI", "WV", "WY", "YC"
