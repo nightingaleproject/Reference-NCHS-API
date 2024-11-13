@@ -58,6 +58,7 @@ function App() {
     { field: 'queuedCount', headerName: '# Queued', type: 'number', width: 110 },
     { field: 'oldest', headerName: 'Oldest Queued', sortable: false, valueGetter: (value, row) => relativeDate(row.oldestQueued), width: 140 },
     { field: 'newest', headerName: 'Newest Queued', sortable: false, valueGetter: (value, row) => relativeDate(row.newestQueued), width: 140 },
+    { field: 'latestProcessed', headerName: 'LatestProcessed', sortable: false, valueGetter: (value, row) => relativeDate(row.latestProcessed), width: 140 },
   ];
 
   const allJurisdictionRows = statusData ? [{ jurisdictionId: 'All', ...statusData }] : [];
