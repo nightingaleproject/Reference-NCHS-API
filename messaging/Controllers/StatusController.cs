@@ -39,8 +39,6 @@ namespace messaging.Controllers
                 DateTime fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-5);
                 DateTime oneHourAgo = DateTime.UtcNow.AddMinutes(-60);
 
-                // TODO: Faster to do this just grouped by jurisdictions and do the addition on the client side?
-
                 // Get overall statistics across all jurisdictions
                 var overallResults = _context.IncomingMessageItems
                     .GroupBy(message => 1) // Group by a constant to get overall results
@@ -57,6 +55,11 @@ namespace messaging.Controllers
                                             .OrderByDescending(message => message.CreatedDate)
                                             .Select(message => message.CreatedDate)
                                             .FirstOrDefault(),
+                        // Look up the most recently processed message
+                        LatestProcessed = group.Where(message => message.ProcessedStatus == "PROCESSED")
+                                               .OrderByDescending(message => message.UpdatedDate)
+                                               .Select(message => message.UpdatedDate)
+                                               .FirstOrDefault(),
                         // How many message have we processed in the past 5 minutes and 1 hour?
                         // Note that we make the assumption that UpdatedDate will be when state was changed to PROCESSED
                         ProcessedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
@@ -86,6 +89,10 @@ namespace messaging.Controllers
                                             .OrderByDescending(message => message.CreatedDate)
                                             .Select(message => message.CreatedDate)
                                             .FirstOrDefault(),
+                        LatestProcessed = group.Where(message => message.ProcessedStatus == "PROCESSED")
+                                               .OrderByDescending(message => message.UpdatedDate)
+                                               .Select(message => message.UpdatedDate)
+                                               .FirstOrDefault(),
                         ProcessedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
                                                                            message.UpdatedDate >= fiveMinutesAgo),
                         ProcessedCountOneHour = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
@@ -104,6 +111,7 @@ namespace messaging.Controllers
                     overallResults.QueuedCount,
                     overallResults.OldestQueued,
                     overallResults.NewestQueued,
+                    overallResults.LatestProcessed,
                     overallResults.ProcessedCountFiveMinutes,
                     overallResults.ProcessedCountOneHour,
                     overallResults.QueuedCountFiveMinutes,
