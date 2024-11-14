@@ -64,12 +64,17 @@ function App() {
     { field: 'source', headerName: 'Source', width: 100 },
   ].concat(columns)
 
+  const eventTypeColumns = [
+    { field: 'eventType', headerName: 'Event Type', width: 120 },
+  ].concat(columns)
+
   const jurisdictionColumns = [
     { field: 'jurisdictionId', headerName: 'Jurisdiction', width: 121 },
   ].concat(columns)
 
   const allJurisdictionRows = statusData ? [{ jurisdictionId: 'All', ...statusData }] : [];
   const sourceRows = statusData?.sourceResults || [];
+  const eventTypeRows = statusData?.eventTypeResults || [];
   const jurisdictionRows = statusData?.jurisdictionResults || [];
 
   return (
@@ -78,7 +83,7 @@ function App() {
       <Box sx={{ width: '100%', mb: 2 }}>
         <Button disabled={fetching} variant="contained" sx={{ float: 'right' }} onClick={() => fetchData()}>Refresh {fetching && <CircularProgress size={15} sx={{ ml: 1 }}/>}</Button>
         <Typography variant="h6" sx={{ float: 'right', mr: 2, mt: 0.5, fontSize: '1.1em' }}>Last refreshed {lastFetchDisplay}</Typography>
-        <Typography variant="h4">FHIR API Status {statusData && statusData.apiEnvironment && `(${statusData.apiEnvironment})`}</Typography>
+        <Typography variant="h5">FHIR API Status {statusData && statusData.apiEnvironment && `(${statusData.apiEnvironment})`}</Typography>
       </Box>
       
       <DataGrid
@@ -94,7 +99,7 @@ function App() {
       />
 
       <Box sx={{ width: '100%', mb: 2 }}>
-        <Typography variant="h4">Status By Source</Typography>
+        <Typography variant="h5">Status By Source</Typography>
       </Box>
 
       <DataGrid
@@ -110,7 +115,23 @@ function App() {
       />
 
       <Box sx={{ width: '100%', mb: 2 }}>
-        <Typography variant="h4">Status By Jurisdiction</Typography>
+        <Typography variant="h5">Status By Event Type</Typography>
+      </Box>
+
+      <DataGrid
+        sx={{ width: '100%', mb: 3 }}
+        rows={eventTypeRows}
+        getRowId={(row) => row.eventType }
+        columns={eventTypeColumns}
+        initialState={{
+          sorting: {
+            sortModel: [{ field: 'eventType', sort: 'asc' }],
+          },
+        }}
+      />
+
+      <Box sx={{ width: '100%', mb: 2 }}>
+        <Typography variant="h5">Status By Jurisdiction</Typography>
       </Box>
 
       <DataGrid
