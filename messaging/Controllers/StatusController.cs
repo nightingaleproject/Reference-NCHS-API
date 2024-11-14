@@ -74,6 +74,36 @@ namespace messaging.Controllers
                         })
                     .FirstOrDefault();
 
+                // Now do the above grouped by source
+                var sourceResults = _context.IncomingMessageItems
+                    .GroupBy(message => message.Source)
+                    .Select(group => new {
+                        Source = group.Key,
+                        ProcessedCount = group.Count(message => message.ProcessedStatus == "PROCESSED"),
+                        QueuedCount = group.Count(message => message.ProcessedStatus == "QUEUED"),
+                        OldestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
+                                            .OrderBy(message => message.CreatedDate)
+                                            .Select(message => message.CreatedDate)
+                                            .FirstOrDefault(),
+                        NewestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
+                                            .OrderByDescending(message => message.CreatedDate)
+                                            .Select(message => message.CreatedDate)
+                                            .FirstOrDefault(),
+                        LatestProcessed = group.Where(message => message.ProcessedStatus == "PROCESSED")
+                                               .OrderByDescending(message => message.UpdatedDate)
+                                               .Select(message => message.UpdatedDate)
+                                               .FirstOrDefault(),
+                        ProcessedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
+                                                                           message.UpdatedDate >= fiveMinutesAgo),
+                        ProcessedCountOneHour = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
+                                                                       message.UpdatedDate >= oneHourAgo),
+                        QueuedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "QUEUED" &&
+                                                                        message.CreatedDate >= fiveMinutesAgo),
+                        QueuedCountOneHour = group.Count(message => message.ProcessedStatus == "QUEUED" &&
+                                                                    message.CreatedDate >= oneHourAgo),
+                        })
+                    .ToList();
+
                 // Now do the above grouped by jurisdiction
                 var jurisdictionResults = _context.IncomingMessageItems
                     .GroupBy(message => message.JurisdictionId)
@@ -104,9 +134,12 @@ namespace messaging.Controllers
                         })
                     .ToList();
 
+                string ApiEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+
                 // Create the JSON result
                 var result = new
                 {
+                    ApiEnvironment,
                     overallResults.ProcessedCount,
                     overallResults.QueuedCount,
                     overallResults.OldestQueued,
@@ -116,6 +149,7 @@ namespace messaging.Controllers
                     overallResults.ProcessedCountOneHour,
                     overallResults.QueuedCountFiveMinutes,
                     overallResults.QueuedCountOneHour,
+                    sourceResults,
                     jurisdictionResults
                 };
 
