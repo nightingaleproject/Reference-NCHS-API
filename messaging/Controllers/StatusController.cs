@@ -104,6 +104,36 @@ namespace messaging.Controllers
                         })
                     .ToList();
 
+                // Now do the above grouped by EventType
+                var eventTypeResults = _context.IncomingMessageItems
+                    .GroupBy(message => message.EventType)
+                    .Select(group => new {
+                        EventType = group.Key,
+                        ProcessedCount = group.Count(message => message.ProcessedStatus == "PROCESSED"),
+                        QueuedCount = group.Count(message => message.ProcessedStatus == "QUEUED"),
+                        OldestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
+                                            .OrderBy(message => message.CreatedDate)
+                                            .Select(message => message.CreatedDate)
+                                            .FirstOrDefault(),
+                        NewestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
+                                            .OrderByDescending(message => message.CreatedDate)
+                                            .Select(message => message.CreatedDate)
+                                            .FirstOrDefault(),
+                        LatestProcessed = group.Where(message => message.ProcessedStatus == "PROCESSED")
+                                               .OrderByDescending(message => message.UpdatedDate)
+                                               .Select(message => message.UpdatedDate)
+                                               .FirstOrDefault(),
+                        ProcessedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
+                                                                           message.UpdatedDate >= fiveMinutesAgo),
+                        ProcessedCountOneHour = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
+                                                                       message.UpdatedDate >= oneHourAgo),
+                        QueuedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "QUEUED" &&
+                                                                        message.CreatedDate >= fiveMinutesAgo),
+                        QueuedCountOneHour = group.Count(message => message.ProcessedStatus == "QUEUED" &&
+                                                                    message.CreatedDate >= oneHourAgo),
+                        })
+                    .ToList();
+
                 // Now do the above grouped by jurisdiction
                 var jurisdictionResults = _context.IncomingMessageItems
                     .GroupBy(message => message.JurisdictionId)
@@ -150,6 +180,7 @@ namespace messaging.Controllers
                     overallResults.QueuedCountFiveMinutes,
                     overallResults.QueuedCountOneHour,
                     sourceResults,
+                    eventTypeResults,
                     jurisdictionResults
                 };
 
