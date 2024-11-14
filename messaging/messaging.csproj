@@ -23,9 +23,15 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="NVSSAPI\fsh-generated\resources\CapabilityStatement-NVSS-API-CS.json" />
-    <EmbeddedResource Include="StatusUI/index.html" />
-    <EmbeddedResource Include="StatusUI/assets/index-uSXOUBRu.css" />
-    <EmbeddedResource Include="StatusUI/assets/index-Bn_y0btp.js" />
+    <Content Include="StatusUI/index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="StatusUI/assets/index-uSXOUBRu.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="StatusUI/assets/index-Bn_y0btp.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
 </ItemGroup>
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
