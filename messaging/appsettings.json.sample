@@ -5,7 +5,8 @@
     "SAMS" : "https://apigw.cdc.gov/OSELS/NCHS/NVSSFHIRAPI",
     "STEVE" : "https://ingress.devfhir.steve.naphsis.us",
     "PageCount" : 100,
-    "MaxPayloadSize" : 10000000
+    "MaxPayloadSize" : 10000000,
+    "Environment": "Development"
   },
   "Serilog": {
     "Using": [

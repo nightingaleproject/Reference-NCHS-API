@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using messaging.Models;
 using messaging.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -20,11 +21,13 @@ namespace messaging.Controllers
     {
         private readonly ApplicationDbContext _context;
         protected readonly ILogger<Status> _logger;
+        protected readonly AppSettings _settings;
 
-        public Status(ILogger<Status> logger, ApplicationDbContext context)
+        public Status(ILogger<Status> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
             _context = context;
             _logger = logger;
+            _settings = settings.Value;
         }
 
         // GET: Status
@@ -164,7 +167,7 @@ namespace messaging.Controllers
                         })
                     .ToList();
 
-                string ApiEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+                string ApiEnvironment = _settings.Environment;
 
                 // Create the JSON result
                 var result = new
