@@ -13,4 +13,5 @@ public class AppSettings
     public int MaxPayloadSize {get; set;}
     public List<string> SupportedBFDRIGVersions {get; set;}
     public List<string> SupportedVRDRIGVersions {get; set;}
+    public string Environment {get; set;} = null;
 }
