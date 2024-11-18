@@ -8,4 +8,5 @@ public class AppSettings
     public string STEVE {get; set;}
     public int PageCount {get; set;}
     public int MaxPayloadSize {get; set;}
+    public string Environment {get; set;} = null;
 }
