@@ -500,6 +500,8 @@ This section documents information useful for developers of the API itself and i
 
 Note: On an Apple silicon Mac you may need to add `--platform=linux/amd64` to the docker run command above.
 
+Note: To reset the database you can use `dotnet ef --project messaging database drop` followed by `dotnet ef --project messaging database update`
+
 ## Deploying in Production
 
 1. Setup a proper MSSQL instance meeting your organizational requirements, or have the credentials to an existing instance available.
