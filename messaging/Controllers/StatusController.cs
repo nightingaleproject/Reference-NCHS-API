@@ -34,7 +34,7 @@ namespace messaging.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetStatus()
+        public async Task<IActionResult> GetStatus(DateTime _since = default(DateTime))
         {
             try
             {
@@ -44,6 +44,7 @@ namespace messaging.Controllers
 
                 // Get overall statistics across all jurisdictions
                 var overallResults = _context.IncomingMessageItems
+                    .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
                     .GroupBy(message => 1) // Group by a constant to get overall results
                     .Select(group => new {
                         // Look up total number of processed and queued messages
@@ -79,6 +80,7 @@ namespace messaging.Controllers
 
                 // Now do the above grouped by source
                 var sourceResults = _context.IncomingMessageItems
+                    .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
                     .GroupBy(message => message.Source)
                     .Select(group => new {
                         Source = group.Key,
@@ -109,6 +111,7 @@ namespace messaging.Controllers
 
                 // Now do the above grouped by EventType
                 var eventTypeResults = _context.IncomingMessageItems
+                    .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
                     .GroupBy(message => message.EventType)
                     .Select(group => new {
                         EventType = group.Key,
@@ -139,6 +142,7 @@ namespace messaging.Controllers
 
                 // Now do the above grouped by jurisdiction
                 var jurisdictionResults = _context.IncomingMessageItems
+                    .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
                     .GroupBy(message => message.JurisdictionId)
                     .Select(group => new {
                         JurisdictionId = group.Key,
@@ -167,21 +171,20 @@ namespace messaging.Controllers
                         })
                     .ToList();
 
-                string ApiEnvironment = _settings.Environment;
+                string ApiEnvironment = _settings.Environment ?? "environment not set in appsettings";
 
-                // Create the JSON result
                 var result = new
                 {
                     ApiEnvironment,
-                    overallResults.ProcessedCount,
-                    overallResults.QueuedCount,
-                    overallResults.OldestQueued,
-                    overallResults.NewestQueued,
-                    overallResults.LatestProcessed,
-                    overallResults.ProcessedCountFiveMinutes,
-                    overallResults.ProcessedCountOneHour,
-                    overallResults.QueuedCountFiveMinutes,
-                    overallResults.QueuedCountOneHour,
+                    ProcessedCount = overallResults?.ProcessedCount ?? 0,
+                    QueuedCount = overallResults?.QueuedCount ?? 0,
+                    OldestQueued = overallResults?.OldestQueued ?? DateTime.MinValue,
+                    NewestQueued = overallResults?.NewestQueued ?? DateTime.MinValue,
+                    LatestProcessed = overallResults?.LatestProcessed ?? DateTime.MinValue,
+                    ProcessedCountFiveMinutes = overallResults?.ProcessedCountFiveMinutes ?? 0,
+                    ProcessedCountOneHour = overallResults?.ProcessedCountOneHour ?? 0,
+                    QueuedCountFiveMinutes = overallResults?.QueuedCountFiveMinutes ?? 0,
+                    QueuedCountOneHour = overallResults?.QueuedCountOneHour ?? 0,
                     sourceResults,
                     eventTypeResults,
                     jurisdictionResults
