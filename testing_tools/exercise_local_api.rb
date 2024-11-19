@@ -58,7 +58,7 @@ def send_message(jurisdiction)
     request = Net::HTTP::Post.new(uri.path)
     request['Content-Type'] = 'application/json'
     response = https.request(request, body)
-    puts "Sent message to #{jurisdiction}"
+    puts "Sent message to #{jurisdiction} and got response code #{response.code}"
   rescue => e
     puts "ERROR! Failed to send message: #{e.message}"
     puts e.backtrace.join("\n")
