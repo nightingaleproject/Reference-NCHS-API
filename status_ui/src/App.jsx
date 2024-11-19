@@ -1,23 +1,36 @@
 import { useState, useEffect } from 'react';
-import { Container, Box, Typography, Paper, Button, CircularProgress } from '@mui/material';
+import { Container, Box, Typography, Paper, Button, CircularProgress, Stack } from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { DataGrid } from '@mui/x-data-grid';
-import moment from 'moment';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
 import './App.css'
+
+// Extend dayjs with needed plugins
+dayjs.extend(relativeTime);
+dayjs.extend(utc);
 
 function App() {
 
+  // We set the default since value to 8pm yesterday
+  const yesterday8pm = dayjs().subtract(1, 'day').hour(20).minute(0).second(0).millisecond(0);
+  const [since, setSince] = useState(yesterday8pm);
   const [statusData, setStatusData] = useState();
   const [fetching, setFetching] = useState(false);
   const [lastFetch, setLastFetch] = useState();
   const [lastFetchDisplay, setLastFetchDisplay] = useState();
 
-  const fetchData = () => {
+  const fetchData = (since) => {
     setFetching(true);
-    fetch('/status').then((result) => {
+    const statusUrl = since ? `/status?_since=${since.toISOString()}` : '/status';
+    fetch(statusUrl).then((result) => {
       return result.json();
     }).then((json) => {
       setStatusData(json);
-      setLastFetch(moment());
+      setLastFetch(dayjs());
     }).catch((e) => {
       console.log(e);
     }).finally(() => {
@@ -25,15 +38,15 @@ function App() {
     });
   }
 
-  // Fetch status JSON on first render
+  // Fetch status JSON on first render and whenever "since" changes
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(since);
+  }, [since]);
 
   // Update the display of how long ago the last fetch happened every second
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setLastFetchDisplay(moment(lastFetch).fromNow());
+      setLastFetchDisplay(lastFetch ? dayjs(lastFetch).fromNow() : '');
     }, 1000); // Update every 1 second
     return () => clearInterval(intervalId); // Cleanup on unmount
   }, [lastFetch]);
@@ -41,9 +54,9 @@ function App() {
   // Instead of showing dates and times show "N minutes ago" or similar
   const relativeDate = (date) => {
     // If no queued messages date comes back as 0001-01-01
-    if (!moment(date).isSame('0001-01-01', 'day')) {
+    if (!dayjs(date).isSame('0001-01-01', 'day')) {
       // Time comes from server in UTC but without the Z indicating such, we append it
-      return moment(`${date}Z`).fromNow();
+      return dayjs.utc(`${date}Z`).fromNow();
     }
   }
 
@@ -81,9 +94,15 @@ function App() {
     <Container maxWidth={false}>
 
       <Box sx={{ width: '100%', mb: 2 }}>
-        <Button disabled={fetching} variant="contained" sx={{ float: 'right' }} onClick={() => fetchData()}>Refresh {fetching && <CircularProgress size={15} sx={{ ml: 1 }}/>}</Button>
+        <Button disabled={fetching} variant="contained" sx={{ float: 'right' }} onClick={() => fetchData(since)}>Refresh {fetching && <CircularProgress size={15} sx={{ ml: 1 }}/>}</Button>
         <Typography variant="h6" sx={{ float: 'right', mr: 2, mt: 0.5, fontSize: '1.1em' }}>Last refreshed {lastFetchDisplay}</Typography>
         <Typography variant="h5">FHIR API Status {statusData && statusData.apiEnvironment && `(${statusData.apiEnvironment})`}</Typography>
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 2 }}>
+          <Typography variant="h5" >Since</Typography>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker value={since} onChange={(newDateTime) => setSince(newDateTime)} />
+          </LocalizationProvider>
+        </Stack>
       </Box>
       
       <DataGrid
