@@ -27,7 +27,7 @@
         "reference": {
           "reference": "CapabilityStatement/NVSS-API-CS"
         },
-        "name": "NVSS-API-CS",
+        "name": "NVSS API Server Capability Statement",
         "exampleBoolean": false
       }
     ],

@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.4.1 - 2024-12-10
+* Update VRDR to v4.4.2
+
 ### v1.4.0 - 2024-11-07
 * Update BFDR to v1.0.0-preview.9 and VRDR to v4.4.1
 * Add validation for maximum payload size
