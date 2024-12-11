@@ -511,7 +511,12 @@ namespace messaging.Controllers
                 try
                 {
                     CommonMessage message = BFDRBaseMessage.Parse(bundle);
+                    CommonMessage.ValidateMessageHeader(message);
                     return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
+                }
+                catch (MessageRuleException mrx)
+                {
+                    throw mrx;
                 }
                 catch (BFDR.MessageParseException mpex) 
                 { 
