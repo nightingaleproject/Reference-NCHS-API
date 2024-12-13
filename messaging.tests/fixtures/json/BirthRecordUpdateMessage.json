@@ -40,7 +40,7 @@
               "valueString": "000000000042"
             },
             {
-              "name": "birth_year",
+              "name": "event_year",
               "valueUnsignedInt": 2019
             },
             {
