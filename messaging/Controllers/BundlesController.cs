@@ -336,12 +336,12 @@ namespace messaging.Controllers
                         }
 
                     }
-                    catch (VRDR.MessageParseException ex)
+                    catch (VRDR.MessageRuleException mrx)
                     {
-                        _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
-                        return BadRequest($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.");
+                        _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
+                        return BadRequest($"Message was missing reqiured header fields: {mrx.Message}");
                     }
-                    catch (MessageRuleException mrx)
+                    catch (VR.MessageRuleException mrx)
                     {
                         _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
                         return BadRequest($"Message was missing reqiured header fields: {mrx.Message}");
@@ -433,15 +433,15 @@ namespace messaging.Controllers
                     return entry;
                 }
             }
-            // catch (VRDR.MessageParseException ex)
-            // {
-            //     _logger.LogDebug($"A message parsing exception occurred while parsing the incoming message: {ex}");
-            //     entry.Response = new Bundle.ResponseComponent();
-            //     entry.Response.Status = "400";
-            //     entry.Response.Outcome = OperationOutcome.ForMessage($"Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide.", OperationOutcome.IssueType.Exception);
-            //     return entry;
-            // }
-            catch (MessageRuleException mrx)
+            catch (VRDR.MessageRuleException mrx)
+            {
+                _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
+                entry.Response = new Bundle.ResponseComponent();
+                entry.Response.Status = "400";
+                entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required header field. {mrx.Message}.", OperationOutcome.IssueType.Exception);
+                return entry;
+            }
+            catch (VR.MessageRuleException mrx)
             {
                 _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
                 entry.Response = new Bundle.ResponseComponent();
@@ -514,7 +514,7 @@ namespace messaging.Controllers
                     CommonMessage.ValidateMessageHeader(message);
                     return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
                 }
-                catch (MessageRuleException mrx)
+                catch (VR.MessageRuleException mrx)
                 {
                     throw mrx;
                 }
@@ -538,7 +538,7 @@ namespace messaging.Controllers
                     BaseMessage.ValidateMessageHeader(message);
                     return ValidateAndCreateIncomingVRDRMessageItem(message, jurisdictionId);
                 }
-                catch (MessageRuleException mrx)
+                catch (VRDR.MessageRuleException mrx)
                 {
                     throw mrx;
                 }

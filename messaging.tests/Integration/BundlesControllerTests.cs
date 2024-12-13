@@ -454,8 +454,9 @@ namespace messaging.tests
             // Set missing required fields
             recordSubmission.MessageSource = "http://example.fhir.org";
             recordSubmission.CertNo = 1;
+            recordSubmission.EventYear = 2024;
 
-            // Submit that Death Record
+            // Submit that Birth Record
             HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
@@ -464,6 +465,7 @@ namespace messaging.tests
             // Set missing required fields
             recordUpdate.MessageSource = "http://example.fhir.org";
             recordUpdate.CertNo = 1;
+            recordUpdate.EventYear = 2024;
 
             // Submit update message
             HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordUpdate.ToJson());
@@ -983,7 +985,7 @@ namespace messaging.tests
             recordSubmission2.JurisdictionId = "MA";
             recordSubmission2.MessageSource = "http://example.fhir.org";
             recordSubmission2.CertNo = 1;
-            recordSubmission.DeathYear = 2024;
+            recordSubmission2.EventYear = 2024;
             recordSubmission2.MessageDestination = "temp,http://nchs.CDC.gov/BFDR_Submission,temp";
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle/BFDR/v2.0", recordSubmission2.ToJson());
@@ -1134,6 +1136,27 @@ namespace messaging.tests
 
             // Submit that Birth Record
             HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", invalidCertMsg2);
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
+        }
+
+        [Fact]
+        public async void PostCatchInvalidEventYear()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record with an invalid event year number
+            string invalidEventYearMsg1 = FixtureStream("fixtures/json/DeathRecordSubmissionMessageInvalidEventYear.json").ReadToEnd();
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage1 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", invalidEventYearMsg1);
+            Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage1.StatusCode);
+
+            // Create a new empty Birth Record with an invalid event year number
+            string invalidEventYearMsg2 = FixtureStream("fixtures/json/BirthRecordSubmissionMessageInvalidEventYear.json").ReadToEnd();
+
+            // Submit that Birth Record
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle", invalidEventYearMsg2);
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
