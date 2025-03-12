@@ -16,6 +16,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Hl7.Fhir.Utility;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Threading;
+using Microsoft.EntityFrameworkCore;
 
 namespace messaging.Controllers
 {
@@ -116,24 +119,20 @@ namespace messaging.Controllers
                 { "jurisdictionId", jurisdictionId },
                 { "_count", _count }
             };
-            if (certificateNumber != null) {
+            if (certificateNumber != null)
+            {
                 // Pad left with leading zeros if not a 6-digit certificate number.
                 certificateNumber = certificateNumber.PadLeft(6, '0');
                 searchParamValues.Add("certificateNumber", certificateNumber);
             }
-
             if (eventYear != null)
             {
                 searchParamValues.Add("eventYear", eventYear);
             }
 
-            // Query for outgoing messages of the requested type by jurisdiction ID. Filter by IG version. Optionally filter by certificate number and death year if those parameters are provided.
-            IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
-                    && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType) || message.EventType.Equals(medicalCodingType))
-                    && igVersion.Equals(message.IGVersion)
-                    && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
-                    && (eventYear == null || message.EventYear == int.Parse(eventYear)));
-
+            // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
+            // TODO: we should use the since param earlier so if we are only getting new respones, we don't select and have to handle thousands of other records
+            IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={eventYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}").AsEnumerable();
             try
             {
                 // Further scope the search to either unretrieved messages (or all since a specific time)
@@ -227,7 +226,7 @@ namespace messaging.Controllers
         /// <summary>
         /// Applies a filter (e.g. calls Where) to reduce the source to unretrieved messages. Should NOT iterate result set/execute query
         /// </summary>
-        protected virtual IQueryable<OutgoingMessageItem> ExcludeRetrieved(IQueryable<OutgoingMessageItem> source)
+        protected virtual IEnumerable<OutgoingMessageItem> ExcludeRetrieved(IEnumerable<OutgoingMessageItem> source)
         {
             return source.Where(message => message.RetrievedAt == null);
         }
@@ -375,7 +374,8 @@ namespace messaging.Controllers
             }
         }
 
-        private bool ValidateJurisdictionId(string messageJurisdictionId, string urlParamJurisdictionId) {
+        private bool ValidateJurisdictionId(string messageJurisdictionId, string urlParamJurisdictionId)
+        {
             if (messageJurisdictionId == null)
             {
                 _logger.LogError("Rejecting request without a jurisdiction ID in submission.");
@@ -600,7 +600,7 @@ namespace messaging.Controllers
                 throw new ArgumentException($"Message Payload Version {message.PayloadVersionId} must match the URL parameter IG Version {igVersion}.");
             }
             IncomingMessageItem item = new IncomingMessageItem();
-            item.Message = message.ToJSON(); 
+            item.Message = message.ToJSON();
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;
@@ -618,7 +618,7 @@ namespace messaging.Controllers
             uint certNo = (uint)message.CertNo;
             string certNoFmt = certNo.ToString("D6");
             item.CertificateNumber = certNoFmt;
-            
+
             item.EventType = getEventType(message);
 
             return item;
@@ -626,19 +626,20 @@ namespace messaging.Controllers
 
         protected async System.Threading.Tasks.Task SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
         {
-            await _context.IncomingMessageItems.AddAsync(item);
-            await _context.SaveChangesAsync();
+            var messageResult = _context.IncomingMessageItems.FromSqlInterpolated($"EXEC CreateIncomingMessageItem @Message={item.Message}, @MessageId={item.MessageId}, @Source={item.Source}, @JurisdictionId={item.JurisdictionId}, @MessageType={item.MessageType}, @CertificateNumber={item.CertificateNumber}, @CreatedDate=null, @UpdatedDate=null, @ProcessedStatus='QUEUED', @EventType={item.EventType}, @EventYear={item.EventYear}").AsEnumerable();
+            IncomingMessageItem insertedItem = messageResult.First();
+            // TODO it could be faster if instead we just retrieve the scope id and set item.Id manually to the returned scope id
 
             // Queue Natality messages for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on" for testing
             // For the June 2025 test event, enable auto responses for Fetal death message types only
             if (_settings.AckAndIJEConversion || ( _settings.FetalDeathEnabled && item.EventType == "FET"))
             {
-                queue.QueueConvertToIJE(item.Id);
+                queue.QueueConvertToIJE(insertedItem.Id);
             }
             // If we are in test mode, give the worker thread 1 extra second to insert the outgoing message, this helps our tests avoid race condition failures
             if (_settings.AckAndIJEConversion)
             {
-                Thread.Sleep(new TimeSpan(0,0,1));
+                Thread.Sleep(new TimeSpan(0, 0, 1));
             }
         }
 
@@ -662,7 +663,7 @@ namespace messaging.Controllers
                     return "MOR";
                 case "http://nchs.cdc.gov/birth_submission":
                 case "http://nchs.cdc.gov/birth_acknowledgement":
-                case "http://nchs.cdc.gov/birth_submission_update": 
+                case "http://nchs.cdc.gov/birth_submission_update":
                 case "http://nchs.cdc.gov/birth_demographics_coding":
                 case "http://nchs.cdc.gov/birth_extraction_error":
                 case "http://nchs.cdc.gov/birth_status":
@@ -704,7 +705,7 @@ namespace messaging.Controllers
                     case "http://nchs.cdc.gov/vrdr_submission_update":
                     case "http://nchs.cdc.gov/vrdr_submission_void":
                     case "http://nchs.cdc.gov/bfdr_submission":
-                    case "http://nchs.cdc.gov/bfdr_acknowledgement": 
+                    case "http://nchs.cdc.gov/bfdr_acknowledgement":
                     case "http://nchs.cdc.gov/bfdr_demographics_coding":
                     case "http://nchs.cdc.gov/bfdr_extraction_error":
                     case "http://nchs.cdc.gov/bfdr_status":
