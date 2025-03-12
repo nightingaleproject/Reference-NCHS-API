@@ -17,6 +17,7 @@ using System.Linq.Expressions;
 using Hl7.Fhir.Utility;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Threading;
+using Microsoft.EntityFrameworkCore;
 
 namespace messaging.Controllers
 {
@@ -85,7 +86,8 @@ namespace messaging.Controllers
                 return BadRequest("Invalid url path provided");
             }
 
-            string recordType = "";
+            // default behavior will only return VRDR records, we will eventually deprecate this
+            string recordType = "MOR";
             if (!String.IsNullOrEmpty(vitalType))
             {
                 vitalType = vitalType.ToUpper();
@@ -116,27 +118,26 @@ namespace messaging.Controllers
                 return BadRequest("Pagination does not support specifying a page without either a _since, certificateNumber, or deathYear parameter");
             }
             _logger.LogDebug($"Provided params: {certificateNumber}, {deathYear}, {_since}");
-            
+
             RouteValueDictionary searchParamValues = new()
             {
                 { "jurisdictionId", jurisdictionId },
                 { "_count", _count }
             };
-            if (certificateNumber != null) {
+            if (certificateNumber != null)
+            {
                 // Pad left with leading zeros if not a 6-digit certificate number.
                 certificateNumber = certificateNumber.PadLeft(6, '0');
                 searchParamValues.Add("certificateNumber", certificateNumber);
             }
-            if (deathYear != null) {
+            if (deathYear != null)
+            {
                 searchParamValues.Add("deathYear", deathYear);
             }
 
             // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
-            IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
-                    && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType))
-                    && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
-                    && (deathYear == null || message.EventYear == int.Parse(deathYear)));
-
+            // TODO: we should use the since param earlier so if we are only getting new respones, we don't select and have to handle thousands of other records
+            IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}").AsEnumerable();
             try
             {
                 // Further scope the search to either unretrieved messages (or all since a specific time)
@@ -200,7 +201,8 @@ namespace messaging.Controllers
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
                 DateTime retrievedTime = DateTime.UtcNow;
                 // update each outgoing message's RetrievedAt field
-                foreach(OutgoingMessageItem msgItem in outgoingMessages) {
+                foreach (OutgoingMessageItem msgItem in outgoingMessages)
+                {
                     MarkAsRetrieved(msgItem, retrievedTime);
                 }
 
@@ -224,7 +226,7 @@ namespace messaging.Controllers
         /// <summary>
         /// Applies a filter (e.g. calls Where) to reduce the source to unretrieved messages. Should NOT iterate result set/execute query
         /// </summary>
-        protected virtual IQueryable<OutgoingMessageItem> ExcludeRetrieved(IQueryable<OutgoingMessageItem> source)
+        protected virtual IEnumerable<OutgoingMessageItem> ExcludeRetrieved(IEnumerable<OutgoingMessageItem> source)
         {
             return source.Where(message => message.RetrievedAt == null);
         }
@@ -381,7 +383,8 @@ namespace messaging.Controllers
             }
         }
 
-        private bool ValidateJurisdictionId(string messageJurisdictionId, string urlParamJurisdictionId) {
+        private bool ValidateJurisdictionId(string messageJurisdictionId, string urlParamJurisdictionId)
+        {
             if (messageJurisdictionId == null)
             {
                 _logger.LogError("Rejecting request without a jurisdiction ID in submission.");
@@ -520,8 +523,8 @@ namespace messaging.Controllers
                 {
                     throw mrx;
                 }
-                catch (BFDR.MessageParseException mpex) 
-                { 
+                catch (BFDR.MessageParseException mpex)
+                {
                     _logger.LogDebug($"The message could not be parsed as a BFDR message. {mpex}");
                     throw new ArgumentException($"Failed to parse input as a BFDR message, message type unrecognized.");
                 }
@@ -544,8 +547,8 @@ namespace messaging.Controllers
                 {
                     throw mrx;
                 }
-                catch (VRDR.MessageParseException mpex) 
-                { 
+                catch (VRDR.MessageParseException mpex)
+                {
                     _logger.LogDebug($"The message could not be parsed as a VRDR message. {mpex}");
                     throw new ArgumentException($"Failed to parse input as a VRDR message, message type unrecognized.");
                 }
@@ -605,7 +608,7 @@ namespace messaging.Controllers
             }
 
             IncomingMessageItem item = new IncomingMessageItem();
-            item.Message = message.ToJSON(); 
+            item.Message = message.ToJSON();
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;
@@ -623,7 +626,7 @@ namespace messaging.Controllers
             uint certNo = (uint)message.CertNo;
             string certNoFmt = certNo.ToString("D6");
             item.CertificateNumber = certNoFmt;
-            
+
             item.EventType = getEventType(message);
 
             return item;
@@ -677,7 +680,7 @@ namespace messaging.Controllers
             }
 
             IncomingMessageItem item = new IncomingMessageItem();
-            item.Message = message.ToJSON(); 
+            item.Message = message.ToJSON();
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;
@@ -687,7 +690,7 @@ namespace messaging.Controllers
             uint certNo = (uint)message.CertNo;
             string certNoFmt = certNo.ToString("D6");
             item.CertificateNumber = certNoFmt;
-            
+
             item.EventType = "MOR";
 
             return item;
@@ -695,18 +698,19 @@ namespace messaging.Controllers
 
         protected async System.Threading.Tasks.Task SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
         {
-            await _context.IncomingMessageItems.AddAsync(item);
-            await _context.SaveChangesAsync();
+            var messageResult = _context.IncomingMessageItems.FromSqlInterpolated($"EXEC CreateIncomingMessageItem @Message={item.Message}, @MessageId={item.MessageId}, @Source={item.Source}, @JurisdictionId={item.JurisdictionId}, @MessageType={item.MessageType}, @CertificateNumber={item.CertificateNumber}, @CreatedDate=null, @UpdatedDate=null, @ProcessedStatus='QUEUED', @EventType={item.EventType}, @EventYear={item.EventYear}").AsEnumerable();
+            IncomingMessageItem insertedItem = messageResult.First();
+            // TODO it could be faster if instead we just retrieve the scope id and set item.Id manually to the returned scope id
 
             // Queue Natality messages for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on" for testing
             if (_settings.AckAndIJEConversion)
             {
-                queue.QueueConvertToIJE(item.Id);
+                queue.QueueConvertToIJE(insertedItem.Id);
             }
             // If we are in test mode, give the worker thread 1 extra second to insert the outgoing message, this helps our tests avoid race condition failures
             if (_settings.AckAndIJEConversion)
             {
-                Thread.Sleep(new TimeSpan(0,0,1));
+                Thread.Sleep(new TimeSpan(0, 0, 1));
             }
         }
 
@@ -730,7 +734,7 @@ namespace messaging.Controllers
                     return "MOR";
                 case "http://nchs.cdc.gov/birth_submission":
                 case "http://nchs.cdc.gov/birth_acknowledgement":
-                case "http://nchs.cdc.gov/birth_submission_update": 
+                case "http://nchs.cdc.gov/birth_submission_update":
                 case "http://nchs.cdc.gov/birth_demographics_coding":
                 case "http://nchs.cdc.gov/birth_extraction_error":
                 case "http://nchs.cdc.gov/birth_status":
@@ -772,7 +776,7 @@ namespace messaging.Controllers
                     case "http://nchs.cdc.gov/vrdr_submission_update":
                     case "http://nchs.cdc.gov/vrdr_submission_void":
                     case "http://nchs.cdc.gov/bfdr_submission":
-                    case "http://nchs.cdc.gov/bfdr_acknowledgement": 
+                    case "http://nchs.cdc.gov/bfdr_acknowledgement":
                     case "http://nchs.cdc.gov/bfdr_demographics_coding":
                     case "http://nchs.cdc.gov/bfdr_extraction_error":
                     case "http://nchs.cdc.gov/bfdr_status":
@@ -840,8 +844,8 @@ namespace messaging.Controllers
         // validIGVersion will return true if the vitalType and igVersion align with a real IG STU version
         private bool validIGVersion(string vitalType, string igVersion)
         {
-            string[] BFDRIgs = {"v2.0"};
-            string[] VRDRIgs = {"v2.2"};
+            string[] BFDRIgs = { "v2.0" };
+            string[] VRDRIgs = { "v2.2" };
 
             if (vitalType == "BFDR-BIRTH" || vitalType == "BFDR-FETALDEATH")
             {
