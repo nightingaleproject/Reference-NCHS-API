@@ -230,6 +230,18 @@ namespace messaging.Controllers
             }
         }
 
+<<<<<<< HEAD
+=======
+        // Allows overriding by STEVE controller to filter off different field
+        /// <summary>
+        /// Applies a filter (e.g. calls Where) to reduce the source to unretrieved messages. Should NOT iterate result set/execute query
+        /// </summary>
+        protected virtual IEnumerable<OutgoingMessageItem> ExcludeRetrieved(IEnumerable<OutgoingMessageItem> source)
+        {
+            return source.Where(message => message.RetrievedAt == null);
+        }
+
+>>>>>>> 20a7627 (fix: update the api to use stored procedures for db interactions)
         // Allows overriding by STEVE controller to mark different field
         protected virtual void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
         {
@@ -626,7 +638,11 @@ namespace messaging.Controllers
 
         protected async System.Threading.Tasks.Task SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
         {
+<<<<<<< HEAD
             var messageResult = _context.IncomingMessageItems.FromSqlInterpolated($"EXEC CreateIncomingMessageItem @Message={item.Message}, @MessageId={item.MessageId}, @Source={item.Source}, @JurisdictionId={item.JurisdictionId}, @MessageType={item.MessageType}, @CertificateNumber={item.CertificateNumber}, @CreatedDate=null, @UpdatedDate=null, @ProcessedStatus='QUEUED', @EventType={item.EventType}, @IGVersion={item.IGVersion}, @EventYear={item.EventYear}").AsEnumerable();
+=======
+            var messageResult = _context.IncomingMessageItems.FromSqlInterpolated($"EXEC CreateIncomingMessageItem @Message={item.Message}, @MessageId={item.MessageId}, @Source={item.Source}, @JurisdictionId={item.JurisdictionId}, @MessageType={item.MessageType}, @CertificateNumber={item.CertificateNumber}, @CreatedDate=null, @UpdatedDate=null, @ProcessedStatus='QUEUED', @EventType={item.EventType}, @EventYear={item.EventYear}").AsEnumerable();
+>>>>>>> 20a7627 (fix: update the api to use stored procedures for db interactions)
             IncomingMessageItem insertedItem = messageResult.First();
             // TODO it could be faster if instead we just retrieve the scope id and set item.Id manually to the returned scope id
 
