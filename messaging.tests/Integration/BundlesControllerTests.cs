@@ -326,7 +326,6 @@ namespace messaging.tests
                 DeathYear = 2024,
                 JurisdictionId = "HI"
             };
-
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/" + recordSubmission.JurisdictionId + "/Bundle", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
@@ -442,7 +441,7 @@ namespace messaging.tests
 
         [Fact]
         public async System.Threading.Tasks.Task UpdateBirthMessagesAreSuccessfullyAcknowledged()
-        {
+        {   
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
 
@@ -481,7 +480,7 @@ namespace messaging.tests
             // use the since parameter to make sure we get both messages
             string since = currentTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
             for (int x = 0; x < 3; ++x) {
-                HttpResponseMessage getBundle = await _client.GetAsync("/UT/Bundle?_since=" + since);
+                HttpResponseMessage getBundle = await _client.GetAsync("/UT/Bundle/BFDR/v2.0?_since=" + since);
                 updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
                 // Waiting for 2 messages to appear
                 if (updatedBundle.Entry.Count > 1) {
