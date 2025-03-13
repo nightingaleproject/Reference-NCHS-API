@@ -12,7 +12,7 @@ jobs:
       sql.data:
         image: mcr.microsoft.com/mssql/server
         env:
-          SA_PASSWORD: yourStrong(!)Password
+          SA_PASSWORD: yourStrong(!)Password1
           ACCEPT_EULA: Y
         ports:
           - "1433:1433"
