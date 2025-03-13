@@ -31,6 +31,10 @@ jobs:
     - name: Build projects
       run: |
         dotnet build
+    - name: Install dotnet ef
+      run: |
+          dotnet tool install --global dotnet-ef
+          dotnet tool restore
     - name: Apply migrations
       run: dotnet ef --project messaging database update
     - name: Test
