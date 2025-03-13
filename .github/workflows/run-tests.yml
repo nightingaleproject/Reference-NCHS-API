@@ -25,7 +25,7 @@ jobs:
       run: dotnet restore
     - name: Install dotnet ef
       run: |
-          dotnet tool install --global dotnet-ef
+          dotnet tool install --global dotnet-ef --version 6.0.36
           dotnet tool restore
     - name: Apply migrations
       run: dotnet ef --project messaging database update
