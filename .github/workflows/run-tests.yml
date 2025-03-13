@@ -31,5 +31,7 @@ jobs:
     - name: Build projects
       run: |
         dotnet build
+    - name: Apply migrations
+      run: dotnet ef --project messaging database update
     - name: Test
       run: dotnet test --no-build
