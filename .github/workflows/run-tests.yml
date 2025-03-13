@@ -23,5 +23,7 @@ jobs:
       uses: actions/setup-dotnet@v1
     - name: Install dependencies
       run: dotnet restore
+    - name: Apply migrations
+      run: dotnet ef --project messaging database update
     - name: Test
       run: dotnet test
