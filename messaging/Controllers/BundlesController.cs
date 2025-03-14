@@ -21,7 +21,7 @@ using System.Threading;
 namespace messaging.Controllers
 {
     [Route("{jurisdictionId:length(2)}/Bundle")]
-    [Route("{jurisdictionId:length(2)}/Bundle/{vitalType:length(4)}/{igVersion}")]
+    [Route("{jurisdictionId:length(2)}/Bundle/{vitalType:regex(^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$)}/{igVersion}")]
     [Route("{jurisdictionId:length(2)}/Bundles")] // Historical endpoint for backwards compatibility
     [Produces("application/json")]
     [ApiController]
@@ -88,22 +88,23 @@ namespace messaging.Controllers
             string recordType = "";
             if (!String.IsNullOrEmpty(vitalType))
             {
+                vitalType = vitalType.ToUpper();
                 if (vitalType.Equals("VRDR"))
                 {
                     recordType = "MOR";
                 }
-                else if (vitalType.Equals("BFDR"))
+                else if (vitalType.Equals("BFDR-BIRTH"))
                 {
-                    if (_settings.BFDREnabled)
-                    {
-                        recordType = "NAT";
-                    }
-                    else
-                    {
-                        _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
-                        return BadRequest("BFDR messaging is not enabled.");
-                    }
-
+                    recordType = "NAT";
+                }
+                else if (vitalType.Equals("BFDR-FETALDEATH"))
+                {
+                    recordType = "FET";
+                }
+                if ((vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")) && !_settings.BFDREnabled)
+                {
+                    _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
+                    return BadRequest("BFDR messaging is not enabled.");
                 }
             }
 
@@ -329,7 +330,7 @@ namespace messaging.Controllers
                         // void message
                         // alias message
                         // acknowledgement message
-                        if (!(bfdrMessageType(item.MessageType) || vrdrMessageType(item.MessageType)))
+                        if (!(birthMessageType(item.MessageType) || fetalDeathMessageType(item.MessageType) || vrdrMessageType(item.MessageType)))
                         {
                             _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
                             return BadRequest($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}");
@@ -424,7 +425,7 @@ namespace messaging.Controllers
                     entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept extraction errors. Please report extraction errors to NCHS manually.", OperationOutcome.IssueType.Exception);
                     return entry;
                 }
-                if (!(bfdrMessageType(item.MessageType) || vrdrMessageType(item.MessageType)))
+                if (!(birthMessageType(item.MessageType) || fetalDeathMessageType(item.MessageType) || vrdrMessageType(item.MessageType)))
                 {
                     _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
                     entry.Response = new Bundle.ResponseComponent();
@@ -505,8 +506,9 @@ namespace messaging.Controllers
 
         protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, Bundle bundle)
         {
-            // the vital type must be specified as BFDR to post BFDR records
-            if (_settings.BFDREnabled && !String.IsNullOrEmpty(vitalType) && vitalType.Equals("BFDR"))
+            // the vital type must be specified as BFDR-BIRTH or BFDR-FETALDEATH to post BFDR records
+            vitalType = vitalType?.ToUpper();
+            if (_settings.BFDREnabled && !String.IsNullOrEmpty(vitalType) && (vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")))
             {
                 try
                 {
@@ -607,7 +609,7 @@ namespace messaging.Controllers
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;
-            if(bfdrMessageType(message.GetType().Name))
+            if(birthMessageType(message.GetType().Name) || fetalDeathMessageType(message.GetType().Name))
             {
                 item.EventYear = ((BFDRBaseMessage)message).EventYear;
             }
@@ -710,7 +712,6 @@ namespace messaging.Controllers
 
         // getEventType generates an EventType string "MOR", "NAT", or "FET"
         // for debugging and tracking records in the db
-        // For now we only have "MOR" records but we could add "NAT" and "FET" here later
         private string getEventType(CommonMessage message)
         {
             switch (message.MessageType)
@@ -735,6 +736,14 @@ namespace messaging.Controllers
                 case "http://nchs.cdc.gov/birth_status":
                 case "http://nchs.cdc.gov/birth_submission_void":
                     return "NAT";
+                case "http://nchs.cdc.gov/fd_submission":
+                case "http://nchs.cdc.gov/fd_acknowledgement":
+                case "http://nchs.cdc.gov/fd_submission_update": 
+                case "http://nchs.cdc.gov/fd_demographics_coding":
+                case "http://nchs.cdc.gov/fd_extraction_error":
+                case "http://nchs.cdc.gov/fd_status":
+                case "http://nchs.cdc.gov/fd_submission_void":
+                    return "FET";
                 default:
                     return "UNK";
             }
@@ -779,38 +788,51 @@ namespace messaging.Controllers
         // validateMessageType checks that the message type is accepted at NCHS
         private bool vrdrMessageType(string messageType)
         {
+            // set the message type to lowercase to make case-insensitive
+            switch (messageType)
             {
-                // set the message type to lowercase to make case-insensitive
-                switch (messageType)
-                {
-                    case "AcknowledgementMessage":
-                    case "DeathRecordAliasMessage":
-                    case "DeathRecordSubmissionMessage":
-                    case "DeathRecordUpdateMessage":
-                    case "DeathRecordVoidMessage":
-                        return true;
-                    default:
-                        break;
-                }
+                case "AcknowledgementMessage":
+                case "DeathRecordAliasMessage":
+                case "DeathRecordSubmissionMessage":
+                case "DeathRecordUpdateMessage":
+                case "DeathRecordVoidMessage":
+                    return true;
+                default:
+                    break;
             }
             return false;
         }
 
         // validateMessageType checks that the message type is accepted at NCHS
-        private bool bfdrMessageType(string messageType)
+        private bool birthMessageType(string messageType)
         {
+            // set the message type to lowercase to make case-insensitive
+            switch (messageType)
             {
-                // set the message type to lowercase to make case-insensitive
-                switch (messageType)
-                {
-                    case "BirthRecordSubmissionMessage":
-                    case "BirthRecordUpdateMessage":
-                    case "BirthRecordAcknowledgementMessage": 
-                    case "BirthRecordVoidMessage":
-                        return true;
-                    default:
-                        break;
-                }
+                case "BirthRecordSubmissionMessage":
+                case "BirthRecordUpdateMessage":
+                case "BirthRecordAcknowledgementMessage": 
+                case "BirthRecordVoidMessage":
+                    return true;
+                default:
+                    break;
+            }
+            return false;
+        }
+
+        // validateMessageType checks that the message type is accepted at NCHS
+        private bool fetalDeathMessageType(string messageType)
+        {
+            // set the message type to lowercase to make case-insensitive
+            switch (messageType)
+            {
+                case "FetalDeathRecordSubmissionMessage":
+                case "FetalDeathRecordUpdateMessage":
+                case "FetalDeathRecordAcknowledgementMessage": 
+                case "FetalDeathRecordVoidMessage":
+                    return true;
+                default:
+                    break;
             }
             return false;
         }
@@ -821,7 +843,7 @@ namespace messaging.Controllers
             string[] BFDRIgs = {"v2.0"};
             string[] VRDRIgs = {"v2.2"};
 
-            if (vitalType == "BFDR")
+            if (vitalType == "BFDR-BIRTH" || vitalType == "BFDR-FETALDEATH")
             {
                 return BFDRIgs.Contains(igVersion);
             }
