@@ -188,7 +188,7 @@ namespace messaging.tests
             // with the new retrievedAt column, only one message should be returned
             Assert.Single(updatedBundle.Entry);
 
-            // Check to see if the results returned for a jurisdiction other than NY does not return NY entries
+            // Check to see if the results returned for a jurisdiction other than UT does not return UT entries
             HttpResponseMessage noMessages = await _client.GetAsync("/FL/Bundle/BFDR-BIRTH/v2.0");
             var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
             Assert.Empty(noMessagesBundle.Entry);
@@ -221,7 +221,7 @@ namespace messaging.tests
             HttpResponseMessage createDeathSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", deathRecordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createDeathSubmissionMessage.StatusCode);
 
-            // Create a new Birth Record
+            // Create a new FetalDeath Record
             FetalDeathRecordSubmissionMessage recordSubmission = BFDRBaseMessage.Parse<FetalDeathRecordSubmissionMessage>(FixtureStream("fixtures/json/FetalDeathRecordSubmissionMessage.json"));
 
             // Set missing required fields
@@ -248,7 +248,7 @@ namespace messaging.tests
             // with the new retrievedAt column, only one message should be returned
             Assert.Single(updatedBundle.Entry);
 
-            // Check to see if the results returned for a jurisdiction other than NY does not return NY entries
+            // Check to see if the results returned for a jurisdiction other than UT does not return UT entries
             HttpResponseMessage noMessages = await _client.GetAsync("/FL/Bundle");
             var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
             Assert.Empty(noMessagesBundle.Entry);
