@@ -39,16 +39,16 @@ namespace messaging.Services
               this._context = context;
           }
 
-          public async Task DoWork(Message message, CancellationToken cancellationToken)
+        public async Task DoWork(Message message, CancellationToken cancellationToken)
         {
             IncomingMessageItem item = this._context.IncomingMessageItems.Find(message.Id);
             item.ProcessedStatus = "PROCESSED";
             this._context.Update(item);
+            OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
+            outgoingMessageItem.JurisdictionId = item.JurisdictionId;
             if (item.EventType == "MOR")
             {
                 BaseMessage parsedMessage = BaseMessage.Parse(item.Message.ToString(), true);
-                OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
-                outgoingMessageItem.JurisdictionId = item.JurisdictionId;
                 try {
                     switch(parsedMessage) {
                         case DeathRecordUpdateMessage update:
@@ -68,13 +68,10 @@ namespace messaging.Services
                     outgoingMessageItem.EventType = "MOR";
                     this._context.OutgoingMessageItems.Add(outgoingMessageItem);
                 }
-                await this._context.SaveChangesAsync();
             }
             else if (item.EventType == "NAT")
             {
                 BFDRBaseMessage parsedMessage = BFDRBaseMessage.Parse(item.Message.ToString(), true);
-                OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
-                outgoingMessageItem.JurisdictionId = item.JurisdictionId;
                 try {
                     switch(parsedMessage) {
                         case BirthRecordUpdateMessage update:
@@ -86,19 +83,40 @@ namespace messaging.Services
                     }
                 } catch {
                     BirthRecordErrorMessage errorMessage = new BirthRecordErrorMessage(parsedMessage);
-                    outgoingMessageItem.Message = errorMessage.ToJSON();
-                    outgoingMessageItem.MessageId = errorMessage.MessageId;
-                    outgoingMessageItem.MessageType = errorMessage.GetType().Name;
-                    outgoingMessageItem.CertificateNumber = errorMessage.CertNo.ToString().PadLeft(6, '0');
-                    outgoingMessageItem.EventYear = errorMessage.EventYear;
-                    outgoingMessageItem.EventType = "NAT";
+                    UpdateOutgoingMessageItem(errorMessage, outgoingMessageItem, "NAT");
                     this._context.OutgoingMessageItems.Add(outgoingMessageItem);
                 }
-                await this._context.SaveChangesAsync();
             }
+            else if (item.EventType == "FET")
+            {
+                BFDRBaseMessage parsedMessage = BFDRBaseMessage.Parse(item.Message.ToString(), true);
+                try {
+                    switch(parsedMessage) {
+                        case FetalDeathRecordUpdateMessage update:
+                            HandleFetalDeathUpdateMessage(update, item);
+                            break;
+                        case FetalDeathRecordSubmissionMessage submission:
+                            HandleFetalDeathSubmissionMessage(submission, item);
+                            break;
+                    }
+                } catch {
+                    FetalDeathRecordErrorMessage errorMessage = new FetalDeathRecordErrorMessage(parsedMessage);
+                    UpdateOutgoingMessageItem(errorMessage, outgoingMessageItem, "FET");
+                    this._context.OutgoingMessageItems.Add(outgoingMessageItem);
+                }
+            }
+            await this._context.SaveChangesAsync();
+        }
 
-
-          }
+        private static void UpdateOutgoingMessageItem(CommonMessage message, OutgoingMessageItem outgoingMessageItem, string eventType)
+        {
+            outgoingMessageItem.Message = message.ToJSON();
+            outgoingMessageItem.MessageId = message.MessageId;
+            outgoingMessageItem.MessageType = message.GetType().Name;
+            outgoingMessageItem.CertificateNumber = message.CertNo.ToString().PadLeft(6, '0');
+            outgoingMessageItem.EventYear = message.EventYear;
+            outgoingMessageItem.EventType = eventType;
+        }
 
         private void HandleSubmissionMessage(DeathRecordSubmissionMessage message, IncomingMessageItem databaseMessage) {
             IJEItem ijeItem = new IJEItem();
@@ -142,7 +160,24 @@ namespace messaging.Services
             // set validation to false
             ijeItem.IJE = new IJEBirth(message.BirthRecord, false).ToString();
             // Log and ack message right after it is successfully extracted
-            CreateBirthAckMessage(message, databaseMessage);
+            CreateBFDRAckMessage<BirthRecordAcknowledgementMessage>(message, databaseMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m));
+            bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
+            // Log the message whether or not it is a duplicate
+            LogCommonMessage(message, databaseMessage);
+            // Only save non-duplicate submission messages
+            if(!duplicateMessage) {
+                this._context.IJEItems.Add(ijeItem);
+                this._context.SaveChanges();
+            }
+        }
+
+        private void HandleFetalDeathSubmissionMessage(FetalDeathRecordSubmissionMessage message, IncomingMessageItem databaseMessage) {
+            IJEItem ijeItem = new IJEItem();
+            ijeItem.MessageId = message.MessageId;
+            // set validation to false
+            ijeItem.IJE = new IJEFetalDeath(message.FetalDeathRecord, false).ToString();
+            // Log and ack message right after it is successfully extracted
+            CreateBFDRAckMessage<FetalDeathRecordAcknowledgementMessage>(message, databaseMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m));
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             // Log the message whether or not it is a duplicate
             LogCommonMessage(message, databaseMessage);
@@ -157,7 +192,26 @@ namespace messaging.Services
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
             ijeItem.IJE = new IJEBirth(message.BirthRecord, false).ToString();
-            CreateBirthAckMessage(message, databaseMessage);
+            CreateBFDRAckMessage<BirthRecordAcknowledgementMessage>(message, databaseMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m));
+            bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
+            IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
+            if(!duplicateMessage) {
+                // Only log messages that are not duplicates
+                LogCommonMessage(message, databaseMessage);
+                // Only save if this is not a message with a duplicate ID and the previousMessage either does not exist or
+                // has an older timestamp than the message we are currently dealing with
+                if(previousMessage == null || message.MessageTimestamp > previousMessage.MessageTimestamp) {
+                    this._context.IJEItems.Add(ijeItem);
+                    this._context.SaveChanges();
+                }
+            }
+        }
+
+        private void HandleFetalDeathUpdateMessage(FetalDeathRecordUpdateMessage message, IncomingMessageItem databaseMessage) {
+            IJEItem ijeItem = new IJEItem();
+            ijeItem.MessageId = message.MessageId;
+            ijeItem.IJE = new IJEFetalDeath(message.FetalDeathRecord, false).ToString();
+            CreateBFDRAckMessage<FetalDeathRecordAcknowledgementMessage>(message, databaseMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m));
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
             if(!duplicateMessage) {
@@ -213,16 +267,16 @@ namespace messaging.Services
             this._context.SaveChanges();
         }
 
-        private void CreateBirthAckMessage(BFDRBaseMessage message, IncomingMessageItem databaseMessage) {
+        private void CreateBFDRAckMessage<T>(BFDRBaseMessage message, IncomingMessageItem databaseMessage, string eventType, Func<BFDRBaseMessage, T> createMessage) where T: BFDRBaseMessage{
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
-            BirthRecordAcknowledgementMessage ackMessage = new BirthRecordAcknowledgementMessage(message);
+            BFDRBaseMessage ackMessage = createMessage.Invoke(message);
             outgoingMessageItem.JurisdictionId = databaseMessage.JurisdictionId;
             outgoingMessageItem.Message = ackMessage.ToJSON();
             outgoingMessageItem.MessageId = ackMessage.MessageId;
             outgoingMessageItem.MessageType = ackMessage.GetType().Name;
             outgoingMessageItem.CertificateNumber = ackMessage.CertNo.ToString().PadLeft(6, '0');
             outgoingMessageItem.EventYear = ackMessage.EventYear;
-            outgoingMessageItem.EventType = "NAT";
+            outgoingMessageItem.EventType = eventType;
             this._context.OutgoingMessageItems.Add(outgoingMessageItem);
             this._context.SaveChanges();
         }

@@ -114,7 +114,7 @@ namespace messaging.tests
             recordSubmission.CertNo = 1;
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR-BIRTH/v2.0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
             Hl7.Fhir.Model.Bundle updatedBundle = null;
@@ -122,7 +122,7 @@ namespace messaging.tests
             // be done is checking to see if the response is correct and if it is still
             // incorrect after the specified delay then assuming that something is wrong
             for (int x = 0; x < 10; ++x) {
-                HttpResponseMessage oneAck = await _client.GetAsync("/UT/Bundle/BFDR/v2.0");
+                HttpResponseMessage oneAck = await _client.GetAsync("/UT/Bundle/BFDR-BIRTH/v2.0");
                 updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
                 if (updatedBundle.Entry.Count > 0) {
                     break;
@@ -139,7 +139,7 @@ namespace messaging.tests
             Assert.Empty(noMessagesBundle.Entry);
 
             // Check that the retrievedAt column filters out the ACK message if we place another request
-            HttpResponseMessage noNewMsgs = await _client.GetAsync("/UT/Bundle/BFDR/v2.0");
+            HttpResponseMessage noNewMsgs = await _client.GetAsync("/UT/Bundle/BFDR-BIRTH/v2.0");
             Hl7.Fhir.Model.Bundle emptyBundle = await JsonResponseHelpers.ParseBundleAsync(noNewMsgs);
             Assert.Empty(emptyBundle.Entry);
 
@@ -168,7 +168,7 @@ namespace messaging.tests
             recordSubmission.CertNo = 1;
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR-BIRTH/v2.0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
             Hl7.Fhir.Model.Bundle updatedBundle = null;
@@ -176,7 +176,7 @@ namespace messaging.tests
             // be done is checking to see if the response is correct and if it is still
             // incorrect after the specified delay then assuming that something is wrong
             for (int x = 0; x < 10; ++x) {
-                HttpResponseMessage oneAck = await _client.GetAsync("/UT/Bundle/BFDR/v2.0");
+                HttpResponseMessage oneAck = await _client.GetAsync("/UT/Bundle/BFDR-BIRTH/v2.0");
                 Assert.Equal(HttpStatusCode.OK, oneAck.StatusCode);
                 updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
                 if (updatedBundle.Entry.Count > 0) {
@@ -188,19 +188,84 @@ namespace messaging.tests
             // with the new retrievedAt column, only one message should be returned
             Assert.Single(updatedBundle.Entry);
 
-            // Check to see if the results returned for a jurisdiction other than NY does not return NY entries
-            HttpResponseMessage noMessages = await _client.GetAsync("/FL/Bundle/BFDR/v2.0");
+            // Check to see if the results returned for a jurisdiction other than UT does not return UT entries
+            HttpResponseMessage noMessages = await _client.GetAsync("/FL/Bundle/BFDR-BIRTH/v2.0");
             var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
             Assert.Empty(noMessagesBundle.Entry);
 
             // Check that the retrievedAt column filters out the ACK message if we place another request
-            HttpResponseMessage noNewMsgs = await _client.GetAsync("/UT/Bundle/BFDR/v2.0");
+            HttpResponseMessage noNewMsgs = await _client.GetAsync("/UT/Bundle/BFDR-BIRTH/v2.0");
             Hl7.Fhir.Model.Bundle emptyBundle = await JsonResponseHelpers.ParseBundleAsync(noNewMsgs);
             Assert.Empty(emptyBundle.Entry);
 
             // Extract the message from the bundle and ensure it is an ACK for the appropritae message
             var lastMessageInBundle = updatedBundle.Entry.Last();
             BirthRecordAcknowledgementMessage parsedMessage = BFDRBaseMessage.Parse<BirthRecordAcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
+            Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task NewFetalDeathSubmissionMessagePostCreatesNewAcknowledgement()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // First, create a new Death Record
+            DeathRecordSubmissionMessage deathRecordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessageUT.json"));
+
+            // Set missing required fields
+            deathRecordSubmission.MessageSource = "http://example.fhir.org";
+            deathRecordSubmission.CertNo = 1;
+
+            // Submit that Death Record
+            HttpResponseMessage createDeathSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle", deathRecordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createDeathSubmissionMessage.StatusCode);
+
+            // Create a new FetalDeath Record
+            FetalDeathRecordSubmissionMessage recordSubmission = BFDRBaseMessage.Parse<FetalDeathRecordSubmissionMessage>(FixtureStream("fixtures/json/FetalDeathRecordSubmissionMessage.json"));
+
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR-FETALDEATH/v2.0", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            Hl7.Fhir.Model.Bundle updatedBundle = null;
+            // This code does not have access to the background jobs, the best that can
+            // be done is checking to see if the response is correct and if it is still
+            // incorrect after the specified delay then assuming that something is wrong
+            for (int x = 0; x < 10; ++x) {
+                HttpResponseMessage oneAck = await _client.GetAsync("/UT/Bundle/BFDR-FETALDEATH/v2.0");
+                updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
+                if (updatedBundle.Entry.Count > 0) {
+                    break;
+                } else {
+                    await System.Threading.Tasks.Task.Delay(x * 500);
+                }
+            }
+            // with the new retrievedAt column, only one message should be returned
+            Assert.Single(updatedBundle.Entry);
+
+            // Check to see if the results returned for a jurisdiction other than UT does not return UT entries
+            HttpResponseMessage noMessages = await _client.GetAsync("/FL/Bundle");
+            var noMessagesBundle = await JsonResponseHelpers.ParseBundleAsync(noMessages);
+            Assert.Empty(noMessagesBundle.Entry);
+
+            // Check that the retrievedAt column filters out the ACK message if we place another request
+            HttpResponseMessage noNewMsgs = await _client.GetAsync("/UT/Bundle/BFDR-FETALDEATH/v2.0");
+            Hl7.Fhir.Model.Bundle emptyBundle = await JsonResponseHelpers.ParseBundleAsync(noNewMsgs);
+            Assert.Empty(emptyBundle.Entry);
+
+            // Check that only the death record ack is returned if we place a request to the default endpoint
+            HttpResponseMessage newMsgs2 = await _client.GetAsync("/UT/Bundle");
+            Hl7.Fhir.Model.Bundle deathRecordBundle = await JsonResponseHelpers.ParseBundleAsync(newMsgs2);
+            Assert.Single(deathRecordBundle.Entry);
+
+            // Extract the message from the bundle and ensure it is an ACK for the appropritae message
+            var lastMessageInBundle = updatedBundle.Entry.Last();
+            FetalDeathRecordAcknowledgementMessage parsedMessage = BFDRBaseMessage.Parse<FetalDeathRecordAcknowledgementMessage>((Hl7.Fhir.Model.Bundle)lastMessageInBundle.Resource);
             Assert.Equal(recordSubmission.MessageId, parsedMessage.AckedMessageId);
         }
 
@@ -457,7 +522,7 @@ namespace messaging.tests
             recordSubmission.EventYear = 2024;
 
             // Submit that Birth Record
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordSubmission.ToJson());
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR-BIRTH/v2.0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
             BirthRecordUpdateMessage recordUpdate = new BirthRecordUpdateMessage(recordSubmission.BirthRecord);
@@ -468,7 +533,7 @@ namespace messaging.tests
             recordUpdate.EventYear = 2024;
 
             // Submit update message
-            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR/v2.0", recordUpdate.ToJson());
+            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/UT/Bundle/BFDR-BIRTH/v2.0", recordUpdate.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
@@ -959,7 +1024,7 @@ namespace messaging.tests
             recordSubmission2.CertNo = 1;
             recordSubmission2.MessageDestination = "http://notnchs.cdc.gov/bfdr_submission,http://nchs.cdc.gov/bfdr_submission";
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle/BFDR/v2.0", recordSubmission2.ToJson());
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle/BFDR-BIRTH/v2.0", recordSubmission2.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage2.StatusCode);
         }
 
@@ -988,7 +1053,7 @@ namespace messaging.tests
             recordSubmission2.EventYear = 2024;
             recordSubmission2.MessageDestination = "temp,http://nchs.CDC.gov/BFDR_Submission,temp";
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle/BFDR/v2.0", recordSubmission2.ToJson());
+            HttpResponseMessage createSubmissionMessage2 = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundle/BFDR-BIRTH/v2.0", recordSubmission2.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage2.StatusCode);
         }
 
@@ -1179,7 +1244,7 @@ namespace messaging.tests
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
 
-            HttpResponseMessage response = await _client.GetAsync($"/NV/Bundle/BFDR/v2.2");
+            HttpResponseMessage response = await _client.GetAsync($"/NV/Bundle/BFDR-BIRTH/v2.2");
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
             HttpResponseMessage response2 = await _client.GetAsync($"/NV/Bundle/VRDR/v2.0");
@@ -1190,8 +1255,10 @@ namespace messaging.tests
             Assert.Equal(HttpStatusCode.BadRequest, response3.StatusCode);
 
             HttpResponseMessage response4 = await _client.GetAsync($"/NV/Bundle/typo/v2.2");
-            Assert.Equal(HttpStatusCode.BadRequest, response4.StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, response4.StatusCode);
 
+            HttpResponseMessage response5 = await _client.GetAsync($"/NV/Bundle/BFDR-FETALDEATH/v2.3");
+            Assert.Equal(HttpStatusCode.BadRequest, response5.StatusCode);
         }
 
         [Fact]
@@ -1200,11 +1267,14 @@ namespace messaging.tests
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
 
-            HttpResponseMessage response = await _client.GetAsync($"/NV/Bundle/BFDR/v2.0");
+            HttpResponseMessage response = await _client.GetAsync($"/NV/Bundle/BFDR-BIRTH/v2.0");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             HttpResponseMessage response2 = await _client.GetAsync($"/NV/Bundle/VRDR/v2.2");
             Assert.Equal(HttpStatusCode.OK, response2.StatusCode);
+
+            HttpResponseMessage response3 = await _client.GetAsync($"/NV/Bundle/BFDR-FETALDEATH/v2.0");
+            Assert.Equal(HttpStatusCode.OK, response3.StatusCode);
         }
 
         // TODO create test that sends a VRDR message to the BFDR endpoint and vv, should return an error in both cases
