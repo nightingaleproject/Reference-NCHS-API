@@ -1,5 +1,10 @@
 ## Changelog
 
+### v1.4.2 - 2025-03-21
+* Add support for FetalDeath messaging under the /BFDR-FETALDEATH url
+* Update BFDR to v1.0.0-preview.11 and VitalRecordMessaging to v1.0.0-preview.6
+* Changed Birth Messaging url to /BFDR-BIRTH
+
 ### v1.4.1 - 2024-12-10
 * Update VRDR to v4.4.2
 
