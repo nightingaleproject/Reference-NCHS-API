@@ -124,7 +124,7 @@ namespace messaging.Services
             // set validation to false
             ijeItem.IJE = new IJEMortality(message.DeathRecord, false).ToString();
             // Log and ack message right after it is successfully extracted
-            CreateDeathAckMessage(message, databaseMessage);
+            CreateAckMessage(message, databaseMessage, "MOR", m => new AcknowledgementMessage(m));
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             // Log the message whether or not it is a duplicate
             LogMessage(message, databaseMessage);
@@ -139,7 +139,7 @@ namespace messaging.Services
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
             ijeItem.IJE = new IJEMortality(message.DeathRecord, false).ToString();
-            CreateDeathAckMessage(message, databaseMessage);
+            CreateAckMessage(message, databaseMessage, "MOR", m => new AcknowledgementMessage(m));
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
             if(!duplicateMessage) {
@@ -160,10 +160,10 @@ namespace messaging.Services
             // set validation to false
             ijeItem.IJE = new IJEBirth(message.BirthRecord, false).ToString();
             // Log and ack message right after it is successfully extracted
-            CreateBFDRAckMessage<BirthRecordAcknowledgementMessage>(message, databaseMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m));
+            CreateAckMessage<BirthRecordAcknowledgementMessage>(message, databaseMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m));
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             // Log the message whether or not it is a duplicate
-            LogCommonMessage(message, databaseMessage);
+            LogMessage(message, databaseMessage);
             // Only save non-duplicate submission messages
             if(!duplicateMessage) {
                 this._context.IJEItems.Add(ijeItem);
@@ -177,10 +177,10 @@ namespace messaging.Services
             // set validation to false
             ijeItem.IJE = new IJEFetalDeath(message.FetalDeathRecord, false).ToString();
             // Log and ack message right after it is successfully extracted
-            CreateBFDRAckMessage<FetalDeathRecordAcknowledgementMessage>(message, databaseMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m));
+            CreateAckMessage<FetalDeathRecordAcknowledgementMessage>(message, databaseMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m));
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             // Log the message whether or not it is a duplicate
-            LogCommonMessage(message, databaseMessage);
+            LogMessage(message, databaseMessage);
             // Only save non-duplicate submission messages
             if(!duplicateMessage) {
                 this._context.IJEItems.Add(ijeItem);
@@ -192,12 +192,12 @@ namespace messaging.Services
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
             ijeItem.IJE = new IJEBirth(message.BirthRecord, false).ToString();
-            CreateBFDRAckMessage<BirthRecordAcknowledgementMessage>(message, databaseMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m));
+            CreateAckMessage<BirthRecordAcknowledgementMessage>(message, databaseMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m));
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
             if(!duplicateMessage) {
                 // Only log messages that are not duplicates
-                LogCommonMessage(message, databaseMessage);
+                LogMessage(message, databaseMessage);
                 // Only save if this is not a message with a duplicate ID and the previousMessage either does not exist or
                 // has an older timestamp than the message we are currently dealing with
                 if(previousMessage == null || message.MessageTimestamp > previousMessage.MessageTimestamp) {
@@ -211,12 +211,12 @@ namespace messaging.Services
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
             ijeItem.IJE = new IJEFetalDeath(message.FetalDeathRecord, false).ToString();
-            CreateBFDRAckMessage<FetalDeathRecordAcknowledgementMessage>(message, databaseMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m));
+            CreateAckMessage<FetalDeathRecordAcknowledgementMessage>(message, databaseMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m));
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
             if(!duplicateMessage) {
                 // Only log messages that are not duplicates
-                LogCommonMessage(message, databaseMessage);
+                LogMessage(message, databaseMessage);
                 // Only save if this is not a message with a duplicate ID and the previousMessage either does not exist or
                 // has an older timestamp than the message we are currently dealing with
                 if(previousMessage == null || message.MessageTimestamp > previousMessage.MessageTimestamp) {
@@ -226,7 +226,7 @@ namespace messaging.Services
             }
         }
 
-        private void LogCommonMessage(CommonMessage message, IncomingMessageItem databaseMessage) {
+        private void LogMessage(CommonMessage message, IncomingMessageItem databaseMessage) {
             IncomingMessageLog entry = new IncomingMessageLog();
             entry.MessageTimestamp = message.MessageTimestamp;
             entry.MessageId = message.MessageId;
@@ -239,37 +239,9 @@ namespace messaging.Services
             this._context.SaveChanges();
         }
 
-        // TODO: once we move to VRDR STU3 and the common library version of VRDR, we can deprecate this function
-        private void LogMessage(DeathRecordSubmissionMessage message, IncomingMessageItem databaseMessage) {
-            IncomingMessageLog entry = new IncomingMessageLog();
-            entry.MessageTimestamp = message.MessageTimestamp;
-            entry.MessageId = message.MessageId;
-            entry.JurisdictionId = databaseMessage.JurisdictionId;
-            //entry.NCHSIdentifier = message.NCHSIdentifier;
-            // TODO NCHS identifier isn't defined in CommonMessage, does it make sense to add it so we can use it here?
-            entry.NCHSIdentifier = "placeholder";
-            entry.StateAuxiliaryIdentifier = message.StateAuxiliaryId;
-            this._context.IncomingMessageLogs.Add(entry);
-            this._context.SaveChanges();
-        }
-
-        private void CreateDeathAckMessage(BaseMessage message, IncomingMessageItem databaseMessage) {
+        private void CreateAckMessage<T>(CommonMessage message, IncomingMessageItem databaseMessage, string eventType, Func<CommonMessage, T> createMessage) where T: CommonMessage{
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
-            AcknowledgementMessage ackMessage = new AcknowledgementMessage(message);
-            outgoingMessageItem.JurisdictionId = databaseMessage.JurisdictionId;
-            outgoingMessageItem.Message = ackMessage.ToJSON();
-            outgoingMessageItem.MessageId = ackMessage.MessageId;
-            outgoingMessageItem.MessageType = ackMessage.GetType().Name;
-            outgoingMessageItem.CertificateNumber = ackMessage.CertNo.ToString().PadLeft(6, '0');
-            outgoingMessageItem.EventYear = ackMessage.DeathYear;
-            outgoingMessageItem.EventType = "MOR";
-            this._context.OutgoingMessageItems.Add(outgoingMessageItem);
-            this._context.SaveChanges();
-        }
-
-        private void CreateBFDRAckMessage<T>(BFDRBaseMessage message, IncomingMessageItem databaseMessage, string eventType, Func<BFDRBaseMessage, T> createMessage) where T: BFDRBaseMessage{
-            OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
-            BFDRBaseMessage ackMessage = createMessage.Invoke(message);
+            CommonMessage ackMessage = createMessage.Invoke(message);
             outgoingMessageItem.JurisdictionId = databaseMessage.JurisdictionId;
             outgoingMessageItem.Message = ackMessage.ToJSON();
             outgoingMessageItem.MessageId = ackMessage.MessageId;

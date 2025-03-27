@@ -63,6 +63,10 @@ namespace messaging.Migrations
                     b.Property<long?>("EventYear")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("IGVersion")
+                        .HasMaxLength(5)
+                        .HasColumnType("CHAR(5)");
+
                     b.Property<string>("JurisdictionId")
                         .IsRequired()
                         .HasMaxLength(2)
@@ -160,6 +164,10 @@ namespace messaging.Migrations
                     b.Property<long?>("EventYear")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("IGVersion")
+                        .HasMaxLength(5)
+                        .HasColumnType("CHAR(5)");
+
                     b.Property<string>("JurisdictionId")
                         .IsRequired()
                         .HasMaxLength(2)
@@ -178,9 +186,6 @@ namespace messaging.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("RetrievedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("SteveRetrievedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("UpdatedDate")
