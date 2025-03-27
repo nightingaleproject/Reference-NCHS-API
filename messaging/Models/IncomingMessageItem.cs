@@ -32,5 +32,8 @@ namespace messaging.Models
         [Column(TypeName = "CHAR")]
         [MaxLength(3)]
         public string EventType {get; set;}
+        [Column(TypeName = "CHAR")]
+        [MaxLength(5)]
+        public string IGVersion { get; set; }
     }
 }

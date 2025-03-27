@@ -13,9 +13,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using System.Linq.Expressions;
 using Hl7.Fhir.Utility;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Threading;
 
 namespace messaging.Controllers
@@ -55,6 +53,12 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
         {
+
+            // How should the historical endpoint default when no ig version is given? Because if the jursidiction POSTs with one version, then GETs with no version, how should the default handle that?
+            // Should it just return all the VRDR messages, regardless of the Payload Version?
+            // And if you POST a message without an IG Version url param or Payload version, how shoud the GET work? Should any GET return it? Should only some GETs depending on IG Version get it? Should only a GET without an IGVersion get it?
+            // This historical backwards compatibilty endpoint is tricky to maintain due to the IG Version.
+
             if (_count == 0)
             {
                 _count = _settings.PageCount;
@@ -88,18 +92,17 @@ namespace messaging.Controllers
             string recordType = "";
             if (!String.IsNullOrEmpty(vitalType))
             {
-                vitalType = vitalType.ToUpper();
-                if (vitalType.Equals("VRDR"))
+                switch (vitalType.ToUpper())
                 {
-                    recordType = "MOR";
-                }
-                else if (vitalType.Equals("BFDR-BIRTH"))
-                {
-                    recordType = "NAT";
-                }
-                else if (vitalType.Equals("BFDR-FETALDEATH"))
-                {
-                    recordType = "FET";
+                    case "VRDR":
+                        recordType = "MOR";
+                        break;
+                    case "BFDR-BIRTH":
+                        recordType = "NAT";
+                        break;
+                    case "BFDR-FETALDEATH":
+                        recordType = "FET";
+                        break;
                 }
                 if ((vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")) && !_settings.BFDREnabled)
                 {
@@ -131,7 +134,7 @@ namespace messaging.Controllers
                 searchParamValues.Add("deathYear", deathYear);
             }
 
-            // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
+            // Query for outgoing messages of the requested type by jurisdiction ID. Filter by IG version. Optionally filter by certificate number and death year if those parameters are provided.
             IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
                     && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType))
                     && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
@@ -312,7 +315,7 @@ namespace messaging.Controllers
                     IncomingMessageItem item;
                     try
                     {
-                        item = ParseIncomingMessageItem(jurisdictionId, vitalType, bundle);
+                        item = ParseIncomingMessageItem(jurisdictionId, vitalType, igVersion, bundle);
                         // Send a special message for extraction errors to report the error manually
                         if (item.MessageType == nameof(ExtractionErrorMessage))
                         {
@@ -336,11 +339,6 @@ namespace messaging.Controllers
                             return BadRequest($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}");
                         }
 
-                    }
-                    catch (VRDR.MessageRuleException mrx)
-                    {
-                        _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
-                        return BadRequest($"Message was missing reqiured header fields: {mrx.Message}");
                     }
                     catch (VR.MessageRuleException mrx)
                     {
@@ -395,6 +393,17 @@ namespace messaging.Controllers
             return true;
         }
 
+        private bool ValidateIGPayloadVersion(string messagePayloadVersion, string urlParamIGVersion)
+        {
+            string extractedVersion = urlParamIGVersion.TrimStart('v').Replace(".", "_");
+            if (!messagePayloadVersion.Equals($"BFDR_STU{extractedVersion}") && !messagePayloadVersion.Equals($"VRDR_STU{extractedVersion}"))
+            {
+                _logger.LogError("Rejecting request with non-matching IG Versions: Message payload version [" + messagePayloadVersion + "] and parameter IG Version [" + urlParamIGVersion + "].");
+                return false;
+            }
+            return true;
+        }
+
         // InsertBatchMessage handles a single message in a batch upload submission
         // Each message is handled independent of the other messages. A status code is generated for
         // each message and is returned in the response bundle
@@ -408,7 +417,7 @@ namespace messaging.Controllers
                 //BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
                 // get the bundle in the bundle
                 Bundle bundle = (Hl7.Fhir.Model.Bundle)msgBundle.Resource;
-                item = ParseIncomingMessageItem(jurisdictionId, vitalType, bundle);
+                item = ParseIncomingMessageItem(jurisdictionId, vitalType, igVersion, bundle);
                 if (item.MessageType == "ExtractionErrorMessage")
                 {
                     _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
@@ -433,14 +442,6 @@ namespace messaging.Controllers
                     entry.Response.Outcome = OperationOutcome.ForMessage($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}", OperationOutcome.IssueType.Exception);
                     return entry;
                 }
-            }
-            catch (VRDR.MessageRuleException mrx)
-            {
-                _logger.LogDebug($"Rejecting message with invalid message header: {mrx}");
-                entry.Response = new Bundle.ResponseComponent();
-                entry.Response.Status = "400";
-                entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required header field. {mrx.Message}.", OperationOutcome.IssueType.Exception);
-                return entry;
             }
             catch (VR.MessageRuleException mrx)
             {
@@ -504,61 +505,52 @@ namespace messaging.Controllers
             return (_settings.SAMS);
         }
 
-        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, Bundle bundle)
+        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, string igVersion, Bundle bundle)
         {
-            // the vital type must be specified as BFDR-BIRTH or BFDR-FETALDEATH to post BFDR records
-            vitalType = vitalType?.ToUpper();
-            if (_settings.BFDREnabled && !String.IsNullOrEmpty(vitalType) && (vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")))
+            try
             {
-                try
+                CommonMessage message;
+                vitalType = vitalType?.ToUpper();
+                if (_settings.BFDREnabled && !String.IsNullOrEmpty(vitalType) && (vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")))
                 {
-                    CommonMessage message = BFDRBaseMessage.Parse(bundle);
+                    message = BFDRBaseMessage.Parse(bundle);
                     CommonMessage.ValidateMessageHeader(message);
-                    return ValidateAndCreateIncomingMessageItem(message, jurisdictionId);
                 }
-                catch (VR.MessageRuleException mrx)
+                // null vital type is considered VRDR by default
+                else if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("VRDR"))
                 {
-                    throw mrx;
-                }
-                catch (BFDR.MessageParseException mpex) 
-                { 
-                    _logger.LogDebug($"The message could not be parsed as a BFDR message. {mpex}");
-                    throw new ArgumentException($"Failed to parse input as a BFDR message, message type unrecognized.");
-                }
-                catch (ArgumentException aex)
-                {
-                    throw aex;
-                }
-            }
-
-            // null vital type is considered VRDR by default
-            if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("VRDR"))
-            {
-                try
-                {
-                    BaseMessage message = BaseMessage.Parse(bundle);
+                    message = BaseMessage.Parse(bundle);
                     BaseMessage.ValidateMessageHeader(message);
-                    return ValidateAndCreateIncomingVRDRMessageItem(message, jurisdictionId);
                 }
-                catch (VRDR.MessageRuleException mrx)
+                else
                 {
-                    throw mrx;
+                    throw new ArgumentException($"Record type url must be of 'VRDR', 'BFDR-BIRTH', or 'BFDR-FETALDEATH' but given {vitalType}. If using BFDR, check that BFDR is enabled in settings.");
                 }
-                catch (VRDR.MessageParseException mpex) 
-                { 
-                    _logger.LogDebug($"The message could not be parsed as a VRDR message. {mpex}");
-                    throw new ArgumentException($"Failed to parse input as a VRDR message, message type unrecognized.");
-                }
-                catch (ArgumentException aex)
-                {
-                    throw aex;
-                }
+                return ValidateAndCreateIncomingMessageItem(message, jurisdictionId, igVersion);
+            }
+            catch (VR.MessageRuleException mrx)
+            {
+                throw mrx;
+            }
+            catch (BFDR.MessageParseException mpex) 
+            { 
+                _logger.LogDebug($"The message could not be parsed as a BFDR message. {mpex}");
+                throw new ArgumentException($"Failed to parse input as a BFDR message, message type unrecognized.");
+            }
+            catch (VRDR.MessageParseException mpex) 
+            { 
+                _logger.LogDebug($"The message could not be parsed as a VRDR message. {mpex}");
+                throw new ArgumentException($"Failed to parse input as a VRDR message, message type unrecognized.");
+            }
+            catch (ArgumentException aex)
+            {
+                throw aex;
             }
 
             throw new ArgumentException($"Failed to parse input as a VRDR or BFDR message, message type unrecognized.");
         }
 
-        protected IncomingMessageItem ValidateAndCreateIncomingMessageItem(CommonMessage message, string jurisdictionId)
+        protected IncomingMessageItem ValidateAndCreateIncomingMessageItem(CommonMessage message, string jurisdictionId, string igVersion)
         {
             // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
             // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
@@ -603,21 +595,25 @@ namespace messaging.Controllers
                 _logger.LogDebug($"The message resource jurisdiction ID {message.JurisdictionId} did not match the parameter jurisdiction ID {jurisdictionId}.");
                 throw new ArgumentException($"Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}.");
             }
-
+            if (!ValidateIGPayloadVersion(message.PayloadVersionId, igVersion))
+            {
+                _logger.LogDebug($"The message resource Payload Version {message.PayloadVersionId} did not match the parameter IG Version {igVersion}.");
+                throw new ArgumentException($"Message Payload Version {message.PayloadVersionId} must match the URL parameter IG Version {igVersion}.");
+            }
             IncomingMessageItem item = new IncomingMessageItem();
             item.Message = message.ToJSON(); 
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;
+            item.IGVersion = igVersion;
             if(birthMessageType(message.GetType().Name) || fetalDeathMessageType(message.GetType().Name))
             {
                 item.EventYear = ((BFDRBaseMessage)message).EventYear;
             }
-            // TODO add this check once we move to the monorepo version of VRDR STU 3.0
-            // else if(vrdrMessageType(message.GetType().Name))
-            // {
-            //     item.EventYear = ((BaseMessage)message).DeathYear;
-            // }
+            else if(vrdrMessageType(message.GetType().Name))
+            {
+                item.EventYear = ((BaseMessage)message).DeathYear;
+            }
 
             // format the certificate number
             uint certNo = (uint)message.CertNo;
@@ -625,70 +621,6 @@ namespace messaging.Controllers
             item.CertificateNumber = certNoFmt;
             
             item.EventType = getEventType(message);
-
-            return item;
-        }
-
-        // TODO: Once we move to VRDR STU 3.0 and the monorepo version of VRDR, we can delete this function
-        protected IncomingMessageItem ValidateAndCreateIncomingVRDRMessageItem(BaseMessage message, string jurisdictionId)
-        {
-            // Pre-check some minimal requirements for validity. Specifically, if there are problems with the message that will lead to failure when
-            // attempting to insert into the database (e.g. missing MessageId), catch that here to return a 400 instead of a 500 on DB error
-            // Message errors SHOULD result in an ExtractionError response; this check is just to catch things that can't make it that far
-            if (String.IsNullOrWhiteSpace(message.MessageSource))
-            {
-                _logger.LogDebug($"Message is missing source endpoint, throw exception");
-                throw new ArgumentException("Message source endpoint cannot be null");
-            }
-            if (String.IsNullOrWhiteSpace(message.MessageDestination))
-            {
-                _logger.LogDebug($"Message is missing destination endpoint, throw exception");
-                throw new ArgumentException("Message destination endpoint cannot be null");
-            }
-            if (!validateNCHSDestination(message.MessageDestination))
-            {
-                _logger.LogDebug($"Message destination endpoint does not include a valid NCHS endpoint, throw exception");
-                throw new ArgumentException("Message destination endpoint does not include a valid NCHS endpoint");
-            }
-            if (String.IsNullOrWhiteSpace(message.MessageId))
-            {
-                _logger.LogDebug($"Message is missing Message ID, throw exception");
-                throw new ArgumentException("Message ID cannot be null");
-            }
-            if (String.IsNullOrWhiteSpace(message.GetType().Name))
-            {
-                _logger.LogDebug($"Message is missing Message Event Type, throw exception");
-                throw new ArgumentException("Message Event Type cannot be null");
-            }
-            if (message.CertNo == null)
-            {
-                _logger.LogDebug($"Message is missing Certificate Number, throw exception");
-                throw new ArgumentException("Message Certificate Number cannot be null");
-            }
-            if ((uint)message.CertNo.ToString().Length > 6)
-            {
-                _logger.LogDebug($"Message Certificate Number number is greater than 6 characters, throw exception");
-                throw new ArgumentException("Message Certificate Number cannot be more than 6 digits long");
-            }
-            if (!ValidateJurisdictionId(message.JurisdictionId, jurisdictionId))
-            {
-                _logger.LogDebug($"The message resource jurisdiction ID {message.JurisdictionId} did not match the parameter jurisdiction ID {jurisdictionId}.");
-                throw new ArgumentException($"Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}.");
-            }
-
-            IncomingMessageItem item = new IncomingMessageItem();
-            item.Message = message.ToJSON(); 
-            item.MessageId = message.MessageId;
-            item.MessageType = message.GetType().Name;
-            item.JurisdictionId = jurisdictionId;
-            item.EventYear = message.DeathYear;
-
-            // format the certificate number
-            uint certNo = (uint)message.CertNo;
-            string certNoFmt = certNo.ToString("D6");
-            item.CertificateNumber = certNoFmt;
-            
-            item.EventType = "MOR";
 
             return item;
         }
@@ -841,7 +773,7 @@ namespace messaging.Controllers
         private bool validIGVersion(string vitalType, string igVersion)
         {
             string[] BFDRIgs = {"v2.0"};
-            string[] VRDRIgs = {"v2.2"};
+            string[] VRDRIgs = {"v2.2", "v3.0"};
 
             if (vitalType == "BFDR-BIRTH" || vitalType == "BFDR-FETALDEATH")
             {
