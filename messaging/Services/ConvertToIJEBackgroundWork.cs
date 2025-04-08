@@ -40,8 +40,6 @@ namespace messaging.Services
             this._context = context;
         }
 
-        // ijeItem.IJE = new IJEMortality(message.DeathRecord, false).ToString();
-
         private readonly static Dictionary<string, Action<CommonMessage, IncomingMessageItem, ApplicationDbContext>> CreateAckMessageCommand = new()
         {
             { "MOR", (message, dbMessage, _context) => CreateAckMessage(message, dbMessage, "MOR", m => new AcknowledgementMessage(m), _context) },
@@ -64,76 +62,72 @@ namespace messaging.Services
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
             outgoingMessageItem.JurisdictionId = item.JurisdictionId;
             outgoingMessageItem.IGVersion = item.IGVersion;
+            CommonMessage parsedMessage;
             if (item.EventType == "MOR")
             {
-                BaseMessage parsedMessage = BaseMessage.Parse(item.Message.ToString(), true);
-                try {
-                    switch(parsedMessage) {
-                        case DeathRecordUpdateMessage update:
-                            HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
+                parsedMessage = BaseMessage.Parse(item.Message.ToString(), true);
+            }
+            else if (item.EventType == "NAT" || item.EventType == "FET")
+            {
+                parsedMessage = BFDRBaseMessage.Parse(item.Message.ToString(), true);
+            }
+            else
+            {
+                throw new Exception($"Invalid Event Type: {item.EventType}");
+            }
+            try
+            {
+                switch(parsedMessage) {
+                    case DeathRecordUpdateMessage update:
+                        HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
                         break;
-                        case DeathRecordSubmissionMessage submission:
-                            HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
+                    case DeathRecordSubmissionMessage submission:
+                        HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
                         break;
-                    }
-                } catch {
-                    ExtractionErrorMessage errorMessage = new ExtractionErrorMessage(parsedMessage);
-                    outgoingMessageItem.Message = errorMessage.ToJSON();
-                    outgoingMessageItem.MessageId = errorMessage.MessageId;
-                    outgoingMessageItem.MessageType = errorMessage.GetType().Name;
-                    outgoingMessageItem.CertificateNumber = errorMessage.CertNo.ToString().PadLeft(6, '0');
-                    outgoingMessageItem.EventYear = errorMessage.GetYear();
-                    outgoingMessageItem.EventType = item.EventType;
-                    this._context.OutgoingMessageItems.Add(outgoingMessageItem);
+                    case BirthRecordUpdateMessage update:
+                        HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
+                        break;
+                    case BirthRecordSubmissionMessage submission:
+                        HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
+                        break;
+                    case FetalDeathRecordUpdateMessage update:
+                        HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
+                        break;
+                    case FetalDeathRecordSubmissionMessage submission:
+                        HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
+                        break;
+                    default:
+                        throw new Exception($"Invalid message type: {parsedMessage.MessageType}");
                 }
             }
-            else if (item.EventType == "NAT")
+            catch
             {
-                BFDRBaseMessage parsedMessage = BFDRBaseMessage.Parse(item.Message.ToString(), true);
-                try {
-                    switch(parsedMessage) {
-                        case BirthRecordUpdateMessage update:
-                            HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
-                            break;
-                        case BirthRecordSubmissionMessage submission:
-                            HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
-                            break;
-                    }
-                } catch {
-                    BirthRecordErrorMessage errorMessage = new BirthRecordErrorMessage(parsedMessage);
-                    UpdateOutgoingMessageItem(errorMessage, outgoingMessageItem, item.EventType);
-                    this._context.OutgoingMessageItems.Add(outgoingMessageItem);
+                CommonMessage errorMessage;
+                if (item.EventType == "MOR")
+                {
+                    errorMessage = new ExtractionErrorMessage((BaseMessage) parsedMessage);
                 }
-            }
-            else if (item.EventType == "FET")
-            {
-                BFDRBaseMessage parsedMessage = BFDRBaseMessage.Parse(item.Message.ToString(), true);
-                try {
-                    switch(parsedMessage) {
-                        case FetalDeathRecordUpdateMessage update:
-                            HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
-                            break;
-                        case FetalDeathRecordSubmissionMessage submission:
-                            HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
-                            break;
-                    }
-                } catch {
-                    FetalDeathRecordErrorMessage errorMessage = new FetalDeathRecordErrorMessage(parsedMessage);
-                    UpdateOutgoingMessageItem(errorMessage, outgoingMessageItem, item.EventType);
-                    this._context.OutgoingMessageItems.Add(outgoingMessageItem);
+                else if (item.EventType == "NAT")
+                {
+                    errorMessage = new BirthRecordErrorMessage((BFDRBaseMessage) parsedMessage);
                 }
+                else if (item.EventType == "FET")
+                {
+                    errorMessage = new FetalDeathRecordErrorMessage((BFDRBaseMessage) parsedMessage);
+                }
+                else
+                {
+                    throw new Exception($"Invalid Event Type: {item.EventType}");
+                }
+                outgoingMessageItem.Message = errorMessage.ToJSON();
+                outgoingMessageItem.MessageId = errorMessage.MessageId;
+                outgoingMessageItem.MessageType = errorMessage.GetType().Name;
+                outgoingMessageItem.CertificateNumber = errorMessage.CertNo.ToString().PadLeft(6, '0');
+                outgoingMessageItem.EventYear = errorMessage.GetYear();
+                outgoingMessageItem.EventType = item.EventType;
+                this._context.OutgoingMessageItems.Add(outgoingMessageItem);
             }
             await this._context.SaveChangesAsync();
-        }
-
-        private static void UpdateOutgoingMessageItem(CommonMessage message, OutgoingMessageItem outgoingMessageItem, string eventType)
-        {
-            outgoingMessageItem.Message = message.ToJSON();
-            outgoingMessageItem.MessageId = message.MessageId;
-            outgoingMessageItem.MessageType = message.GetType().Name;
-            outgoingMessageItem.CertificateNumber = message.CertNo.ToString().PadLeft(6, '0');
-            outgoingMessageItem.EventYear = message.EventYear;
-            outgoingMessageItem.EventType = eventType;
         }
 
         private void HandleSubmissionMessage(CommonMessage message, IncomingMessageItem databaseMessage, Func<CommonMessage, string> createIJEString, Action<CommonMessage, IncomingMessageItem, ApplicationDbContext> createAckMessage)
@@ -154,7 +148,8 @@ namespace messaging.Services
             }
         }
 
-        private void HandleUpdateMessage(CommonMessage message, IncomingMessageItem databaseMessage, Func<CommonMessage, string> createIJEString, Action<CommonMessage, IncomingMessageItem, ApplicationDbContext> createAckMessage) {
+        private void HandleUpdateMessage(CommonMessage message, IncomingMessageItem databaseMessage, Func<CommonMessage, string> createIJEString, Action<CommonMessage, IncomingMessageItem, ApplicationDbContext> createAckMessage)
+        {
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
             ijeItem.IJE = createIJEString(message);
@@ -173,20 +168,8 @@ namespace messaging.Services
             }
         }
 
-        private void LogMessage(CommonMessage message, IncomingMessageItem databaseMessage) {
-            IncomingMessageLog entry = new IncomingMessageLog();
-            entry.MessageTimestamp = message.MessageTimestamp;
-            entry.MessageId = message.MessageId;
-            entry.JurisdictionId = databaseMessage.JurisdictionId;
-            //entry.NCHSIdentifier = message.NCHSIdentifier;
-            // TODO NCHS identifier isn't defined in CommonMessage, does it make sense to add it so we can use it here?
-            entry.NCHSIdentifier = "placeholder";
-            entry.StateAuxiliaryIdentifier = message.StateAuxiliaryId;
-            this._context.IncomingMessageLogs.Add(entry);
-            this._context.SaveChanges();
-        }
-
-        private static void CreateAckMessage<T>(CommonMessage message, IncomingMessageItem databaseMessage, string eventType, Func<CommonMessage, T> createMessage, ApplicationDbContext _context) where T: CommonMessage{
+        private static void CreateAckMessage<T>(CommonMessage message, IncomingMessageItem databaseMessage, string eventType, Func<CommonMessage, T> createMessage, ApplicationDbContext _context) where T: CommonMessage
+        {
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
             CommonMessage ackMessage = createMessage.Invoke(message);
             outgoingMessageItem.JurisdictionId = databaseMessage.JurisdictionId;
@@ -199,6 +182,17 @@ namespace messaging.Services
             outgoingMessageItem.IGVersion = databaseMessage.IGVersion;
             _context.OutgoingMessageItems.Add(outgoingMessageItem);
             _context.SaveChanges();
+        }
+
+        private void LogMessage(CommonMessage message, IncomingMessageItem databaseMessage) {
+            IncomingMessageLog entry = new IncomingMessageLog();
+            entry.MessageTimestamp = message.MessageTimestamp;
+            entry.MessageId = message.MessageId;
+            entry.JurisdictionId = databaseMessage.JurisdictionId;
+            entry.NCHSIdentifier = message.NCHSIdentifier;
+            entry.StateAuxiliaryIdentifier = message.StateAuxiliaryId;
+            this._context.IncomingMessageLogs.Add(entry);
+            this._context.SaveChanges();
         }
 
         private bool IncomingMessageLogItemExists(string messageId)
