@@ -248,7 +248,7 @@ namespace messaging.Services
             outgoingMessageItem.MessageId = ackMessage.MessageId;
             outgoingMessageItem.MessageType = ackMessage.GetType().Name;
             outgoingMessageItem.CertificateNumber = ackMessage.CertNo.ToString().PadLeft(6, '0');
-            outgoingMessageItem.EventYear = ackMessage.EventYear;
+            outgoingMessageItem.EventYear = ackMessage.GetYear();
             outgoingMessageItem.EventType = eventType;
             outgoingMessageItem.IGVersion = databaseMessage.IGVersion;
             this._context.OutgoingMessageItems.Add(outgoingMessageItem);
