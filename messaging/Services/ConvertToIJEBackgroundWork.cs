@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VRDR;
 using VR;
+using System.Collections.Generic;
 
 namespace messaging.Services
 {
@@ -31,13 +32,29 @@ namespace messaging.Services
 
       public class Worker : IBackgroundWorker<Message, Worker>
       {
-          private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-          public Worker(ApplicationDbContext context)
-          {
-              // This is where you put your dependencies, services, etc.
-              this._context = context;
-          }
+        public Worker(ApplicationDbContext context)
+        {
+            // This is where you put your dependencies, services, etc.
+            this._context = context;
+        }
+
+        // ijeItem.IJE = new IJEMortality(message.DeathRecord, false).ToString();
+
+        private readonly static Dictionary<string, Action<CommonMessage, IncomingMessageItem, ApplicationDbContext>> CreateAckMessageCommand = new()
+        {
+            { "MOR", (message, dbMessage, _context) => CreateAckMessage(message, dbMessage, "MOR", m => new AcknowledgementMessage(m), _context) },
+            { "NAT", (message, dbMessage, _context) => CreateAckMessage(message, dbMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m), _context) },
+            { "FET", (message, dbMessage, _context) => CreateAckMessage(message, dbMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m), _context) }
+        };
+
+        private readonly static Dictionary<string, Func<CommonMessage, string>> CreateIJEStringCommand = new()
+        {
+            { "MOR", (message) => new IJEMortality(((DeathRecordSubmissionMessage) message).DeathRecord, false).ToString() },
+            { "NAT", (message) => new IJEBirth(((BirthRecordSubmissionMessage) message).BirthRecord, false).ToString() },
+            { "FET", (message) => new IJEFetalDeath(((FetalDeathRecordSubmissionMessage) message).FetalDeathRecord, false).ToString() }
+        };
 
         public async Task DoWork(Message message, CancellationToken cancellationToken)
         {
@@ -53,10 +70,10 @@ namespace messaging.Services
                 try {
                     switch(parsedMessage) {
                         case DeathRecordUpdateMessage update:
-                            HandleUpdateMessage(update, item);
+                            HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
                         break;
                         case DeathRecordSubmissionMessage submission:
-                            HandleSubmissionMessage(submission, item);
+                            HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
                         break;
                     }
                 } catch {
@@ -66,7 +83,7 @@ namespace messaging.Services
                     outgoingMessageItem.MessageType = errorMessage.GetType().Name;
                     outgoingMessageItem.CertificateNumber = errorMessage.CertNo.ToString().PadLeft(6, '0');
                     outgoingMessageItem.EventYear = errorMessage.GetYear();
-                    outgoingMessageItem.EventType = "MOR";
+                    outgoingMessageItem.EventType = item.EventType;
                     this._context.OutgoingMessageItems.Add(outgoingMessageItem);
                 }
             }
@@ -76,15 +93,15 @@ namespace messaging.Services
                 try {
                     switch(parsedMessage) {
                         case BirthRecordUpdateMessage update:
-                            HandleBirthUpdateMessage(update, item);
+                            HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
                             break;
                         case BirthRecordSubmissionMessage submission:
-                            HandleBirthSubmissionMessage(submission, item);
+                            HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
                             break;
                     }
                 } catch {
                     BirthRecordErrorMessage errorMessage = new BirthRecordErrorMessage(parsedMessage);
-                    UpdateOutgoingMessageItem(errorMessage, outgoingMessageItem, "NAT");
+                    UpdateOutgoingMessageItem(errorMessage, outgoingMessageItem, item.EventType);
                     this._context.OutgoingMessageItems.Add(outgoingMessageItem);
                 }
             }
@@ -94,15 +111,15 @@ namespace messaging.Services
                 try {
                     switch(parsedMessage) {
                         case FetalDeathRecordUpdateMessage update:
-                            HandleFetalDeathUpdateMessage(update, item);
+                            HandleUpdateMessage(update, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
                             break;
                         case FetalDeathRecordSubmissionMessage submission:
-                            HandleFetalDeathSubmissionMessage(submission, item);
+                            HandleSubmissionMessage(submission, item, CreateIJEStringCommand[item.EventType], CreateAckMessageCommand[item.EventType]);
                             break;
                     }
                 } catch {
                     FetalDeathRecordErrorMessage errorMessage = new FetalDeathRecordErrorMessage(parsedMessage);
-                    UpdateOutgoingMessageItem(errorMessage, outgoingMessageItem, "FET");
+                    UpdateOutgoingMessageItem(errorMessage, outgoingMessageItem, item.EventType);
                     this._context.OutgoingMessageItems.Add(outgoingMessageItem);
                 }
             }
@@ -119,13 +136,14 @@ namespace messaging.Services
             outgoingMessageItem.EventType = eventType;
         }
 
-        private void HandleSubmissionMessage(DeathRecordSubmissionMessage message, IncomingMessageItem databaseMessage) {
+        private void HandleSubmissionMessage(CommonMessage message, IncomingMessageItem databaseMessage, Func<CommonMessage, string> createIJEString, Action<CommonMessage, IncomingMessageItem, ApplicationDbContext> createAckMessage)
+        {
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
             // set validation to false
-            ijeItem.IJE = new IJEMortality(message.DeathRecord, false).ToString();
+            ijeItem.IJE = createIJEString(message);
             // Log and ack message right after it is successfully extracted
-            CreateAckMessage(message, databaseMessage, "MOR", m => new AcknowledgementMessage(m));
+            createAckMessage(message, databaseMessage, this._context);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             // Log the message whether or not it is a duplicate
             LogMessage(message, databaseMessage);
@@ -136,83 +154,11 @@ namespace messaging.Services
             }
         }
 
-        private void HandleUpdateMessage(DeathRecordUpdateMessage message, IncomingMessageItem databaseMessage) {
+        private void HandleUpdateMessage(CommonMessage message, IncomingMessageItem databaseMessage, Func<CommonMessage, string> createIJEString, Action<CommonMessage, IncomingMessageItem, ApplicationDbContext> createAckMessage) {
             IJEItem ijeItem = new IJEItem();
             ijeItem.MessageId = message.MessageId;
-            ijeItem.IJE = new IJEMortality(message.DeathRecord, false).ToString();
-            CreateAckMessage(message, databaseMessage, "MOR", m => new AcknowledgementMessage(m));
-            bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
-            IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
-            if(!duplicateMessage) {
-                // Only log messages that are not duplicates
-                LogMessage(message, databaseMessage);
-                // Only save if this is not a message with a duplicate ID and the previousMessage either does not exist or
-                // has an older timestamp than the message we are currently dealing with
-                if(previousMessage == null || message.MessageTimestamp > previousMessage.MessageTimestamp) {
-                    this._context.IJEItems.Add(ijeItem);
-                    this._context.SaveChanges();
-                }
-            }
-        }
-
-        private void HandleBirthSubmissionMessage(BirthRecordSubmissionMessage message, IncomingMessageItem databaseMessage) {
-            IJEItem ijeItem = new IJEItem();
-            ijeItem.MessageId = message.MessageId;
-            // set validation to false
-            ijeItem.IJE = new IJEBirth(message.BirthRecord, false).ToString();
-            // Log and ack message right after it is successfully extracted
-            CreateAckMessage<BirthRecordAcknowledgementMessage>(message, databaseMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m));
-            bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
-            // Log the message whether or not it is a duplicate
-            LogMessage(message, databaseMessage);
-            // Only save non-duplicate submission messages
-            if(!duplicateMessage) {
-                this._context.IJEItems.Add(ijeItem);
-                this._context.SaveChanges();
-            }
-        }
-
-        private void HandleFetalDeathSubmissionMessage(FetalDeathRecordSubmissionMessage message, IncomingMessageItem databaseMessage) {
-            IJEItem ijeItem = new IJEItem();
-            ijeItem.MessageId = message.MessageId;
-            // set validation to false
-            ijeItem.IJE = new IJEFetalDeath(message.FetalDeathRecord, false).ToString();
-            // Log and ack message right after it is successfully extracted
-            CreateAckMessage<FetalDeathRecordAcknowledgementMessage>(message, databaseMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m));
-            bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
-            // Log the message whether or not it is a duplicate
-            LogMessage(message, databaseMessage);
-            // Only save non-duplicate submission messages
-            if(!duplicateMessage) {
-                this._context.IJEItems.Add(ijeItem);
-                this._context.SaveChanges();
-            }
-        }
-
-        private void HandleBirthUpdateMessage(BirthRecordUpdateMessage message, IncomingMessageItem databaseMessage) {
-            IJEItem ijeItem = new IJEItem();
-            ijeItem.MessageId = message.MessageId;
-            ijeItem.IJE = new IJEBirth(message.BirthRecord, false).ToString();
-            CreateAckMessage<BirthRecordAcknowledgementMessage>(message, databaseMessage, "NAT", m => new BirthRecordAcknowledgementMessage(m));
-            bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
-            IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
-            if(!duplicateMessage) {
-                // Only log messages that are not duplicates
-                LogMessage(message, databaseMessage);
-                // Only save if this is not a message with a duplicate ID and the previousMessage either does not exist or
-                // has an older timestamp than the message we are currently dealing with
-                if(previousMessage == null || message.MessageTimestamp > previousMessage.MessageTimestamp) {
-                    this._context.IJEItems.Add(ijeItem);
-                    this._context.SaveChanges();
-                }
-            }
-        }
-
-        private void HandleFetalDeathUpdateMessage(FetalDeathRecordUpdateMessage message, IncomingMessageItem databaseMessage) {
-            IJEItem ijeItem = new IJEItem();
-            ijeItem.MessageId = message.MessageId;
-            ijeItem.IJE = new IJEFetalDeath(message.FetalDeathRecord, false).ToString();
-            CreateAckMessage<FetalDeathRecordAcknowledgementMessage>(message, databaseMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m));
+            ijeItem.IJE = createIJEString(message);
+            createAckMessage(message, databaseMessage, this._context);
             bool duplicateMessage = IncomingMessageLogItemExists(message.MessageId);
             IncomingMessageLog previousMessage = LatestMessageByNCHSId(message.NCHSIdentifier);
             if(!duplicateMessage) {
@@ -240,7 +186,7 @@ namespace messaging.Services
             this._context.SaveChanges();
         }
 
-        private void CreateAckMessage<T>(CommonMessage message, IncomingMessageItem databaseMessage, string eventType, Func<CommonMessage, T> createMessage) where T: CommonMessage{
+        private static void CreateAckMessage<T>(CommonMessage message, IncomingMessageItem databaseMessage, string eventType, Func<CommonMessage, T> createMessage, ApplicationDbContext _context) where T: CommonMessage{
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
             CommonMessage ackMessage = createMessage.Invoke(message);
             outgoingMessageItem.JurisdictionId = databaseMessage.JurisdictionId;
@@ -251,8 +197,8 @@ namespace messaging.Services
             outgoingMessageItem.EventYear = ackMessage.GetYear();
             outgoingMessageItem.EventType = eventType;
             outgoingMessageItem.IGVersion = databaseMessage.IGVersion;
-            this._context.OutgoingMessageItems.Add(outgoingMessageItem);
-            this._context.SaveChanges();
+            _context.OutgoingMessageItems.Add(outgoingMessageItem);
+            _context.SaveChanges();
         }
 
         private bool IncomingMessageLogItemExists(string messageId)
