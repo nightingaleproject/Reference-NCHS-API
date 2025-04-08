@@ -779,7 +779,7 @@ namespace messaging.tests
           Assert.NotNull(bundle2.NextLink);
 
           // 3rd response is 10 records
-          HttpResponseMessage getBundles3 = await JsonResponseHelpers.GetAsync(_client, "/NY/Bundle?_count=20");
+          HttpResponseMessage getBundles3 = await JsonResponseHelpers.GetAsync(_client, "/NY/Bundle/VRDR/v3.0?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles3.StatusCode);
 
           string bundleOfBundles3 = await getBundles3.Content.ReadAsStringAsync();
@@ -789,7 +789,7 @@ namespace messaging.tests
           Assert.Null(bundle3.NextLink);
 
           // 4th response is 0 records
-          HttpResponseMessage getBundles4 = await JsonResponseHelpers.GetAsync(_client, "/NY/Bundle?_count=20");
+          HttpResponseMessage getBundles4 = await JsonResponseHelpers.GetAsync(_client, "/NY/Bundle/VRDR/v3.0?_count=20");
           Assert.Equal(HttpStatusCode.OK, getBundles4.StatusCode);
 
           string bundleOfBundles4 = await getBundles4.Content.ReadAsStringAsync();

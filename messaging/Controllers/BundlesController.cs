@@ -353,7 +353,6 @@ namespace messaging.Controllers
                             _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
                             return BadRequest($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}");
                         }
-                        Console.WriteLine("FFF" + item.IGVersion + "JJJ");
                     }
                     catch (VR.MessageRuleException mrx)
                     {
