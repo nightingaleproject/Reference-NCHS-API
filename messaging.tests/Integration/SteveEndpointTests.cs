@@ -114,10 +114,6 @@ namespace messaging.tests
         [Fact]
         public async Task UpdateMessagesAreSuccessfullyAcknowledged()
         {
-            ///
-            /// This test highlights a big issue I'm having. Basically, when a message is parsed, as in the first message in this test, it parses without a PAYLOAD_VERSION. This means it's an old message and must be sent to the base or VRDR/v2.2 endpoint. But then the second test takes the death record from it and manually creates a new DeathMessage. By default, deathmessages create a new message with the PAYLOD_VERSION set to v3.0. So now we have the same death record being created with different IG messaging versions. So testing them would require altering the test messages to have a payload version of 3.0. This can be done, but I think it's possibly indicitve of a larger issue? I'm just concernerned that if these tests require these changes, does it mean backwards compatibality is not as seamless as it should be?
-            ///
-
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
 
