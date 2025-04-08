@@ -36,7 +36,6 @@ namespace messaging.Controllers
             Services = services;
             _settings = settings.Value;
             _logger = logger;
-
         }
 
         /// <summary>
@@ -53,12 +52,6 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
         {
-
-            // How should the historical endpoint default when no ig version is given? Because if the jursidiction POSTs with one version, then GETs with no version, how should the default handle that?
-            // Should it just return all the VRDR messages, regardless of the Payload Version?
-            // And if you POST a message without an IG Version url param or Payload version, how shoud the GET work? Should any GET return it? Should only some GETs depending on IG Version get it? Should only a GET without an IGVersion get it?
-            // This historical backwards compatibilty endpoint is tricky to maintain due to the IG Version.
-
             if (_count == 0)
             {
                 _count = _settings.PageCount;
@@ -81,34 +74,45 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid page number.");
                 return BadRequest("page must not be negative");
             }
-
-            // if a vitalType is provided in the url, it must be a valid vital type and ig version
-            if (!String.IsNullOrEmpty(vitalType) && !validIGVersion(vitalType, igVersion))
+            if (String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion))
             {
-                _logger.LogError($"Rejecting request with invalid url path. {vitalType}");
+                // If the historical backwards compatibilty endpoint is used (no vital type and no ig version provided), default to VRDR v2.2
+                vitalType = "VRDR";
+                igVersion = "v2.2";
+            }
+            else if (String.IsNullOrEmpty(vitalType))
+            {
+                _logger.LogError($"Rejecting request with invalid url path.");
+                return BadRequest("Invalid url path provided");
+            }
+            else if ((vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")) && !_settings.BFDREnabled)
+            {
+                _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
+                return BadRequest("BFDR messaging is not enabled.");
+            }
+            else if ((!String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion)) || (String.IsNullOrEmpty(vitalType) && !String.IsNullOrEmpty(igVersion)))
+            {
+                _logger.LogError($"Rejecting request with invalid url path When either vital type or ig version are provided, both must be provided. Vital type: {vitalType}, IG Version: {igVersion}");
+                return BadRequest("Invalid url path provided");
+            }
+            if (!validIGVersion(vitalType, igVersion))
+            {
+                _logger.LogError($"Rejecting request with invalid url path. Vital type and ig version are invalid. Vital type: {vitalType}, IG Version: {igVersion}");
                 return BadRequest("Invalid url path provided");
             }
 
             string recordType = "";
-            if (!String.IsNullOrEmpty(vitalType))
+            switch (vitalType.ToUpper())
             {
-                switch (vitalType.ToUpper())
-                {
-                    case "VRDR":
-                        recordType = "MOR";
-                        break;
-                    case "BFDR-BIRTH":
-                        recordType = "NAT";
-                        break;
-                    case "BFDR-FETALDEATH":
-                        recordType = "FET";
-                        break;
-                }
-                if ((vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")) && !_settings.BFDREnabled)
-                {
-                    _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
-                    return BadRequest("BFDR messaging is not enabled.");
-                }
+                case "VRDR":
+                    recordType = "MOR";
+                    break;
+                case "BFDR-BIRTH":
+                    recordType = "NAT";
+                    break;
+                case "BFDR-FETALDEATH":
+                    recordType = "FET";
+                    break;
             }
 
             bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && deathYear == null);
@@ -137,6 +141,7 @@ namespace messaging.Controllers
             // Query for outgoing messages of the requested type by jurisdiction ID. Filter by IG version. Optionally filter by certificate number and death year if those parameters are provided.
             IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
                     && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType))
+                    && igVersion.Equals(message.IGVersion)
                     && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
                     && (deathYear == null || message.EventYear == int.Parse(deathYear)));
 
@@ -276,10 +281,20 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
                 return BadRequest("Invalid jurisdiction ID");
             }
-            // if a vitalType is provided in the url, it must be a valid vital type and ig version
-            if (!String.IsNullOrEmpty(vitalType) && !validIGVersion(vitalType, igVersion))
+            if (String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion))
             {
-                _logger.LogError($"Rejecting request with invalid url path. {vitalType}");
+                vitalType = "VRDR";
+                igVersion = "v2.2";
+            }
+            else if ((!String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion)) || (String.IsNullOrEmpty(vitalType) && !String.IsNullOrEmpty(igVersion)))
+            {
+                _logger.LogError($"Rejecting request with invalid url path. Vital type: {vitalType}, IG Version: {igVersion}");
+                return BadRequest("Invalid url path provided");
+            }
+            // The provided vital type and ig version must be valid together
+            if (!validIGVersion(vitalType, igVersion))
+            {
+                _logger.LogError($"Rejecting request with invalid url path. Vital type and ig version are not invalid. Vital type: {vitalType}, IG Version: {igVersion}");
                 return BadRequest("Invalid url, IG version was not recognized");
             }
 
@@ -338,7 +353,7 @@ namespace messaging.Controllers
                             _logger.LogDebug($"Error: Unsupported message type {item.MessageType} found");
                             return BadRequest($"Unsupported message type: NCHS API does not accept messages of type {item.MessageType}");
                         }
-
+                        Console.WriteLine("FFF" + item.IGVersion + "JJJ");
                     }
                     catch (VR.MessageRuleException mrx)
                     {
@@ -393,15 +408,20 @@ namespace messaging.Controllers
             return true;
         }
 
-        private bool ValidateIGPayloadVersion(string messagePayloadVersion, string urlParamIGVersion)
+        private static bool ValidateIGPayloadVersion(string messagePayloadVersion, string urlParamIGVersion)
         {
-            string extractedVersion = urlParamIGVersion.TrimStart('v').Replace(".", "_");
-            if (!messagePayloadVersion.Equals($"BFDR_STU{extractedVersion}") && !messagePayloadVersion.Equals($"VRDR_STU{extractedVersion}"))
+            // If the message payload is not provided, as in from an old version of messaging, then the url param must be v2.2.
+            if (String.IsNullOrEmpty(messagePayloadVersion) && urlParamIGVersion == "v2.2")
             {
-                _logger.LogError("Rejecting request with non-matching IG Versions: Message payload version [" + messagePayloadVersion + "] and parameter IG Version [" + urlParamIGVersion + "].");
-                return false;
+                return true;
             }
-            return true;
+            Dictionary<string, string> validVersionMappings = new()
+            {
+              { "BFDR_STU2_0", "v2.0" },
+              { "VRDR_STU3_0", "v3.0" },
+              { "VRDR_STU2_2", "v2.2" }
+            };
+            return messagePayloadVersion != null && validVersionMappings.ContainsKey(messagePayloadVersion) && validVersionMappings[messagePayloadVersion].Equals(urlParamIGVersion);
         }
 
         // InsertBatchMessage handles a single message in a batch upload submission
@@ -514,18 +534,16 @@ namespace messaging.Controllers
                 if (_settings.BFDREnabled && !String.IsNullOrEmpty(vitalType) && (vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")))
                 {
                     message = BFDRBaseMessage.Parse(bundle);
-                    CommonMessage.ValidateMessageHeader(message);
                 }
-                // null vital type is considered VRDR by default
-                else if (String.IsNullOrEmpty(vitalType) || vitalType.Equals("VRDR"))
+                else if (vitalType.Equals("VRDR"))
                 {
                     message = BaseMessage.Parse(bundle);
-                    BaseMessage.ValidateMessageHeader(message);
                 }
                 else
                 {
                     throw new ArgumentException($"Record type url must be of 'VRDR', 'BFDR-BIRTH', or 'BFDR-FETALDEATH' but given {vitalType}. If using BFDR, check that BFDR is enabled in settings.");
                 }
+                CommonMessage.ValidateMessageHeader(message);
                 return ValidateAndCreateIncomingMessageItem(message, jurisdictionId, igVersion);
             }
             catch (VR.MessageRuleException mrx)
@@ -612,7 +630,7 @@ namespace messaging.Controllers
             }
             else if(vrdrMessageType(message.GetType().Name))
             {
-                item.EventYear = ((BaseMessage)message).DeathYear;
+                item.EventYear = message.GetYear();
             }
 
             // format the certificate number
@@ -767,6 +785,30 @@ namespace messaging.Controllers
                     break;
             }
             return false;
+        }
+
+        protected bool ValidateVitalTypeIGVersion(ref string vitalType, ref string igVersion, out BadRequestObjectResult br)
+        {
+            if (String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion))
+            {
+                // If the historical backwards compatibilty endpoint is used (no vital type or ig version provided), default to VRDR v2.0
+                vitalType = "VRDR";
+                igVersion = "v2.2";
+            }
+            else if ((!String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion)) || (String.IsNullOrEmpty(vitalType) && !String.IsNullOrEmpty(igVersion)))
+            {
+                _logger.LogError($"Rejecting request with invalid url path When either vital type or ig version are provided, both must be provided. Vital type: {vitalType}, IG Version: {igVersion}");
+                br = BadRequest("Invalid url path provided");
+                return false;
+            }
+            if (!validIGVersion(vitalType, igVersion))
+            {
+                _logger.LogError($"Rejecting request with invalid url path. Vital type and ig version are invalid. Vital type: {vitalType}, IG Version: {igVersion}");
+                br = BadRequest("Invalid url path provided");
+                return false;
+            }
+            br = null;
+            return true;
         }
 
         // validIGVersion will return true if the vitalType and igVersion align with a real IG STU version
