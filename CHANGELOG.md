@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.6.0 - 2025-04-08
+* Add support for multiple IG Versions (BFDR v2.0, VRDR v2.2 & v3.0) at the new /vitalType/igVersion endpoint
+* Add support for VRDR library v5.0.0 and VR Messaging Common Messages while maintaining backwards compatibilty
+
 ### v1.5.0 - 2025-03-21
 * Add support for FetalDeath messaging under the /BFDR-FETALDEATH url
 * Update BFDR to v1.0.0-preview.11 and VitalRecordMessaging to v1.0.0-preview.6
