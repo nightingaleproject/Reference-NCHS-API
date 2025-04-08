@@ -74,31 +74,9 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid page number.");
                 return BadRequest("page must not be negative");
             }
-            if (String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion))
+            if (!ValidateVitalTypeIGVersion(ref vitalType, ref igVersion, out BadRequestObjectResult br))
             {
-                // If the historical backwards compatibilty endpoint is used (no vital type and no ig version provided), default to VRDR v2.2
-                vitalType = "VRDR";
-                igVersion = "v2.2";
-            }
-            else if (String.IsNullOrEmpty(vitalType))
-            {
-                _logger.LogError($"Rejecting request with invalid url path.");
-                return BadRequest("Invalid url path provided");
-            }
-            else if ((vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")) && !_settings.BFDREnabled)
-            {
-                _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
-                return BadRequest("BFDR messaging is not enabled.");
-            }
-            else if ((!String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion)) || (String.IsNullOrEmpty(vitalType) && !String.IsNullOrEmpty(igVersion)))
-            {
-                _logger.LogError($"Rejecting request with invalid url path When either vital type or ig version are provided, both must be provided. Vital type: {vitalType}, IG Version: {igVersion}");
-                return BadRequest("Invalid url path provided");
-            }
-            if (!validIGVersion(vitalType, igVersion))
-            {
-                _logger.LogError($"Rejecting request with invalid url path. Vital type and ig version are invalid. Vital type: {vitalType}, IG Version: {igVersion}");
-                return BadRequest("Invalid url path provided");
+                return br;
             }
 
             string recordType = "";
@@ -281,21 +259,9 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
                 return BadRequest("Invalid jurisdiction ID");
             }
-            if (String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion))
+            if (!ValidateVitalTypeIGVersion(ref vitalType, ref igVersion, out BadRequestObjectResult br))
             {
-                vitalType = "VRDR";
-                igVersion = "v2.2";
-            }
-            else if ((!String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion)) || (String.IsNullOrEmpty(vitalType) && !String.IsNullOrEmpty(igVersion)))
-            {
-                _logger.LogError($"Rejecting request with invalid url path. Vital type: {vitalType}, IG Version: {igVersion}");
-                return BadRequest("Invalid url path provided");
-            }
-            // The provided vital type and ig version must be valid together
-            if (!validIGVersion(vitalType, igVersion))
-            {
-                _logger.LogError($"Rejecting request with invalid url path. Vital type and ig version are not invalid. Vital type: {vitalType}, IG Version: {igVersion}");
-                return BadRequest("Invalid url, IG version was not recognized");
+                return br;
             }
 
             // Check page 35 of the messaging document for full flow
@@ -794,15 +760,27 @@ namespace messaging.Controllers
                 vitalType = "VRDR";
                 igVersion = "v2.2";
             }
+            else if (String.IsNullOrEmpty(vitalType))
+            {
+                _logger.LogError($"Rejecting request with invalid url path.");
+                br = BadRequest("Invalid url path provided");
+                return false;
+            }
             else if ((!String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion)) || (String.IsNullOrEmpty(vitalType) && !String.IsNullOrEmpty(igVersion)))
             {
                 _logger.LogError($"Rejecting request with invalid url path When either vital type or ig version are provided, both must be provided. Vital type: {vitalType}, IG Version: {igVersion}");
                 br = BadRequest("Invalid url path provided");
                 return false;
             }
+            else if ((vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")) && !_settings.BFDREnabled)
+            {
+                _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
+                br = BadRequest("BFDR messaging is not enabled.");
+                return false;
+            }
             if (!validIGVersion(vitalType, igVersion))
             {
-                _logger.LogError($"Rejecting request with invalid url path. Vital type and ig version are invalid. Vital type: {vitalType}, IG Version: {igVersion}");
+                _logger.LogError($"Rejecting request with invalid url path. Vital type or ig version are invalid. Vital type: {vitalType}, IG Version: {igVersion}");
                 br = BadRequest("Invalid url path provided");
                 return false;
             }
