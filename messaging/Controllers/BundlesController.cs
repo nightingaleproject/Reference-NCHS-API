@@ -56,14 +56,12 @@ namespace messaging.Controllers
             {
                 _count = _settings.PageCount;
             }
-
             if (!VR.IJEData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
             {
                 // Don't log the jurisdictionId value itself, since it is (known-invalid) user input
                 _logger.LogError("Rejecting request with invalid jurisdiction ID.");
                 return BadRequest("Invalid jurisdiction ID");
             }
-
             if (_count < 0)
             {
                 _logger.LogError("Rejecting request with invalid count parameter.");
@@ -700,8 +698,8 @@ namespace messaging.Controllers
             return false;
         }
 
-        // validateMessageType checks that the message type is accepted at NCHS
-        private bool vrdrMessageType(string messageType)
+        // Checks that the message type is accepted at NCHS for death
+        private static bool vrdrMessageType(string messageType)
         {
             // set the message type to lowercase to make case-insensitive
             switch (messageType)
@@ -718,8 +716,8 @@ namespace messaging.Controllers
             return false;
         }
 
-        // validateMessageType checks that the message type is accepted at NCHS
-        private bool birthMessageType(string messageType)
+        // Checks that the message type is accepted at NCHS for birth
+        private static bool birthMessageType(string messageType)
         {
             // set the message type to lowercase to make case-insensitive
             switch (messageType)
@@ -735,8 +733,8 @@ namespace messaging.Controllers
             return false;
         }
 
-        // validateMessageType checks that the message type is accepted at NCHS
-        private bool fetalDeathMessageType(string messageType)
+        // Checks that the message type is accepted at NCHS for featl death
+        private static bool fetalDeathMessageType(string messageType)
         {
             // set the message type to lowercase to make case-insensitive
             switch (messageType)
@@ -752,6 +750,13 @@ namespace messaging.Controllers
             return false;
         }
 
+        /// <summary>
+        /// Validate that the Vital Type and IG Version are valid together. If null data is provided, they default to VRDR/v2.2
+        /// </summary>
+        /// <param name="vitalType"></param>
+        /// <param name="igVersion"></param>
+        /// <param name="br"></param>
+        /// <returns></returns>
         protected bool ValidateVitalTypeIGVersion(ref string vitalType, ref string igVersion, out BadRequestObjectResult br)
         {
             if (String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion))
@@ -778,7 +783,7 @@ namespace messaging.Controllers
                 br = BadRequest("BFDR messaging is not enabled.");
                 return false;
             }
-            if (!validIGVersion(vitalType, igVersion))
+            if (!ValidIGVersion(vitalType, igVersion))
             {
                 _logger.LogError($"Rejecting request with invalid url path. Vital type or ig version are invalid. Vital type: {vitalType}, IG Version: {igVersion}");
                 br = BadRequest("Invalid url path provided");
@@ -788,8 +793,13 @@ namespace messaging.Controllers
             return true;
         }
 
-        // validIGVersion will return true if the vitalType and igVersion align with a real IG STU version
-        private bool validIGVersion(string vitalType, string igVersion)
+        /// <summary>
+        /// Return true if the vitalType and igVersion align with a valid IG version.
+        /// </summary>
+        /// <param name="vitalType"></param>
+        /// <param name="igVersion"></param>
+        /// <returns></returns>
+        private static bool ValidIGVersion(string vitalType, string igVersion)
         {
             string[] BFDRIgs = {"v2.0"};
             string[] VRDRIgs = {"v2.2", "v3.0"};
