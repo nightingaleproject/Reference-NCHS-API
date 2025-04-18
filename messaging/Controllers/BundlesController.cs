@@ -137,7 +137,9 @@ namespace messaging.Controllers
 
             // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
             // TODO: we should use the since param earlier so if we are only getting new respones, we don't select and have to handle thousands of other records
+            // IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}").ToList();
             IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}").AsEnumerable();
+            Console.WriteLine(outgoingMessagesQuery.ToString());
             try
             {
                 // Further scope the search to either unretrieved messages (or all since a specific time)
@@ -145,13 +147,16 @@ namespace messaging.Controllers
                 // if _since is the default value, then apply the retrieved at logic unless certificate number or death year are provided
                 if (!additionalParamsProvided)
                 {
+                    // TODO SP: Instead we should call a different stored procedure here with the retrieved at = null set
                     outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
                 }
                 if (_since != default(DateTime))
                 {
+                    // TODO SP: Instead we should call a different stored procedure here with the since param passed in
                     outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
                 }
 
+                // TODO SP: we should use a stored procedure instead, might need to have two for the count?
                 int totalMessageCount = outgoingMessagesQuery.Count();
 
                 // Convert to list to execute the query, capture the result for re-use
