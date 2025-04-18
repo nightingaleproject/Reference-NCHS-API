@@ -140,13 +140,16 @@ namespace messaging.Controllers
                 // if _since is the default value, then apply the retrieved at logic unless certificate number or death year are provided
                 if (!additionalParamsProvided)
                 {
+                    // TODO SP: Instead we should call a different stored procedure here with the retrieved at = null set
                     outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
                 }
                 if (_since != default(DateTime))
                 {
+                    // TODO SP: Instead we should call a different stored procedure here with the since param passed in
                     outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
                 }
 
+                // TODO SP: we should use a stored procedure instead, might need to have two for the count?
                 int totalMessageCount = outgoingMessagesQuery.Count();
 
                 // Convert to list to execute the query, capture the result for re-use
