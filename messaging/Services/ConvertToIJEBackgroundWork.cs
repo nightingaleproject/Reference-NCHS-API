@@ -40,6 +40,7 @@ namespace messaging.Services
             this._context = context;
         }
 
+        // Dict for creating ACK messages of birth/death/fetaldeath types that utilizes the Command Design Pattern
         private readonly static Dictionary<string, Action<CommonMessage, IncomingMessageItem, ApplicationDbContext>> CreateAckMessageCommand = new()
         {
             { "MOR", (message, dbMessage, _context) => CreateAckMessage(message, dbMessage, "MOR", m => new AcknowledgementMessage(m), _context) },
@@ -47,6 +48,7 @@ namespace messaging.Services
             { "FET", (message, dbMessage, _context) => CreateAckMessage(message, dbMessage, "FET", m => new FetalDeathRecordAcknowledgementMessage(m), _context) }
         };
 
+        // Dict for creating IJE Strings of birth/death/fetaldeath types that utilizes the Command Design Pattern
         private readonly static Dictionary<string, Func<CommonMessage, string>> CreateIJEStringCommand = new()
         {
             { "MOR", (message) => new IJEMortality(((DeathRecordSubmissionMessage) message).DeathRecord, false).ToString() },

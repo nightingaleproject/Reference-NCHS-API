@@ -1308,7 +1308,9 @@ namespace messaging.tests
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
 
+            // VRDR v2.2 record
             DeathRecordSubmissionMessage recordV2_2 = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessageV2_2.json"));
+            // VRDR v3.0 record
             DeathRecordSubmissionMessage recordV3_0 = new(new DeathRecord())
             {
                 MessageSource = "http://example.fhir.org",
@@ -1317,77 +1319,94 @@ namespace messaging.tests
                 JurisdictionId = recordV2_2.JurisdictionId
             };
 
+            // POST a v2.2 VRDR record to the default endpoint
             HttpResponseMessage response = await JsonResponseHelpers.PostJsonAsync(_client, $"/{recordV2_2.JurisdictionId}/Bundle", recordV2_2.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
+            // Make sure the record does not return for the v3.0 endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/VRDR/v3.0");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Hl7.Fhir.Model.Bundle bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Empty(bundle.Entry);
 
+            // Check that the record returns for the v2.2 endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/VRDR/v2.2");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Single(bundle.Entry);
 
+            // Make sure the record does not return now that it's been recieved
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/VRDR/v2.2");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Empty(bundle.Entry);
 
+            // Make sure the record does not return now that it's been recieved, even in the default endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Empty(bundle.Entry);
 
+            // POST a VRDR v2.2 to the new v2.2 endpoint
             response = await JsonResponseHelpers.PostJsonAsync(_client, $"/{recordV2_2.JurisdictionId}/Bundle/VRDR/v2.2", recordV2_2.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
+            // Make sure the record does not return for the v3.0 endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/VRDR/v3.0");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Empty(bundle.Entry);
 
+            // Check that the record returns for the v2.2 endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/VRDR/v2.2");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Single(bundle.Entry);
 
+            // Make sure the record does not return now that it's been recieved
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/VRDR/v2.2");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Empty(bundle.Entry);
 
+            // Make sure the record does not return now that it's been recieved, even in the default endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Empty(bundle.Entry);
 
+            // POST a v2.2 record to the default endpoint
             response = await JsonResponseHelpers.PostJsonAsync(_client, $"/{recordV2_2.JurisdictionId}/Bundle", recordV2_2.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+            // POST a v3.0 record to the v3.0 endpoint
             response = await JsonResponseHelpers.PostJsonAsync(_client, $"/{recordV3_0.JurisdictionId}/Bundle/VRDR/v3.0", recordV3_0.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
+            // Check that the v3.0 record returns from the v3.0 endpoint
             response = await _client.GetAsync($"/{recordV3_0.JurisdictionId}/Bundle/VRDR/v3.0");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Single(bundle.Entry);
 
+            // Make sure the v3.0 record does not return now that it's been recieved
             response = await _client.GetAsync($"/{recordV3_0.JurisdictionId}/Bundle/VRDR/v3.0");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Empty(bundle.Entry);
 
+            // Check that the v2.2 record returns from the default endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Single(bundle.Entry);
 
+            // Make sure the record does not return now that it's been recieved, even in the v2.2 endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/VRDR/v2.2");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);
             Assert.Empty(bundle.Entry);
 
+            // Make sure the record does not return now that it's been recieved, even in the default endpoint
             response = await _client.GetAsync($"/{recordV2_2.JurisdictionId}/Bundle/");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             bundle = await JsonResponseHelpers.ParseBundleAsync(response);

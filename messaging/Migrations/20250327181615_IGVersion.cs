@@ -12,16 +12,18 @@ namespace messaging.Migrations
             migrationBuilder.AddColumn<string>(
                 name: "IGVersion",
                 table: "OutgoingMessageItems",
-                type: "CHAR(5)",
-                maxLength: 5,
-                nullable: true);
+                type: "CHAR(10)",
+            maxLength: 10,
+                nullable: false,
+                defaultValue: "v2.2");
 
             migrationBuilder.AddColumn<string>(
                 name: "IGVersion",
                 table: "IncomingMessageItems",
-                type: "CHAR(5)",
-                maxLength: 5,
-                nullable: true);
+                type: "CHAR(10)",
+                maxLength: 10,
+                nullable: false,
+                defaultValue: "v2.2");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
