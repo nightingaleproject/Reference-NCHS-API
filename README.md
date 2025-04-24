@@ -487,27 +487,21 @@ Example Response:
 This section documents information useful for developers of the API itself and is not relevant to users of the API or developers of systems that use the API.
 
 ## Version Updates
+
 1. Update the CHANGELOG.md
 2. Update `NVSSAPI_CapStmt.fsh` to use the new version number
 3. Regenerate the fsh file so CapabilityStatement-NVSS-API-CS.json includes the new version number
 
 ## Steps to start the API In Development
 
-1. Run MSSQL server: In development `docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 -d mcr.microsoft.com/mssql/server`, or in production configure a proper MSSQL instance to your organizational requirements.
-2. Ensure the `NVSSMessagingDatabase` contains the proper MSSQL connection string for your environment in `messaging/appsettings.Development.json`
-3. Migrate your local database to match the current migration: `dotnet ef --project messaging database update`
-4. Run the server using `dotnet run --project messaging`
+See [GettingStarted.md](GettingStarted.md).
 
 ## Deploying in Production
 
-1. Setup a proper MSSQL instance meeting your organizational requirements, or have the credentials to an existing instance available.
-2. Rename `appsettings.json.sample` to `appsettings.json` inside of the `messaging` folder.
-3. Ensure the `NVSSMessagingDatabase` contains the proper MSSQL connection string for your environment in `messaging/appsettings.json` are set correctly.
-4. Migrate your local database to match the current migration: `dotnet ef --project messaging database update`
-5. Run the server using `dotnet run --project messaging`
+See [DeploymentSteps.md](DeploymentSteps.md).
 
 ## Logging
-The application uses Serilog as the third party log provider. Serilog replaces .NET standard Logging and can be configured in the appsettings.json file. 
+The application uses Serilog as the third party log provider. Serilog replaces .NET standard Logging and can be configured in the appsettings.json file.
 
 ### Logging Sinks
 Serilog supports a variety of sinks to write your logs to. The default configuration writes the logs to the console and to a file. A new file is created each day and files are deleted after 31 days by default. These default configurations can be overwritten in the appsettings.json file. Serilog's provided sinks are listed [here](https://github.com/serilog/serilog/wiki/Provided-Sinks). Splunk, S3, and DBs are among the many options provided by serilog. To change the sink configuration, update the "Using" and "WriteTo" configuration fields in the example below.
