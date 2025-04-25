@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "messaging", "messaging\mess
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "messaging.tests", "messaging.tests\messaging.tests.csproj", "{B392CFD5-D49A-4CF2-BF70-CF5F29F84C8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "status_api", "status_api\status_api.csproj", "{AC6C768B-E5AB-567C-AF97-E6E16FFA6C23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
