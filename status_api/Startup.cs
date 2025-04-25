@@ -37,7 +37,7 @@ namespace status_api
                 {
                     // Use a read-only connection to the same DB as NVSSMessaging
                     opt.UseSqlServer(Configuration.GetConnectionString("NVSSMessagingDatabase"));
-                    opt.IsReadOnly(true);
+                    // opt.IsReadOnly(true); /// FIXME
                 }
             );
             services.AddControllers().AddNewtonsoftJson(
@@ -46,7 +46,7 @@ namespace status_api
                     // Instruct Newtonsoft JSON parsing to just handle dates as strings to avoid the "helpful" conversion
                     // of all DateTimeOffsets into the time zone where the API is running and instead preserve local time
                     options.SerializerSettings.DateParseHandling = Newtonsoft.Json.DateParseHandling.None;
-                    options.SerializerSettings.Converters.Add(new BundleConverter());
+                    // options.SerializerSettings.Converters.Add(new BundleConverter()); TODO uncomment or remove?
                 });
             services.AddSwaggerGen(c =>
             {
