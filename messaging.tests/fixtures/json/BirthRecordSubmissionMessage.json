@@ -46,6 +46,10 @@
           {
             "name": "jurisdiction_id",
             "valueString": "UT"
+          },
+          {
+            "name": "payload_version_id",
+            "valueString": "BFDR_STU2_0"
           }
         ]
       }
@@ -92,8 +96,8 @@
                 "coding": [
                   {
                     "system": "http://loinc.org",
-                    "code": "71230-7",
-                    "display": "Birth certificate"
+                    "code": "92011-6",
+                    "display": "Jurisdiction live birth report Document"
                   }
                 ]
               },
