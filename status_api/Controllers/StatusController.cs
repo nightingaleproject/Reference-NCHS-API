@@ -5,15 +5,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using messaging.Models;
-using messaging.Services;
+// using messaging.Models;
+// using messaging.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
-namespace messaging.Controllers
+namespace status_api.Controllers
 {
     [Route("status")]
     [ApiController]
