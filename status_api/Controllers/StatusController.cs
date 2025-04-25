@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using status_api.Models;
 // using messaging.Models;
 // using messaging.Services;
 using Microsoft.Extensions.Logging;
