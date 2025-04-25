@@ -2,6 +2,7 @@ using messaging.Models;
 using messaging.tests.Helpers;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -21,6 +22,7 @@ namespace messaging.tests
         private readonly ApplicationDbContext _context;
 
         private readonly string STEVE_ENDPOINT = "/STEVE/NY/Bundle";
+        private readonly string STEVE_VRDR_3_0_ENDPOINT = "/STEVE/NY/Bundle/VRDR/v3.0";
         private readonly string NY_ENDPOINT = "/NY/Bundle";
 
         public SteveEndpointTests(CustomWebApplicationFactory<messaging.Startup> factory)
@@ -48,13 +50,13 @@ namespace messaging.tests
             recordSubmission.MessageSource = "http://example.fhir.org";
             recordSubmission.CertNo = 1;
 
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_VRDR_3_0_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
             Assert.Equal(1, await GetTableCount(_context.OutgoingMessageItems, 1));
 
-            Hl7.Fhir.Model.Bundle updatedBundle = await GetQueuedMessages(STEVE_ENDPOINT);
+            Hl7.Fhir.Model.Bundle updatedBundle = await GetQueuedMessages(STEVE_VRDR_3_0_ENDPOINT);
             Assert.Single(updatedBundle.Entry);
 
             // Check to see if the results returned for a jurisdiction other than NY does not return NY entries
@@ -89,17 +91,17 @@ namespace messaging.tests
             recordSubmission.CertNo = 1;
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_VRDR_3_0_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
 
             // Submit Identifical Death Record Again
-            HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
+            HttpResponseMessage duplicateSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_VRDR_3_0_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, duplicateSubmissionMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
             Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
-            HttpResponseMessage oneAck = await _client.GetAsync(STEVE_ENDPOINT);
+            HttpResponseMessage oneAck = await _client.GetAsync(STEVE_VRDR_3_0_ENDPOINT);
             Hl7.Fhir.Model.Bundle updatedBundle = await JsonResponseHelpers.ParseBundleAsync(oneAck);
 
             // Even though the message is a duplicate, it is still ACK'd
@@ -122,7 +124,7 @@ namespace messaging.tests
             recordSubmission.MessageSource = "http://example.fhir.org";
             recordSubmission.CertNo = 1;
             
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_VRDR_3_0_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
             DeathRecordUpdateMessage recordUpdate = new DeathRecordUpdateMessage(recordSubmission.DeathRecord);
@@ -132,13 +134,13 @@ namespace messaging.tests
             recordUpdate.CertNo = 1;
 
             // Submit update message
-            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordUpdate.ToJson());
+            HttpResponseMessage updateMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_VRDR_3_0_ENDPOINT, recordUpdate.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, updateMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
             Assert.Equal(2, await GetTableCount(_context.OutgoingMessageItems, 2));
 
-            Hl7.Fhir.Model.Bundle updatedBundle = await GetQueuedMessages(STEVE_ENDPOINT);
+            Hl7.Fhir.Model.Bundle updatedBundle = await GetQueuedMessages(STEVE_VRDR_3_0_ENDPOINT);
 
             // Even though the message is a duplicate, it is still ACK'd
             Assert.Equal(2, updatedBundle.Entry.Count);
@@ -160,19 +162,19 @@ namespace messaging.tests
             recordSubmission.MessageSource = "http://example.fhir.org";
             recordSubmission.CertNo = 1;
 
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_VRDR_3_0_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
             Assert.Equal(1, await GetTableCount(_context.OutgoingMessageItems, 1));
 
             // Get the Jurisdiction response (don't need the retries because it is known to be in the queue)
-            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(NY_ENDPOINT);
+            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(STEVE_VRDR_3_0_ENDPOINT);
             Hl7.Fhir.Model.Bundle response = await JsonResponseHelpers.ParseBundleAsync(jurisdictionResponse);
             Assert.Single(response.Entry);
 
             // Get the STEVE response, which should be empty because the jurisdiction/STEVE queue are a single queue.
-            response = await GetQueuedMessages(STEVE_ENDPOINT);
+            response = await GetQueuedMessages(STEVE_VRDR_3_0_ENDPOINT);
             Assert.Empty(response.Entry);
         }
 
@@ -191,18 +193,18 @@ namespace messaging.tests
             recordSubmission.JurisdictionId = "NY";
             recordSubmission.DeathYear = 2024;
 
-            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_ENDPOINT, recordSubmission.ToJson());
+            HttpResponseMessage submissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, STEVE_VRDR_3_0_ENDPOINT, recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, submissionMessage.StatusCode);
 
             // Make sure the ACKs made it into the queue before querying the endpoint
             Assert.Equal(1, await GetTableCount(_context.OutgoingMessageItems, 1));
 
             // Get the STEVE response
-            Hl7.Fhir.Model.Bundle response = await GetQueuedMessages(STEVE_ENDPOINT);
+            Hl7.Fhir.Model.Bundle response = await GetQueuedMessages(STEVE_VRDR_3_0_ENDPOINT);
             Assert.Single(response.Entry);
 
             // Get the Jurisdiction response, which should be empty because the jurisdiction/STEVE queue are a single queue.
-            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(NY_ENDPOINT);
+            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(NY_ENDPOINT + "/VRDR/v3.0");
             response = await JsonResponseHelpers.ParseBundleAsync(jurisdictionResponse);
             Assert.Empty(response.Entry);
         }
@@ -220,7 +222,7 @@ namespace messaging.tests
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{badJurisdiction}/Bundle", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{badJurisdiction}/Bundle/VRDR/v3.0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
         }
 
@@ -230,7 +232,7 @@ namespace messaging.tests
             string badJurisdiction = "AB";
             Assert.False(VR.IJEData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
-            HttpResponseMessage response = await _client.GetAsync($"/STEVE/{badJurisdiction}/Bundle");
+            HttpResponseMessage response = await _client.GetAsync($"/STEVE/{badJurisdiction}/Bundle/VRDR/v3.0");
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
@@ -285,7 +287,7 @@ namespace messaging.tests
             // Can't be sure how long it will take; retry a couple times with cooldown in between before assuming failure
             for (int x = 0; x < retries; ++x)
             {
-                HttpResponseMessage oneAck = await _client.GetAsync(STEVE_ENDPOINT);
+                HttpResponseMessage oneAck = await _client.GetAsync(endpoint);
                 queued = await JsonResponseHelpers.ParseBundleAsync(oneAck);
                 if (queued.Entry.Count > 0)
                 {

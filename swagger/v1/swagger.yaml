@@ -433,8 +433,7 @@ paths:
           in: path
           required: true
           schema:
-            maxLength: 4
-            minLength: 4
+            pattern: ^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$
             type: string
         - name: igVersion
           in: path
@@ -494,8 +493,7 @@ paths:
           in: path
           required: true
           schema:
-            maxLength: 4
-            minLength: 4
+            pattern: ^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$
             type: string
         - name: igVersion
           in: path

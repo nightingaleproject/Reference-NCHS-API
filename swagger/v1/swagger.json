@@ -677,8 +677,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "maxLength": 4,
-              "minLength": 4,
+              "pattern": "^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$",
               "type": "string"
             }
           },
@@ -772,8 +771,7 @@
             "in": "path",
             "required": true,
             "schema": {
-              "maxLength": 4,
-              "minLength": 4,
+              "pattern": "^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$",
               "type": "string"
             }
           },
