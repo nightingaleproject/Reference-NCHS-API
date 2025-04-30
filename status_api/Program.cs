@@ -1,3 +1,4 @@
+using Microsoft.Extensions.FileProviders;
 using Microsoft.EntityFrameworkCore;
 using messaging.Models;
 
@@ -31,4 +32,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "StatusUI")),
+    RequestPath = "/StatusUI"
+});
+
 app.Run();
+

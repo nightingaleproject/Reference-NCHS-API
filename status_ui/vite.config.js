@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: '',
   build: {
-    outDir: '../messaging/StatusUI',
+    outDir: '../status_api/StatusUI',
     emptyOutDir: true,
   },
   server: {
