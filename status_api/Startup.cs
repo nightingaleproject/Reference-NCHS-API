@@ -36,9 +36,8 @@ namespace status_api
             services.AddMiniProfiler(options => options.RouteBasePath = "/profiler").AddEntityFramework();
             services.AddDbContext<ApplicationDbContext>(opt =>
                 {
-                    // TODO Use a read-only connection to the same DB as NVSSMessaging
+                    // TODO make readonly
                     opt.UseSqlServer(Configuration.GetConnectionString("NVSSMessagingDatabase"));
-                    // opt.IsReadOnly(true); /// FIXME
                 }
             );
             services.AddControllers().AddNewtonsoftJson(
@@ -100,13 +99,13 @@ namespace status_api
                 {
                     c.PreSerializeFilters.Add((swagger, httpReq) =>
                     {
-                        swagger.Servers = new List<OpenApiServer> { new OpenApiServer { Url = "https://test.ASTV-NVSS-API.cdc.gov" } }; // TODO URL for status_api
+                        swagger.Servers = new List<OpenApiServer> { new OpenApiServer { Url = "https://test-status.ASTV-NVSS-API.cdc.gov" } }; // TODO confirm URL
                     });
                 });
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NVSS Status API v1"));
             }
 
-            app.UseMiniProfiler(); // TODO add profiler deps?
+            app.UseMiniProfiler();
             app.UseRouting();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
