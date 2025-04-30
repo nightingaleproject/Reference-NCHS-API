@@ -13,6 +13,7 @@ using System.IO;
 using System;
 using Microsoft.AspNetCore.Http.Features;
 
+using messaging;
 using messaging.Models;
 
 namespace status_api
