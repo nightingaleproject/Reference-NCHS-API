@@ -5,14 +5,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using status_api.Models;
-// using messaging.Models;
-// using messaging.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+
+using messaging.Models;
 
 namespace status_api.Controllers
 {

@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
-using status_api.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.FileProviders;
 using System.Collections.Generic;
@@ -14,6 +13,7 @@ using System.IO;
 using System;
 using Microsoft.AspNetCore.Http.Features;
 
+using messaging.Models;
 
 namespace status_api
 {
