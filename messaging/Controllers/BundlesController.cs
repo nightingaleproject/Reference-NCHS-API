@@ -371,20 +371,16 @@ namespace messaging.Controllers
             return true;
         }
 
-        private static bool ValidateIGPayloadVersion(string messagePayloadVersion, string urlParamIGVersion)
+        private bool ValidateIGPayloadVersion(string messagePayloadVersion, string urlParamIGVersion)
         {
             // If the message payload is not provided, as in from an old version of messaging, then the url param must be v2.2.
             if (String.IsNullOrEmpty(messagePayloadVersion) && urlParamIGVersion == "v2.2")
             {
                 return true;
             }
-            Dictionary<string, string> validVersionMappings = new()
-            {
-              { "BFDR_STU2_0", "v2.0" },
-              { "VRDR_STU3_0", "v3.0" },
-              { "VRDR_STU2_2", "v2.2" }
-            };
-            return messagePayloadVersion != null && validVersionMappings.ContainsKey(messagePayloadVersion) && validVersionMappings[messagePayloadVersion].Equals(urlParamIGVersion);
+            return messagePayloadVersion != null && urlParamIGVersion != null &&
+                    (_settings.SupportedVRDRIGVersions.Any(p => messagePayloadVersion.Equals(p) && urlParamIGVersion.Equals(AppSettings.ConvertIGPaylodVersion(p)))
+                    || _settings.SupportedBFDRIGVersions.Any(p => messagePayloadVersion.Equals(p) && urlParamIGVersion.Equals(AppSettings.ConvertIGPaylodVersion(p))));
         }
 
         // InsertBatchMessage handles a single message in a batch upload submission
@@ -810,18 +806,15 @@ namespace messaging.Controllers
         /// <param name="vitalType"></param>
         /// <param name="igVersion"></param>
         /// <returns></returns>
-        private static bool ValidIGVersion(string vitalType, string igVersion)
+        private bool ValidIGVersion(string vitalType, string igVersion)
         {
-            string[] BFDRIgs = {"v2.0"};
-            string[] VRDRIgs = {"v2.2", "v3.0"};
-
             if (vitalType == "BFDR-BIRTH" || vitalType == "BFDR-FETALDEATH")
             {
-                return BFDRIgs.Contains(igVersion);
+                return _settings.SupportedBFDRIGVersions.Select(AppSettings.ConvertIGPaylodVersion).Contains(igVersion);
             }
             else if (vitalType == "VRDR")
             {
-                return VRDRIgs.Contains(igVersion);
+                return _settings.SupportedVRDRIGVersions.Select(AppSettings.ConvertIGPaylodVersion).Contains(igVersion);
             }
             return false;
         }
