@@ -32,10 +32,10 @@ namespace status_api
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
 
             services.AddMemoryCache();
-            services.AddMiniProfiler(options => options.RouteBasePath = "/profiler").AddEntityFramework(); // TODO add profiler deps?
+            services.AddMiniProfiler(options => options.RouteBasePath = "/profiler").AddEntityFramework();
             services.AddDbContext<ApplicationDbContext>(opt =>
                 {
-                    // Use a read-only connection to the same DB as NVSSMessaging
+                    // TODO Use a read-only connection to the same DB as NVSSMessaging
                     opt.UseSqlServer(Configuration.GetConnectionString("NVSSMessagingDatabase"));
                     // opt.IsReadOnly(true); /// FIXME
                 }
