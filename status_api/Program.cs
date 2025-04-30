@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using messaging.Models;
 
 var builder = WebApplication.CreateBuilder(args);
