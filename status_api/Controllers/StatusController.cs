@@ -14,21 +14,27 @@ using Microsoft.AspNetCore.Http;
 using messaging;
 using messaging.Models;
 
+using System.Text.Json;
+
 namespace status_api.Controllers
 {
     [Route("status")]
     [ApiController]
-    public class Status : ControllerBase
+    public class StatusController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        protected readonly ILogger<Status> _logger;
+        protected readonly ILogger<StatusController> _logger;
         protected readonly AppSettings _settings;
 
-        public Status(ILogger<Status> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
+        public StatusController(ILogger<StatusController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
             _context = context;
             _logger = logger;
             _settings = settings.Value;
+
+            _logger.LogInformation("============= DEBUGGING =================");
+            _logger.LogInformation(JsonSerializer.Serialize(_settings));
+            _logger.LogInformation("============= DEBUGGING =================");
         }
 
         // GET: Status
