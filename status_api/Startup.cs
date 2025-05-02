@@ -113,7 +113,7 @@ namespace status_api
                 endpoints.MapControllers();
             });
 
-            // Serve the StatusUI static files from the appropriate location
+            // ../StatusUI JS app must build to ./StatusUI, which is served by GET /StatusUI/index.html
             app.UseFileServer(new FileServerOptions
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "StatusUI")),
