@@ -32,9 +32,9 @@ namespace status_api.Controllers
             _logger = logger;
             _settings = settings.Value;
 
-            _logger.LogInformation("============= DEBUGGING =================");
-            _logger.LogInformation(JsonSerializer.Serialize(_settings));
-            _logger.LogInformation("============= DEBUGGING =================");
+            _logger.LogDebug("============= DEBUGGING =================");
+            _logger.LogDebug(JsonSerializer.Serialize(_settings));
+            _logger.LogDebug("============= DEBUGGING =================");
         }
 
         // GET: Status

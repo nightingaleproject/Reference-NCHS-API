@@ -1,12 +1,15 @@
 using System;
 
-public class AppSettings
+namespace messaging
 {
-    public Boolean AckAndIJEConversion { get; set; } = false;
-    public Boolean BFDREnabled { get; set; } = false;
-    public string SAMS {get; set;}
-    public string STEVE {get; set;}
-    public int PageCount {get; set;}
-    public int MaxPayloadSize {get; set;}
-    public string Environment {get; set;} = null;
+    public class AppSettings
+    {
+        public Boolean AckAndIJEConversion { get; set; } = false;
+        public Boolean BFDREnabled { get; set; } = false;
+        public string SAMS {get; set;}
+        public string STEVE {get; set;}
+        public int PageCount {get; set;}
+        public int MaxPayloadSize {get; set;}
+        public string Environment {get; set;} = null;
+    }
 }
