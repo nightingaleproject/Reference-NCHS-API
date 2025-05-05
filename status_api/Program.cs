@@ -1,11 +1,7 @@
 using Microsoft.Extensions.FileProviders;
-// using Microsoft.Extensions.Configuration;
-// using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-// using Microsoft.Extensions.Logging;
-// using System;
+
 using messaging.Models;
-// using messaging;
 using status_api;
 
 Console.WriteLine("Booting status_api Program.cs");
@@ -52,17 +48,15 @@ app.Use(async (context, next) =>
     context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
     context.Response.Headers.Add("Cache-Control", "no-store");
 
-    // null check the MaxRequestBodySizeFeature, this feature is null in the dotnet test instance and will throw a null error in our testing framework
-    // IHttpMaxRequestBodySizeFeature feat = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
-    // if (feat != null)
-    // {
-    //     feat.MaxRequestBodySize = Int32.Parse(Configuration.GetSection("AppSettings").GetSection("MaxPayloadSize").Value);
-    // }
-
     // The StatusUI React app requires its own CSP headers
     if (context.Request.Path.StartsWithSegments("/StatusUI"))
     {
         context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline';");
+    }
+    else if( context.Request.Path.StartsWithSegments("/swagger") && app.Environment.IsDevelopment() )
+    {
+        // TODO: enable Swagger UI for production?
+        context.Response.Headers.Add("Content-Security-Policy", "Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'");
     }
     else
     {
