@@ -1,20 +1,21 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+// using Microsoft.AspNetCore.Builder;
+// using Microsoft.AspNetCore.Hosting;
+// using Microsoft.Extensions.Configuration;
+// using Microsoft.Extensions.DependencyInjection;
+// using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+// using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.FileProviders;
-using System.Collections.Generic;
+// using System.Collections.Generic;
 using System.Reflection;
-using System.IO;
-using System;
+// using System.IO;
+// using System;
 using Microsoft.AspNetCore.Http.Features;
-
-using messaging;
 using messaging.Models;
+
+// For debugging:
+using System.Text.Json;
 
 namespace status_api
 {
@@ -22,6 +23,7 @@ namespace status_api
     {
         public Startup(IConfiguration configuration)
         {
+            Console.WriteLine("DEBUG: Startup.cs Startup constructor!");
             Configuration = configuration;
         }
 
@@ -30,7 +32,13 @@ namespace status_api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            Console.WriteLine("DEBUG: Startup#ConfigureServices");
+
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+
+            Console.WriteLine("============= DBG STARTUP =================");
+            Console.WriteLine(JsonSerializer.Serialize(Configuration.GetSection("AppSettings")));
+            Console.WriteLine("============= DBG STARTUP =================");
 
             services.AddMemoryCache();
             services.AddMiniProfiler(options => options.RouteBasePath = "/profiler").AddEntityFramework();
@@ -65,6 +73,8 @@ namespace status_api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
+            Console.WriteLine("DEBUG: Startup#Configure");
+
             app.UseHttpLogging();
             app.UseHttpsRedirection();
             app.Use(async (context, next) =>

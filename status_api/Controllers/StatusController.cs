@@ -1,20 +1,18 @@
-using System;
-using System.Reflection;
-using System.Linq;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Microsoft.Extensions.Logging;
+// using System;
+// using System.Reflection;
+// using System.Linq;
+// using System.Collections.Generic;
+// using System.IO;
+// using System.Threading.Tasks;
+// using Newtonsoft.Json.Linq;
+// using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.EntityFrameworkCore;
+// using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
+// using Microsoft.AspNetCore.Http;
 
-using messaging;
+// using messaging;
 using messaging.Models;
-
-using System.Text.Json;
 
 namespace status_api.Controllers
 {
@@ -31,10 +29,6 @@ namespace status_api.Controllers
             _context = context;
             _logger = logger;
             _settings = settings.Value;
-
-            _logger.LogDebug("============= DEBUGGING =================");
-            _logger.LogDebug(JsonSerializer.Serialize(_settings));
-            _logger.LogDebug("============= DEBUGGING =================");
         }
 
         // GET: Status
