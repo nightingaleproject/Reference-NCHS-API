@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 // using Microsoft.Extensions.Logging;
 // using System;
 using messaging.Models;
-using messaging;
+// using messaging;
 using status_api;
 
 Console.WriteLine("Booting status_api Program.cs");
@@ -13,12 +13,8 @@ Console.WriteLine("Booting status_api Program.cs");
 var builder = WebApplication.CreateBuilder(args);
 var env = builder.Environment;
 
-// Load configuration, with latter sources overriding former
-builder.Configuration
-    .AddJsonFile("appsettings.json")
-    .AddJsonFile($"appsettings.{env.EnvironmentName}.json")
-    .AddEnvironmentVariables()
-    .AddCommandLine(args);
+// builder automatically loads config from appsettings.<Environment>.json and appsettings.json. See for details:
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
 
 // Specify MSSQL DB URL in NVSSMessagingDatabase
 var connectionString =
@@ -28,11 +24,18 @@ var connectionString =
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// Use options pattern to bind configuration
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
+builder.Services.Configure<AppSettings>(
+    builder.Configuration.GetSection("AppSettings")
+);
+
 builder.Services.AddMemoryCache();
-// builder.Services.AddOptions<status_api.AppSettings>(new status_api.AppSettings(builder.Configuration.GetSection("AppSettings")));
+
 builder.Services.AddControllers();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Use Swagger/OpenAPI
+// https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
