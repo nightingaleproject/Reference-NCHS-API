@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 // using Microsoft.Extensions.Logging;
 // using System;
 using messaging.Models;
+using messaging;
+using status_api;
 
 Console.WriteLine("Booting status_api Program.cs");
 
@@ -27,7 +29,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddMemoryCache();
-
+// builder.Services.AddOptions<status_api.AppSettings>(new status_api.AppSettings(builder.Configuration.GetSection("AppSettings")));
 builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
