@@ -135,27 +135,41 @@ namespace messaging.Controllers
             IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={eventYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}").AsEnumerable();
             try
             {
-                // Further scope the search to either unretrieved messages (or all since a specific time)
-                // TODO only allow the since param in development
-                // if _since is the default value, then apply the retrieved at logic unless certificate number or death year are provided
+                // intialize vars
+                int totalMessageCount = 0;
+                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = null;
+
+
                 if (!additionalParamsProvided)
                 {
-                    // TODO SP: Instead we should call a different stored procedure here with the retrieved at = null set
-                    outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
-                }
-                if (_since != default(DateTime))
-                {
-                    // TODO SP: Instead we should call a different stored procedure here with the since param passed in
-                    outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
-                }
+                    // Here we handle case where no debug params are provided, operate as a queue
+                    // First get the total count of messages so we can include the total in the response
+                    // This stored procedure is pretty hacky, we want the count but entity framework requires us to work with the model types. Return the count in the id column of an outgoing message 
+                    // This allows us to still follow NCHS's stored procedure requirement and minimize processing on the client side
+                    // TODO look into creating a scalar function that uses the stored procedure under the hood but allows us to get a scalar response
+                    IQueryable<OutgoingMessageItem> outgoingMessagesQueryCount = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC CountNewOutgoingMessages @JurisdictionId={jurisdictionId}, @EventType={recordType}");
+                    totalMessageCount = Convert.ToInt32(outgoingMessagesQueryCount.ToList().FirstOrDefault().Id);
 
-                // TODO SP: we should use a stored procedure instead, might need to have two for the count?
-                int totalMessageCount = outgoingMessagesQuery.Count();
+                    // Now select the outgoing messages from the queue, select up to the page size
+                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageOrdered @JurisdictionId={jurisdictionId}, @EventType={recordType}, @Count={_count}");
+                }
+                else
+                {
+                    // Here we handle the case where debug params are provided
+                    // First get the total count of messages so we can include the total in the response
+                    // TODO update to use the approach above
+                    IQueryable<OutgoingMessageItem> outgoingMessagesQueryCount = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC CountOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}");
+                    totalMessageCount = Convert.ToInt32(outgoingMessagesQueryCount.ToList().FirstOrDefault().Id);
+                    // We need to account for paging, calculate the number of messages to skip
+                    int numToSkip = (page - 1) * _count;
+                    // Now select the outgoing messages based on the params provided, select up to the page size
+                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}, @Skip={numToSkip}, @Count={_count}");
+
+                }
 
                 // Convert to list to execute the query, capture the result for re-use
-                int numToSkip = (page - 1) * _count;
-                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.CreatedDate).Skip(numToSkip).Take(_count);
-
+                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.ToList();
+                
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
                 IEnumerable<System.Threading.Tasks.Task<VR.CommonMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => CommonMessage.ParseGenericMessage(message.Message, true)));
@@ -164,7 +178,7 @@ namespace messaging.Controllers
                 Bundle responseBundle = new Bundle();
                 responseBundle.Type = Bundle.BundleType.Searchset;
                 responseBundle.Timestamp = DateTime.Now;
-                // Note that total is total number of matching results, not number being returned (outgoingMessages.Count)
+                // Note that total is total number of matching results, not number being returned
                 responseBundle.Total = totalMessageCount;
                 // For the usual use case (unread only), the "next" page is just a repeated request.
                 // But when using since, we have to actually track pages
@@ -185,7 +199,7 @@ namespace messaging.Controllers
                     searchParamValues.Add("page", 1);
                     responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
                     // take the total number of the original selected messages, round up, and divide by the count to get the total number of pages
-                    int lastPage = (outgoingMessagesQuery.Count() + (_count - 1)) / _count;
+                    int lastPage = (outgoingMessages.Count() + (_count - 1)) / _count;
                     searchParamValues.Remove("page");
                     searchParamValues.Add("page", lastPage);
                     responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
@@ -214,8 +228,8 @@ namespace messaging.Controllers
                 {
                     responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
                 }
-
-                _context.SaveChanges();
+                // TODO we have to use a stored procedure here instead to update the message retrieved at field
+                //_context.SaveChanges();
                 return responseBundle;
             }
             catch (Exception ex)
@@ -238,6 +252,9 @@ namespace messaging.Controllers
         protected virtual void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
         {
             omi.RetrievedAt = retrieved;
+            Console.WriteLine($"Update retrieved: {omi.Id}, {omi.RetrievedAt}");
+            // var messageResult = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC UpdateOutgoingMessagesRetrievedAt @Id={omi.Id}, @RetrievedAt={omi.RetrievedAt}");
+            var messageResult = _context.Database.ExecuteSqlInterpolated($"EXEC UpdateOutgoingMessagesRetrievedAt @Id={omi.Id}, @RetrievedAt={omi.RetrievedAt}");
         }
 
         // POST: Bundles
@@ -839,6 +856,11 @@ namespace messaging.Controllers
                 return _settings.SupportedVRDRIGVersions.Contains(igVersion);
             }
             return false;
+        }
+
+        public class IntReturn
+        {
+            public int Value { get; set; }
         }
     }
 }
