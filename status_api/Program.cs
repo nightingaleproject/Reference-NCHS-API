@@ -18,7 +18,10 @@ var connectionString =
         ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    // TODO removeme Console.WriteLine(connectionString);
+    options.UseSqlServer(connectionString);
+});
 
 // Use options pattern to bind configuration
 // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
@@ -34,6 +37,15 @@ builder.Services.AddControllers();
 // https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+/* 
+// Print all Services for debugging
+Console.WriteLine("Services:");
+foreach (var service in builder.Services)
+{
+    Console.WriteLine($"{service.ServiceType.Name} - {service.ImplementationType?.Name ?? "Unknown"}");
+}
+ */
 
 // ======================== Configure middleware for HTTP handling ================================
 var app = builder.Build();
@@ -93,4 +105,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.Run();
+
+// Required for tests:
+public partial class Program { }
 
