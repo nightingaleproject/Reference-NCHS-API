@@ -1,10 +1,12 @@
-// TODO: fix 'Program' is inaccessible due to its proection level - turn top-level statements into class?
+namespace status_api.tests;
+
 public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
         {
+            /*
             var dbContextDescriptor = services.SingleOrDefault(
                 d => d.ServiceType ==
                     typeof(DbContextOptions<ApplicationDbContext>));
@@ -16,9 +18,9 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
                     typeof(DbConnection));
 
             services.Remove(dbConnectionDescriptor);
-
+            */
             // Create open SqliteConnection so EF won't automatically close it.
-            services.AddSingleton<DbConnection>(container =>
+            services.AddService<DbConnection>(container =>
             {
                 var connection = new SqliteConnection("DataSource=:memory:"); // TODO: Connection String from settings; use MSSQL?
                 connection.Open();

@@ -1,3 +1,5 @@
+namespace status_api.tests;
+
 public class StatusEndpointTests :
     IClassFixture<StatusApiTestsWebApplicationFactory<Program>>
 {
