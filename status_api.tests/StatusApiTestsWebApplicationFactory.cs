@@ -4,6 +4,10 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        var connectionString =
+                builder.Configuration.GetConnectionString("NVSSMessagingDatabase")
+                    ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
+
         builder.ConfigureServices(services =>
         {
             /*
@@ -18,11 +22,11 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
                     typeof(DbConnection));
 
             services.Remove(dbConnectionDescriptor);
-            */
+            
             // Create open SqliteConnection so EF won't automatically close it.
             services.AddService<DbConnection>(container =>
             {
-                var connection = new SqliteConnection("DataSource=:memory:"); // TODO: Connection String from settings; use MSSQL?
+                var connection = 
                 connection.Open();
 
                 return connection;
@@ -33,8 +37,13 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
                 var connection = container.GetRequiredService<DbConnection>();
                 options.UseSqlite(connection);
             });
+            */
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(connectionString)
+            );
         });
 
-        builder.UseEnvironment("Development"); // TODO test env
+        builder.UseEnvironment("Test");
     }
 }
