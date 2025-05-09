@@ -117,7 +117,7 @@ namespace messaging.Controllers
                 _logger.LogError("Rejecting request with a page number but no _since, certificateNumber, or deathYear parameter.");
                 return BadRequest("Pagination does not support specifying a page without either a _since, certificateNumber, or deathYear parameter");
             }
-            _logger.LogDebug($"Provided PPPPPparams: {certificateNumber}, {deathYear}, {_since}");
+            _logger.LogDebug($"Provided params: {certificateNumber}, {deathYear}, {_since}");
 
             RouteValueDictionary searchParamValues = new()
             {
@@ -138,7 +138,7 @@ namespace messaging.Controllers
             // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
             try
             {
-                // intialize vars
+                // intialize count and the query result
                 int totalMessageCount = 0;
                 IQueryable<OutgoingMessageItem> outgoingMessagesQuery = null;
 
@@ -147,12 +147,8 @@ namespace messaging.Controllers
                 {
                     // Here we handle case where no debug params are provided, operate as a queue
                     // First get the total count of messages so we can include the total in the response
-                    // This stored procedure is pretty hacky, we want the count but entity framework requires us to work with the model types. Return the count in the id column of an outgoing message 
-                    // This allows us to still follow NCHS's stored procedure requirement and minimize processing on the client side
-                    // TODO look into creating a scalar function that uses the stored procedure under the hood but allows us to get a scalar response
-                    IQueryable<OutgoingMessageItem> outgoingMessagesQueryCount = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC CountNewOutgoingMessages @JurisdictionId={jurisdictionId}, @EventType={recordType}");
-                    totalMessageCount = Convert.ToInt32(outgoingMessagesQueryCount.ToList().FirstOrDefault().Id);
-
+                    var countMsg = _context.Database.SqlQuery<int>($"EXEC CountNewOutgoingMessages @JurisdictionId={jurisdictionId}, @EventType={recordType}").ToList();
+                    totalMessageCount = countMsg.FirstOrDefault();
                     // Now select the outgoing messages from the queue, select up to the page size
                     outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageOrdered @JurisdictionId={jurisdictionId}, @EventType={recordType}, @Count={_count}");
                 }
@@ -161,22 +157,11 @@ namespace messaging.Controllers
                     // Here we handle the case where debug params are provided
                     // We need to account for paging, calculate the number of messages to skip
                     int numToSkip = (page - 1) * _count;
-                    if (_since == default(DateTime))
-                    {
-                        // First get the total count of messages so we can include the total in the response
-                        IQueryable<OutgoingMessageItem> outgoingMessagesQueryCount = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC CountNewOutgoingMessagesWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={null}");
-                        totalMessageCount = Convert.ToInt32(outgoingMessagesQueryCount.ToList().FirstOrDefault().Id);
-                        // Now select the outgoing messages based on the params provided, select up to the page size
-                        outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={null}, @Skip={numToSkip}, @Count={_count}");
-                    }
-                    else
-                    {
-                        // First get the total count of messages so we can include the total in the response
-                        IQueryable<OutgoingMessageItem> outgoingMessagesQueryCount = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC CountNewOutgoingMessagesWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}");
-                        totalMessageCount = Convert.ToInt32(outgoingMessagesQueryCount.ToList().FirstOrDefault().Id);
-                        // Now select the outgoing messages based on the params provided, select up to the page size
-                        outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}, @Skip={numToSkip}, @Count={_count}");
-                    }
+                    // First get the total count of messages so we can include the total in the response
+                    var countMsg = _context.Database.SqlQuery<int>($"EXEC CountNewOutgoingMessagesWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}").ToList();
+                    totalMessageCount = countMsg.FirstOrDefault();
+                    // Now select the outgoing messages based on the params provided, select up to the page size
+                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}, @Skip={numToSkip}, @Count={_count}");
                 }
 
                 // Convert to list to execute the query, capture the result for re-use
@@ -244,20 +229,11 @@ namespace messaging.Controllers
             }
         }
 
-        // Allows overriding by STEVE controller to filter off different field
-        /// <summary>
-        /// Applies a filter (e.g. calls Where) to reduce the source to unretrieved messages. Should NOT iterate result set/execute query
-        /// </summary>
-        protected virtual IEnumerable<OutgoingMessageItem> ExcludeRetrieved(IEnumerable<OutgoingMessageItem> source)
-        {
-            return source.Where(message => message.RetrievedAt == null);
-        }
-
         // Allows overriding by STEVE controller to mark different field
         protected virtual void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
         {
             omi.RetrievedAt = retrieved;
-            var messageResult = _context.Database.ExecuteSqlInterpolated($"EXEC UpdateOutgoingMessagesRetrievedAt @Id={omi.Id}, @RetrievedAt={omi.RetrievedAt}");
+            _context.Database.ExecuteSqlInterpolated($"EXEC UpdateOutgoingMessagesRetrievedAt @Id={omi.Id}, @RetrievedAt={omi.RetrievedAt}");
         }
 
         // POST: Bundles
