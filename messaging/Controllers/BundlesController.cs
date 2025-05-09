@@ -156,15 +156,24 @@ namespace messaging.Controllers
                 else
                 {
                     // Here we handle the case where debug params are provided
-                    // First get the total count of messages so we can include the total in the response
-                    // TODO update to use the approach above
-                    IQueryable<OutgoingMessageItem> outgoingMessagesQueryCount = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC CountOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}");
-                    totalMessageCount = Convert.ToInt32(outgoingMessagesQueryCount.ToList().FirstOrDefault().Id);
                     // We need to account for paging, calculate the number of messages to skip
                     int numToSkip = (page - 1) * _count;
-                    // Now select the outgoing messages based on the params provided, select up to the page size
-                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}, @Skip={numToSkip}, @Count={_count}");
-
+                    if (_since == default(DateTime))
+                    {
+                        // First get the total count of messages so we can include the total in the response
+                        IQueryable<OutgoingMessageItem> outgoingMessagesQueryCount = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC CountNewOutgoingMessagesWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={null}");
+                        totalMessageCount = Convert.ToInt32(outgoingMessagesQueryCount.ToList().FirstOrDefault().Id);
+                        // Now select the outgoing messages based on the params provided, select up to the page size
+                        outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={null}, @Skip={numToSkip}, @Count={_count}");
+                    }
+                    else
+                    {
+                        // First get the total count of messages so we can include the total in the response
+                        IQueryable<OutgoingMessageItem> outgoingMessagesQueryCount = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC CountNewOutgoingMessagesWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}");
+                        totalMessageCount = Convert.ToInt32(outgoingMessagesQueryCount.ToList().FirstOrDefault().Id);
+                        // Now select the outgoing messages based on the params provided, select up to the page size
+                        outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}, @Skip={numToSkip}, @Count={_count}");
+                    }
                 }
 
                 // Convert to list to execute the query, capture the result for re-use
@@ -228,8 +237,6 @@ namespace messaging.Controllers
                 {
                     responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
                 }
-                // TODO we have to use a stored procedure here instead to update the message retrieved at field
-                //_context.SaveChanges();
                 return responseBundle;
             }
             catch (Exception ex)
@@ -252,8 +259,6 @@ namespace messaging.Controllers
         protected virtual void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
         {
             omi.RetrievedAt = retrieved;
-            Console.WriteLine($"Update retrieved: {omi.Id}, {omi.RetrievedAt}");
-            // var messageResult = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC UpdateOutgoingMessagesRetrievedAt @Id={omi.Id}, @RetrievedAt={omi.RetrievedAt}");
             var messageResult = _context.Database.ExecuteSqlInterpolated($"EXEC UpdateOutgoingMessagesRetrievedAt @Id={omi.Id}, @RetrievedAt={omi.RetrievedAt}");
         }
 
