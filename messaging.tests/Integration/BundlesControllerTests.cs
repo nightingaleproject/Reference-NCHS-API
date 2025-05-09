@@ -545,7 +545,7 @@ namespace messaging.tests
             // use the since parameter to make sure we get both messages
             string since = currentTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
             for (int x = 0; x < 3; ++x) {
-                HttpResponseMessage getBundle = await _client.GetAsync("/UT/Bundle/BFDR/v2.0?_since=" + since);
+                HttpResponseMessage getBundle = await _client.GetAsync("/UT/Bundle/BFDR-BIRTH/v2.0?_since=" + since);
                 updatedBundle = await JsonResponseHelpers.ParseBundleAsync(getBundle);
                 // Waiting for 2 messages to appear
                 if (updatedBundle.Entry.Count > 1) {

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace messaging.Controllers
 {
     [Route("STEVE/{jurisdictionId:length(2)}/Bundle")]
-    [Route("STEVE/{jurisdictionId:length(2)}/Bundle/{vitalType:length(4)}/{igVersion}")]
+    [Route("STEVE/{jurisdictionId:length(2)}/Bundle/{vitalType:regex(^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$)}/{igVersion}")]
     [Route("STEVE/{jurisdictionId:length(2)}/Bundles")] // Historical endpoint for backwards compatibility
     [ApiController]
     public class SteveController : BundlesController
