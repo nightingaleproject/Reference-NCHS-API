@@ -4,10 +4,12 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        /*
         var connectionString =
                 builder.Configuration.GetConnectionString("NVSSMessagingDatabase")
                     ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
-
+        */
+        
         builder.ConfigureServices(services =>
         {
             /*
@@ -39,9 +41,11 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
             });
             */
 
+            /*
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString)
             );
+            */
         });
 
         builder.UseEnvironment("Test");

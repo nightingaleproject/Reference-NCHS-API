@@ -35,14 +35,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
+/* 
 // Print all Services for debugging
 Console.WriteLine("Services:");
 foreach (var service in builder.Services)
 {
     Console.WriteLine($"{service.ServiceType.Name} - {service.ImplementationType?.Name ?? "Unknown"}");
 }
-
+ */
 
 // ======================== Configure middleware for HTTP handling ================================
 var app = builder.Build();
