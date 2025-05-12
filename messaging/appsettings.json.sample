@@ -28,6 +28,6 @@
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "NVSSMessagingDatabase": "Server=localhost;Database=nvssmessaging;User=sa;Password=yourStrong(!)Password;"
+    "NVSSMessagingDatabase": "Server=localhost;Database=nvssmessaging;User=sa;Password=yourStrong(!)Password;TrustServerCertificate=True;"
   }
 }
