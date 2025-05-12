@@ -371,20 +371,16 @@ namespace messaging.Controllers
             return true;
         }
 
-        private static bool ValidateIGPayloadVersion(string messagePayloadVersion, string urlParamIGVersion)
+        private bool ValidateIGPayloadVersion(string messagePayloadVersion, string urlParamIGVersion)
         {
-            // If the message payload is not provided, as in from an old version of messaging, then the url param must be v2.2.
-            if (String.IsNullOrEmpty(messagePayloadVersion) && urlParamIGVersion == "v2.2")
+            // If the message payload is not provided, as in from an old version of messaging, then the url param must be VRDR_STU2_2.
+            if (String.IsNullOrEmpty(messagePayloadVersion) && urlParamIGVersion == "VRDR_STU2_2")
             {
                 return true;
             }
-            Dictionary<string, string> validVersionMappings = new()
-            {
-              { "BFDR_STU2_0", "v2.0" },
-              { "VRDR_STU3_0", "v3.0" },
-              { "VRDR_STU2_2", "v2.2" }
-            };
-            return messagePayloadVersion != null && validVersionMappings.ContainsKey(messagePayloadVersion) && validVersionMappings[messagePayloadVersion].Equals(urlParamIGVersion);
+            return messagePayloadVersion != null && urlParamIGVersion != null &&
+                    (_settings.SupportedVRDRIGVersions.Any(p => messagePayloadVersion.Equals(p) && urlParamIGVersion.Equals(p))
+                    || _settings.SupportedBFDRIGVersions.Any(p => messagePayloadVersion.Equals(p) && urlParamIGVersion.Equals(p)));
         }
 
         // InsertBatchMessage handles a single message in a batch upload submission
@@ -756,7 +752,7 @@ namespace messaging.Controllers
         }
 
         /// <summary>
-        /// Validate that the Vital Type and IG Version are valid together. If null data is provided, they default to VRDR/v2.2
+        /// Validate that the Vital Type and IG Version are valid together. If null data is provided, they default to VRDR/VRDR_STU2_2
         /// </summary>
         /// <param name="vitalType"></param>
         /// <param name="igVersion"></param>
@@ -766,9 +762,9 @@ namespace messaging.Controllers
         {
             if (String.IsNullOrEmpty(vitalType) && String.IsNullOrEmpty(igVersion))
             {
-                // If the historical backwards compatibilty endpoint is used (no vital type or ig version provided), default to VRDR v2.0
+                // If the historical backwards compatibilty endpoint is used (no vital type or ig version provided), default to VRDR_STU2_2
                 vitalType = "VRDR";
-                igVersion = "v2.2";
+                igVersion = "VRDR_STU2_2";
             }
             else if (String.IsNullOrEmpty(vitalType))
             {
@@ -810,18 +806,15 @@ namespace messaging.Controllers
         /// <param name="vitalType"></param>
         /// <param name="igVersion"></param>
         /// <returns></returns>
-        private static bool ValidIGVersion(string vitalType, string igVersion)
+        private bool ValidIGVersion(string vitalType, string igVersion)
         {
-            string[] BFDRIgs = {"v2.0"};
-            string[] VRDRIgs = {"v2.2", "v3.0"};
-
             if (vitalType == "BFDR-BIRTH" || vitalType == "BFDR-FETALDEATH")
             {
-                return BFDRIgs.Contains(igVersion);
+                return _settings.SupportedBFDRIGVersions.Contains(igVersion);
             }
             else if (vitalType == "VRDR")
             {
-                return VRDRIgs.Contains(igVersion);
+                return _settings.SupportedVRDRIGVersions.Contains(igVersion);
             }
             return false;
         }

@@ -33,7 +33,7 @@ namespace messaging.Models
         [MaxLength(3)]
         public string EventType {get; set;}
         [Column(TypeName = "CHAR")]
-        [MaxLength(10)]
+        [MaxLength(20)]
         public string IGVersion { get; set; }
     }
 }

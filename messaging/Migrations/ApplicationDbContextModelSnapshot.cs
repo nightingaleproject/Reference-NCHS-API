@@ -64,8 +64,8 @@ namespace messaging.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("IGVersion")
-                        .HasMaxLength(5)
-                        .HasColumnType("CHAR(5)");
+                        .HasMaxLength(20)
+                        .HasColumnType("CHAR(20)");
 
                     b.Property<string>("JurisdictionId")
                         .IsRequired()
@@ -165,8 +165,8 @@ namespace messaging.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("IGVersion")
-                        .HasMaxLength(5)
-                        .HasColumnType("CHAR(5)");
+                        .HasMaxLength(20)
+                        .HasColumnType("CHAR(20)");
 
                     b.Property<string>("JurisdictionId")
                         .IsRequired()
