@@ -12,7 +12,7 @@ using messaging.Models;
 namespace messaging.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250327181615_IGVersion")]
+    [Migration("20250512160614_IGVersion")]
     partial class IGVersion
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,8 +66,8 @@ namespace messaging.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("IGVersion")
-                        .HasMaxLength(5)
-                        .HasColumnType("CHAR(5)");
+                        .HasMaxLength(20)
+                        .HasColumnType("CHAR(20)");
 
                     b.Property<string>("JurisdictionId")
                         .IsRequired()
@@ -167,8 +167,8 @@ namespace messaging.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("IGVersion")
-                        .HasMaxLength(5)
-                        .HasColumnType("CHAR(5)");
+                        .HasMaxLength(20)
+                        .HasColumnType("CHAR(20)");
 
                     b.Property<string>("JurisdictionId")
                         .IsRequired()

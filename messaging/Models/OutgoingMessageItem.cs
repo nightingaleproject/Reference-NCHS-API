@@ -29,7 +29,7 @@ namespace messaging.Models
 
         public DateTime? RetrievedAt { get; set; }
         [Column(TypeName = "CHAR")]
-        [MaxLength(5)]
+        [MaxLength(20)]
         public string IGVersion { get; set; }
     }
 }
