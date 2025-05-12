@@ -494,7 +494,11 @@ namespace messaging.Controllers
             {
                 CommonMessage message;
                 vitalType = vitalType?.ToUpper();
-                if (_settings.BFDREnabled && !String.IsNullOrEmpty(vitalType) && (vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")))
+                if (_settings.BirthEnabled && !String.IsNullOrEmpty(vitalType) && vitalType.Equals("BFDR-BIRTH"))
+                {
+                    message = BFDRBaseMessage.Parse(bundle);
+                }
+                else if (_settings.FetalDeathEnabled && !String.IsNullOrEmpty(vitalType) && vitalType.Equals("BFDR-FETALDEATH"))
                 {
                     message = BFDRBaseMessage.Parse(bundle);
                 }
@@ -612,7 +616,8 @@ namespace messaging.Controllers
             await _context.SaveChangesAsync();
 
             // Queue Natality messages for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on" for testing
-            if (_settings.AckAndIJEConversion)
+            // For the June 2025 test event, enable auto responses for Fetal death message types only
+            if (_settings.AckAndIJEConversion || ( _settings.FetalDeathEnabled && item.EventType == "FET"))
             {
                 queue.QueueConvertToIJE(item.Id);
             }
@@ -777,10 +782,16 @@ namespace messaging.Controllers
                 br = BadRequest("Invalid url path provided");
                 return false;
             }
-            else if ((vitalType.Equals("BFDR-BIRTH") || vitalType.Equals("BFDR-FETALDEATH")) && !_settings.BFDREnabled)
+            else if (vitalType.Equals("BFDR-BIRTH") && !_settings.BirthEnabled)
             {
-                _logger.LogError("Rejecting request for natality data. BFDR messaging is not enabled.");
-                br = BadRequest("BFDR messaging is not enabled.");
+                _logger.LogError("Rejecting request for natality data. BFDR Birth messaging is not enabled.");
+                br = BadRequest("BFDR Birth messaging is not enabled.");
+                return false;
+            }
+            else if (vitalType.Equals("BFDR-FETALDEATH") && !_settings.FetalDeathEnabled)
+            {
+                _logger.LogError("Rejecting request for natality data. BFDR Fetal Death messaging is not enabled.");
+                br = BadRequest("BFDR Fetal Death messaging is not enabled.");
                 return false;
             }
             if (!ValidIGVersion(vitalType, igVersion))
