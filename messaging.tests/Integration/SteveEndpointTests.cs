@@ -22,7 +22,7 @@ namespace messaging.tests
         private readonly ApplicationDbContext _context;
 
         private readonly string STEVE_ENDPOINT = "/STEVE/NY/Bundle";
-        private readonly string STEVE_VRDR_3_0_ENDPOINT = "/STEVE/NY/Bundle/VRDR/v3.0";
+        private readonly string STEVE_VRDR_3_0_ENDPOINT = "/STEVE/NY/Bundle/VRDR/VRDR_STU3_0";
         private readonly string NY_ENDPOINT = "/NY/Bundle";
 
         public SteveEndpointTests(CustomWebApplicationFactory<messaging.Startup> factory)
@@ -204,7 +204,7 @@ namespace messaging.tests
             Assert.Single(response.Entry);
 
             // Get the Jurisdiction response, which should be empty because the jurisdiction/STEVE queue are a single queue.
-            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(NY_ENDPOINT + "/VRDR/v3.0");
+            HttpResponseMessage jurisdictionResponse = await _client.GetAsync(NY_ENDPOINT + "/VRDR/VRDR_STU3_0");
             response = await JsonResponseHelpers.ParseBundleAsync(jurisdictionResponse);
             Assert.Empty(response.Entry);
         }
@@ -222,7 +222,7 @@ namespace messaging.tests
             DeathRecordSubmissionMessage recordSubmission = new DeathRecordSubmissionMessage(new DeathRecord());
 
             // Submit that Death Record
-            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{badJurisdiction}/Bundle/VRDR/v3.0", recordSubmission.ToJson());
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, $"/STEVE/{badJurisdiction}/Bundle/VRDR/VRDR_STU3_0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage.StatusCode);
         }
 
@@ -232,7 +232,7 @@ namespace messaging.tests
             string badJurisdiction = "AB";
             Assert.False(VR.IJEData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
 
-            HttpResponseMessage response = await _client.GetAsync($"/STEVE/{badJurisdiction}/Bundle/VRDR/v3.0");
+            HttpResponseMessage response = await _client.GetAsync($"/STEVE/{badJurisdiction}/Bundle/VRDR/VRDR_STU3_0");
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
