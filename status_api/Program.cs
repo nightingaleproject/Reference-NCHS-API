@@ -18,7 +18,10 @@ var connectionString =
         ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    // TODO removeme Console.WriteLine(connectionString);
+    options.UseSqlServer(connectionString);
+});
 
 // Use options pattern to bind configuration
 // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources

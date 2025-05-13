@@ -6,6 +6,8 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        Console.WriteLine("==== 1 =====");
+
         builder.ConfigureAppConfiguration((context, builder) => {
             builder.AddJsonFile("appsettings.Test.json");
         });
@@ -24,6 +26,7 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
                 //var logger = scopedServices.GetRequiredService<ILogger<CustomWebApplicationFactory<TStartup>>>();
 
                 db.Database.EnsureCreated();
+
             }
         });
     }
