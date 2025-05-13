@@ -117,7 +117,6 @@ namespace messaging.Controllers
             // Query for outgoing messages of the requested type by jurisdiction ID. Filter by IG version. Optionally filter by certificate number and death year if those parameters are provided.
             IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
                     && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType))
-                    && igVersion.Equals(message.IGVersion)
                     && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
                     && (deathYear == null || message.EventYear == int.Parse(deathYear)));
 
@@ -590,7 +589,6 @@ namespace messaging.Controllers
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;
-            item.IGVersion = igVersion;
             if(birthMessageType(message.GetType().Name) || fetalDeathMessageType(message.GetType().Name))
             {
                 item.EventYear = ((BFDRBaseMessage)message).EventYear;

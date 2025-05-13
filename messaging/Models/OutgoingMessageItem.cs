@@ -28,8 +28,6 @@ namespace messaging.Models
         public string EventType {get; set;}
 
         public DateTime? RetrievedAt { get; set; }
-        [Column(TypeName = "CHAR")]
-        [MaxLength(5)]
-        public string IGVersion { get; set; }
+
     }
 }
