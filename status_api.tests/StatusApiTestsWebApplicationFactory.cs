@@ -2,50 +2,31 @@ namespace status_api.tests;
 
 public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
 {
+    public IConfiguration Configuration { get; }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        /*
+        builder.ConfigureAppConfiguration((context, builder) => {
+            builder.AddJsonFile("appsettings.Test.json");
+        });
+
         var connectionString =
-                builder.Configuration.GetConnectionString("NVSSMessagingDatabase")
+                Configuration.GetConnectionString("NVSSMessagingDatabase")
                     ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
-        */
         
         builder.ConfigureServices(services =>
         {
-            /*
-            var dbContextDescriptor = services.SingleOrDefault(
-                d => d.ServiceType ==
-                    typeof(DbContextOptions<ApplicationDbContext>));
+            var buildServiceProvider = services.BuildServiceProvider();
 
-            services.Remove(dbContextDescriptor);
-
-            var dbConnectionDescriptor = services.SingleOrDefault(
-                d => d.ServiceType ==
-                    typeof(DbConnection));
-
-            services.Remove(dbConnectionDescriptor);
-            
-            // Create open SqliteConnection so EF won't automatically close it.
-            services.AddService<DbConnection>(container =>
+            using (var scope = buildServiceProvider.CreateScope())
             {
-                var connection = 
-                connection.Open();
+                var scopedServices = scope.ServiceProvider;
+                var db = scopedServices.GetRequiredService<ApplicationDbContext>();
+                // TODO logging:
+                //var logger = scopedServices.GetRequiredService<ILogger<CustomWebApplicationFactory<TStartup>>>();
 
-                return connection;
-            });
-
-            services.AddDbContext<ApplicationDbContext>((container, options) =>
-            {
-                var connection = container.GetRequiredService<DbConnection>();
-                options.UseSqlite(connection);
-            });
-            */
-
-            /*
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(connectionString)
-            );
-            */
+                db.Database.EnsureCreated();
+            }
         });
 
         builder.UseEnvironment("Test");
