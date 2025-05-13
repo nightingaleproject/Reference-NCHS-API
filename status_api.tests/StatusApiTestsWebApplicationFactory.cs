@@ -10,10 +10,8 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
             builder.AddJsonFile("appsettings.Test.json");
         });
 
-        var connectionString =
-                Configuration.GetConnectionString("NVSSMessagingDatabase")
-                    ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
-        
+        builder.UseEnvironment("Test");
+
         builder.ConfigureServices(services =>
         {
             var buildServiceProvider = services.BuildServiceProvider();
@@ -28,7 +26,5 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
                 db.Database.EnsureCreated();
             }
         });
-
-        builder.UseEnvironment("Test");
     }
 }
