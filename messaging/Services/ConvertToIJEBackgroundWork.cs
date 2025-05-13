@@ -63,7 +63,6 @@ namespace messaging.Services
             this._context.Update(item);
             OutgoingMessageItem outgoingMessageItem = new OutgoingMessageItem();
             outgoingMessageItem.JurisdictionId = item.JurisdictionId;
-            outgoingMessageItem.IGVersion = item.IGVersion;
             CommonMessage parsedMessage;
             if (item.EventType == "MOR")
             {
@@ -181,7 +180,6 @@ namespace messaging.Services
             outgoingMessageItem.CertificateNumber = ackMessage.CertNo.ToString().PadLeft(6, '0');
             outgoingMessageItem.EventYear = ackMessage.GetYear();
             outgoingMessageItem.EventType = eventType;
-            outgoingMessageItem.IGVersion = databaseMessage.IGVersion;
             _context.OutgoingMessageItems.Add(outgoingMessageItem);
             _context.SaveChanges();
         }
