@@ -34,5 +34,6 @@ public class StatusEndpointTests :
 
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers?.ContentType?.MediaType);
     }
 }
