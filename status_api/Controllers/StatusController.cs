@@ -1,22 +1,10 @@
-// using System;
-// using System.Reflection;
-// using System.Linq;
-// using System.Collections.Generic;
-// using System.IO;
-// using System.Threading.Tasks;
-// using Newtonsoft.Json.Linq;
-// using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-// using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
-// using Microsoft.AspNetCore.Http;
-
-// using messaging;
 using messaging.Models;
 
 namespace status_api.Controllers
 {
-    [Route("status")]
+    [Route("api/v1/status")]
     [ApiController]
     public class StatusController : ControllerBase
     {
@@ -31,7 +19,7 @@ namespace status_api.Controllers
             _settings = settings.Value;
         }
 
-        // GET: Status
+        // GET: /status
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -195,7 +183,7 @@ namespace status_api.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An exception occurred while preparing status information. since: {since}", _since);
+                _logger.LogError(ex, "An exception occurred while preparing status information. Param since: {since}", _since);
                 return StatusCode(500);
             }
 
