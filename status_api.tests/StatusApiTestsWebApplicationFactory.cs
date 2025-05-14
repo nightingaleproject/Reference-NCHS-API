@@ -23,7 +23,6 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
                 var logger = scopedServices.GetRequiredService<ILogger<StatusApiTestsWebApplicationFactory<TProgram>>>();
 
                 db.Database.EnsureCreated();
-
             }
         });
     }
