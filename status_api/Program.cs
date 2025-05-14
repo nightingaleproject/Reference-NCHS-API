@@ -1,110 +1,116 @@
 using Microsoft.Extensions.FileProviders;
 using Microsoft.EntityFrameworkCore;
-
+using Serilog;
 using messaging.Models;
 using status_api;
 
-Console.WriteLine("Booting status_api Program.cs");
-
 var builder = WebApplication.CreateBuilder(args);
-var env = builder.Environment;
 
-// builder automatically loads config from appsettings.<Environment>.json and appsettings.json. See for details:
-// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
+Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Configuration)
+                .CreateLogger();
 
-// Specify MSSQL DB URL in NVSSMessagingDatabase
-var connectionString =
-    builder.Configuration.GetConnectionString("NVSSMessagingDatabase")
-        ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
+Log.Information("Booting status_api and StatusUI");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    // TODO removeme Console.WriteLine(connectionString);
-    options.UseSqlServer(connectionString);
-});
+try {
+    var env = builder.Environment;
 
-// Use options pattern to bind configuration
-// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
-builder.Services.Configure<AppSettings>(
-    builder.Configuration.GetSection("AppSettings")
-);
+    // builder automatically loads config from appsettings.<Environment>.json and appsettings.json. See for details:
+    // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
 
-builder.Services.AddMemoryCache();
+    // Fetch MSSQL DB from config ConnectionStrings' NVSSMessagingDatabase
+    var connectionString =
+        builder.Configuration.GetConnectionString("NVSSMessagingDatabase")
+            ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
 
-builder.Services.AddControllers();
+    builder.Host.UseSerilog(Log.Logger);
 
-// Use Swagger/OpenAPI
-// https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseSqlServer(connectionString);
+    });
 
-/* 
-// Print all Services for debugging
-Console.WriteLine("Services:");
-foreach (var service in builder.Services)
-{
-    Console.WriteLine($"{service.ServiceType.Name} - {service.ImplementationType?.Name ?? "Unknown"}");
+    // Use options pattern to bind configuration
+    // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
+    builder.Services.Configure<AppSettings>(
+        builder.Configuration.GetSection("AppSettings")
+    );
+
+    builder.Services.AddMemoryCache();
+
+    builder.Services.AddControllers();
+
+    // Use Swagger/OpenAPI
+    // https://aka.ms/aspnetcore/swashbuckle
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+
+    // ======================== Configure middleware for HTTP handling ================================
+    var app = builder.Build();
+
+    app.UseHttpLogging();
+    app.UseHttpsRedirection();
+
+    // Harden HTTP Headers for security
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
+        context.Response.Headers.Add("Cache-Control", "no-store");
+
+        // The StatusUI React app requires its own CSP headers
+        if (context.Request.Path.StartsWithSegments("/StatusUI"))
+        {
+            context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline';");
+        }
+        // Swagger UI fails strict CSP, so loosen it for Dev only; see: https://github.com/swagger-api/swagger-ui/issues/5817
+        else if( context.Request.Path.StartsWithSegments("/swagger") && app.Environment.IsDevelopment() )
+        {
+            context.Response.Headers.Add("Content-Security-Policy", "Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'");
+        }
+        else
+        {
+            context.Response.Headers.Add("Content-Type", "application/json");
+            context.Response.Headers.Add("Content-Security-Policy", "default-src");
+        }
+
+        await next.Invoke();
+    });
+
+    if (app.Environment.IsDevelopment())
+    {
+        // GET /Error
+        app.UseExceptionHandler("/Error");
+        app.UseHsts();
+
+        // GET /results to view profiling results
+        app.UseMiniProfiler();
+
+        // GET /swagger for Swagger OpenAPI Docs
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseAuthorization();
+    app.MapControllers();
+
+    // GET /StatusUI/index.html renders StatusUI react app from `npm run build`
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "StatusUI")),
+        RequestPath = "/StatusUI"
+    });
+
+    app.Run();
 }
- */
-
-// ======================== Configure middleware for HTTP handling ================================
-var app = builder.Build();
-
-app.UseHttpLogging();
-app.UseHttpsRedirection();
-
-// Harden HTTP Headers for security
-app.Use(async (context, next) =>
+catch (Exception ex)
 {
-    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-    context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
-    context.Response.Headers.Add("Cache-Control", "no-store");
-
-    // The StatusUI React app requires its own CSP headers
-    if (context.Request.Path.StartsWithSegments("/StatusUI"))
-    {
-        context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline';");
-    }
-    else if( context.Request.Path.StartsWithSegments("/swagger") && app.Environment.IsDevelopment() )
-    {
-        // TODO: enable Swagger UI for production?
-        context.Response.Headers.Add("Content-Security-Policy", "Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'");
-    }
-    else
-    {
-        context.Response.Headers.Add("Content-Type", "application/json");
-        context.Response.Headers.Add("Content-Security-Policy", "default-src");
-    }
-
-    await next.Invoke();
-});
-
-if (app.Environment.IsDevelopment())
-{
-    // GET /Error
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
-
-    // GET /results to view profiling results
-    app.UseMiniProfiler();
-
-    // GET /swagger for Swagger OpenAPI Docs
-    // TODO: do we enable this for production?
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    Log.Fatal(ex, "Application terminated unexpectedly");
 }
-
-app.UseAuthorization();
-app.MapControllers();
-
-// GET /StatusUI/index.html renders StatusUI react app from `npm run build`
-app.UseStaticFiles(new StaticFileOptions
+finally
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "StatusUI")),
-    RequestPath = "/StatusUI"
-});
-
-app.Run();
+    Log.CloseAndFlush();
+}
 
 // Required for tests:
 public partial class Program { }

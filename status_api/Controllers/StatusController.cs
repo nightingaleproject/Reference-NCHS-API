@@ -195,7 +195,7 @@ namespace status_api.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogDebug($"An exception occurred while preparing status information: {ex}");
+                _logger.LogError(ex, "An exception occurred while preparing status information. since: {since}", _since);
                 return StatusCode(500);
             }
 
