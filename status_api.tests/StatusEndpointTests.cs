@@ -26,4 +26,13 @@ public class StatusEndpointTests :
         response.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Get_StatusUIIndex_ReturnsOkResult()
+    {
+        var response = await _client.GetAsync("/StatusUI/index.html");
+
+        response.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
 }
