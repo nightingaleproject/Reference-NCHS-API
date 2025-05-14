@@ -1,8 +1,8 @@
 ## Changelog
 
-### v1.6.0 - 2025-04-08
-* Add support for multiple IG Versions (BFDR v2.0, VRDR v2.2 & v3.0) at the new /vitalType/igVersion endpoint
-* Add support for VRDR library v5.0.0 and VR Messaging Common Messages while maintaining backwards compatibilty
+### v1.6.0 - 2025-05-14
+* Add configs to enable Birth and FetalDeath separately
+* Send autoacknowledgements for FetalDeath submissions, this is a temporary feature for the June 2025 test event
 
 ### v1.5.0 - 2025-03-21
 * Add support for FetalDeath messaging under the /BFDR-FETALDEATH url
