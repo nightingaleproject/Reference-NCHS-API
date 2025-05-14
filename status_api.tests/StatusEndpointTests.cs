@@ -20,7 +20,7 @@ public class StatusEndpointTests :
     [Fact]
     public async Task Get_Status_ReturnsOkResult()
     {
-        var response = await _client.GetAsync("/status");
+        var response = await _client.GetAsync("/api/v1/status");
 
         // Assert
         response.EnsureSuccessStatusCode();
