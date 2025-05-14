@@ -61,7 +61,7 @@ try {
         // The StatusUI React app requires its own CSP headers
         if (context.Request.Path.StartsWithSegments("/StatusUI"))
         {
-            context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline';");
+            context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline';");
         }
         // Swagger UI fails strict CSP, so loosen it for Dev only; see: https://github.com/swagger-api/swagger-ui/issues/5817
         else if( context.Request.Path.StartsWithSegments("/swagger") && app.Environment.IsDevelopment() )
