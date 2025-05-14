@@ -31,7 +31,7 @@
     <Content Include="StatusUI/assets/index-uSXOUBRu.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="StatusUI/assets/index-DM7jbCo2.js">
+    <Content Include="StatusUI/assets/index-DJqzH0km.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

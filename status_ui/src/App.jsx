@@ -25,7 +25,8 @@ function App() {
 
   const fetchData = (since) => {
     setFetching(true);
-    const statusUrl = since ? `/status?_since=${since.toISOString()}` : '/status';
+    const baseUrl = '/api/v1';
+    const statusUrl = since ? `${baseUrl}/status?_since=${since.toISOString()}` : `${baseUrl}/status`;
     fetch(statusUrl).then((result) => {
       return result.json();
     }).then((json) => {
