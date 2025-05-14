@@ -108,12 +108,6 @@ namespace messaging
             {
                 endpoints.MapControllers();
             });
-            // Serve the StatusUI static files from the appropriate location
-            app.UseFileServer(new FileServerOptions
-            {
-                FileProvider = new PhysicalFileProvider(Path.Combine(env.ContentRootPath, "StatusUI")),
-                RequestPath = "/StatusUI"
-            });
         }
     }
 }

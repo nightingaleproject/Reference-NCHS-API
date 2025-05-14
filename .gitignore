@@ -7,3 +7,4 @@ appsettings.json
 **.csproj.user
 messaging/logs
 .DS_store
+status_api/Logs
