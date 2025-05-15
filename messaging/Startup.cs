@@ -74,17 +74,9 @@ namespace messaging
                 {
                     feat.MaxRequestBodySize = Int32.Parse(Configuration.GetSection("AppSettings").GetSection("MaxPayloadSize").Value);
                 }
-                // We change the default headers based on whether it's StatusUI or not
-                if (context.Request.Path.StartsWithSegments("/StatusUI"))
-                {
-                    // StatusUI is a small JS app where we want to serve a few files
-                    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self' 'unsafe-inline';");
-                }
-                else
-                {
-                    context.Response.Headers.Add("Content-Type", "application/json");
-                    context.Response.Headers.Add("Content-Security-Policy", "default-src");
-                }
+                context.Response.Headers.Add("Content-Type", "application/json");
+                context.Response.Headers.Add("Content-Security-Policy", "default-src");
+                
                 await next.Invoke();
             });
             if (env.IsDevelopment())
