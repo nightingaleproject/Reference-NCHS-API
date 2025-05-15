@@ -2,7 +2,7 @@
 
 ## Dependencies
  - .NET Core 6.100
- - Docker with 
+ - Docker with MSSQL Server
 
 ## Quick Start
 
