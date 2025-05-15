@@ -45,6 +45,11 @@ try {
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
+    builder.Services.AddMiniProfiler(options => {
+                        options.RouteBasePath = "/profiler";
+                    })
+                    .AddEntityFramework();
+
     // ======================== Configure middleware for HTTP handling ================================
     var app = builder.Build();
 
@@ -63,8 +68,10 @@ try {
         {
             context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline';");
         }
-        // Swagger UI fails strict CSP, so loosen it for Dev only; see: https://github.com/swagger-api/swagger-ui/issues/5817
-        else if( context.Request.Path.StartsWithSegments("/swagger") && app.Environment.IsDevelopment() )
+        // Miniprofiler & Swagger UI fail strict CSP, so loosen it for Dev only
+        // see: https://github.com/swagger-api/swagger-ui/issues/5817
+        else if( (context.Request.Path.StartsWithSegments("/profiler") ||context.Request.Path.StartsWithSegments("/swagger"))
+                  && app.Environment.IsDevelopment() )
         {
             context.Response.Headers.Add("Content-Security-Policy", "Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'");
         }
@@ -83,7 +90,7 @@ try {
         app.UseExceptionHandler("/Error");
         app.UseHsts();
 
-        // GET /results to view profiling results
+        // GET /profiler/results-index for profiling
         app.UseMiniProfiler();
 
         // GET /swagger for Swagger OpenAPI Docs

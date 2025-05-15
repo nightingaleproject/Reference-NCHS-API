@@ -19,7 +19,6 @@ namespace status_api.Controllers
             _settings = settings.Value;
         }
 
-        // GET: /status
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
