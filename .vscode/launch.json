@@ -13,7 +13,7 @@
       "request": "launch",
       "preLaunchTask": "build",
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/messaging/bin/Debug/net5.0/messaging.dll",
+      "program": "${workspaceFolder}/messaging/bin/Debug/net6.0/messaging.dll",
       "requireExactSource": false,
       "args": [],
       "cwd": "${workspaceFolder}/messaging",
