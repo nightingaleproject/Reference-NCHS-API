@@ -873,7 +873,28 @@ namespace messaging.tests
             Assert.Equal(HttpStatusCode.BadRequest, createSubmissionMessage2.StatusCode);
         }
 
-        
+        [Fact]
+        public async void PostWithInvalidFHIRGetsError()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Submit Death Record with a blank string
+            string blankString = FixtureStream("fixtures/json/DeathRecordSubmissionBlankString.json").ReadToEnd();
+            HttpResponseMessage blankStringResponse = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle", blankString);
+            string blankStringBody = await blankStringResponse.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.BadRequest, blankStringResponse.StatusCode);
+            Assert.Contains("The property 'text' has an empty string value", blankStringBody);
+
+            // Submit Death Record with a null value
+            string nullValue = FixtureStream("fixtures/json/DeathRecordSubmissionNullValue.json").ReadToEnd();
+            HttpResponseMessage nullValueResponse = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle", nullValue);
+            string nullValueBody = await nullValueResponse.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.BadRequest, nullValueResponse.StatusCode);
+            Assert.Contains("The property 'text' cannot have just a null value", nullValueBody);
+        }
 
         [Fact]
         public async void PostPreservesLocalTime()

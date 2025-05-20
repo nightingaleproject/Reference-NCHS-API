@@ -30,9 +30,8 @@ Validation for the following URL parameters: `jurisdictionId`
 
 | Error Response Code | Validation Check | Error Message |
 |------|----------------|--------|
-| 400 | if parsing the generic bundle with `BaseMessage.ParseGenericBundle(text.ToString(), true);` throws an error | bad request: Failed to parse bundle. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
-| 400 | if parsing a generic message with `BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);` throws an error | bad request: Failed to parse message: {ex.Message}. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
-
+| 400 | if parsing the generic bundle with `JObject bundle = JsonConvert.DeserializeObject<JObject>(text.ToString());` throws an error | bad request: Failed to parse bundle. Please verify that it is consistent with the current Vital Records Messaging FHIR Implementation Guide. |
+| 400 | if parsing a generic message with `CommonMessage.ParseGenericBundle(resource.ToString());` throws an error | bad request: The message is not valid. {ex.Message} |
 
 ## Message Header Field Validation
 Validates the required message headers are provided: `MessageSource`, `MessageDestination`, `MessageId`, `EventType`, `CertNo` 
