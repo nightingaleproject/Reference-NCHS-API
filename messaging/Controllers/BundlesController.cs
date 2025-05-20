@@ -52,6 +52,8 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
         {
+            bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && deathYear == null);
+
             if (_count == 0)
             {
                 _count = _settings.PageCount;
@@ -91,7 +93,6 @@ namespace messaging.Controllers
                     break;
             }
 
-            bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && deathYear == null);
             // Retrieving unread messages changes the result set (as they get marked read), so we don't REALLY support paging
             if (!additionalParamsProvided && page > 1)
             {
@@ -181,11 +182,17 @@ namespace messaging.Controllers
                         responseBundle.NextLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
                     }
                 }
+
                 var messages = await System.Threading.Tasks.Task.WhenAll(messageTasks);
-                DateTime retrievedTime = DateTime.UtcNow;
-                // update each outgoing message's RetrievedAt field
-                foreach(OutgoingMessageItem msgItem in outgoingMessages) {
-                    MarkAsRetrieved(msgItem, retrievedTime);
+
+                // If no additional params were included in the request, update each outgoing message's RetrievedAt field
+                if (!additionalParamsProvided)
+                {
+                    DateTime retrievedTime = DateTime.UtcNow;
+                    foreach (OutgoingMessageItem msgItem in outgoingMessages)
+                    {
+                        MarkAsRetrieved(msgItem, retrievedTime);
+                    }
                 }
 
                 // Add messages to the bundle
