@@ -52,9 +52,14 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string deathYear, DateTime _since = default(DateTime), int page = 1)
+        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string eventYear, string deathYear, DateTime _since = default(DateTime), int page = 1)
         {
-            bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && deathYear == null);
+            if (eventYear == null && deathYear != null)
+            {
+                eventYear = deathYear; // Only if eventYear wasn't specified
+            }
+
+            bool additionalParamsProvided = !(_since == default(DateTime) && certificateNumber == null && eventYear == null);
 
             if (_count == 0)
             {
@@ -99,10 +104,10 @@ namespace messaging.Controllers
             if (!additionalParamsProvided && page > 1)
             {
                 _logger.LogError("Rejecting request with a page number but no _since parameter.");
-                return BadRequest("Pagination does not support specifying a page without either a _since, certificateNumber, or deathYear parameter");
+                return BadRequest("Pagination does not support specifying a page without either a _since, certificateNumber, or eventYear/deathYear parameter");
             }
-            _logger.LogDebug($"Provided params: {certificateNumber}, {deathYear}, {_since}");
-            
+            _logger.LogDebug($"Provided params: {certificateNumber}, {eventYear}, {_since}");
+
             RouteValueDictionary searchParamValues = new()
             {
                 { "jurisdictionId", jurisdictionId },
@@ -113,8 +118,10 @@ namespace messaging.Controllers
                 certificateNumber = certificateNumber.PadLeft(6, '0');
                 searchParamValues.Add("certificateNumber", certificateNumber);
             }
-            if (deathYear != null) {
-                searchParamValues.Add("deathYear", deathYear);
+
+            if (eventYear != null)
+            {
+                searchParamValues.Add("eventYear", eventYear);
             }
 
             // Query for outgoing messages of the requested type by jurisdiction ID. Filter by IG version. Optionally filter by certificate number and death year if those parameters are provided.
@@ -122,7 +129,7 @@ namespace messaging.Controllers
                     && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType))
                     && igVersion.Equals(message.IGVersion)
                     && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
-                    && (deathYear == null || message.EventYear == int.Parse(deathYear)));
+                    && (eventYear == null || message.EventYear == int.Parse(eventYear)));
 
             try
             {
