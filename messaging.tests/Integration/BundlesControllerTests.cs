@@ -88,6 +88,45 @@ namespace messaging.tests
         }
 
         [Fact]
+        public async System.Threading.Tasks.Task GetWithParamsDoesNotMarkAsRetrieved()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new Death Record
+            DeathRecordSubmissionMessage recordSubmission = BaseMessage.Parse<DeathRecordSubmissionMessage>(FixtureStream("fixtures/json/DeathRecordSubmissionMessage.json"));
+
+            // Set missing required fields
+            recordSubmission.MessageSource = "http://example.fhir.org";
+            recordSubmission.CertNo = 1;
+
+            // Submit that Death Record
+            HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/NY/Bundle/VRDR/VRDR_STU3_0", recordSubmission.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
+
+            // Perform a GET with one parameter
+            HttpResponseMessage someParams = await _client.GetAsync("/NY/Bundle/VRDR/VRDR_STU3_0?deathYear=2018");
+            Hl7.Fhir.Model.Bundle someParamsBundle = await JsonResponseHelpers.ParseBundleAsync(someParams);
+            Assert.Single(someParamsBundle.Entry);
+
+            // Perform a GET with all parameters
+            string since = default(DateTime).ToString("yyyy-MM-ddTHH:mm:ss.fffffff");
+            HttpResponseMessage allParams = await _client.GetAsync("/NY/Bundle/VRDR/VRDR_STU3_0?deathYear=2018&certificateNumber=" + recordSubmission.CertNo + "&_since=" + since);
+            Hl7.Fhir.Model.Bundle allParamsBundle = await JsonResponseHelpers.ParseBundleAsync(allParams);
+            Assert.Single(allParamsBundle.Entry);
+
+            // Perform a GET with no parameters; previous GETs should not have marked as retrieved
+            HttpResponseMessage noParamsFirst = await _client.GetAsync("/NY/Bundle/VRDR/VRDR_STU3_0");
+            Hl7.Fhir.Model.Bundle noParamsFirstBundle = await JsonResponseHelpers.ParseBundleAsync(noParamsFirst);
+            Assert.Single(noParamsFirstBundle.Entry);
+
+            // Perform a GET with no parameters; previous GET should have marked as retrieved
+            HttpResponseMessage noParamsSecond = await _client.GetAsync("/NY/Bundle/VRDR/VRDR_STU3_0");
+            Hl7.Fhir.Model.Bundle noParamsSecondBundle = await JsonResponseHelpers.ParseBundleAsync(noParamsSecond);
+            Assert.Empty(noParamsSecondBundle.Entry);
+        }
+
+        [Fact]
         public async System.Threading.Tasks.Task NewBirthSubmissionMessagePostCreatesNewAcknowledgement()
         {
             // Clear any messages in the database for a clean test
