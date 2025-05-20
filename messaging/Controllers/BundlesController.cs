@@ -493,6 +493,8 @@ namespace messaging.Controllers
         {
             try
             {
+                // Parse the message strictly. Any issues (e.g. invalid FHIR) will be reported back up
+                // to the submitter via an ArgumentException.
                 Bundle bundle = CommonMessage.ParseGenericBundle(resource.ToString());
 
                 CommonMessage message;
