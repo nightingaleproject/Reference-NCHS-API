@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Hl7.Fhir.Utility;
 using System.Threading;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace messaging.Controllers
 {
@@ -267,10 +269,18 @@ namespace messaging.Controllers
             Bundle responseBundle = new Bundle();
             try
             {
+                // Parse as generic JSON to figure out if we have a batch or message; we will parse
+                // and validate as actual FHIR when we know what we have. This allows us to enforce
+                // strict parsing for things like batches, as we don't want to reject an entire batch
+                // if a subset of entries are invalid.
+                var parseSettings = new JsonSerializerSettings
+                {
+                    DateParseHandling = DateParseHandling.None // Leave timestamps as-is
+                };
+                JObject bundle = JsonConvert.DeserializeObject<JObject>(text.ToString(), parseSettings);
+                string bundleType = bundle["type"].ToString();
 
-                Bundle bundle = CommonMessage.ParseGenericBundle(text.ToString(), true);
-                // check whether the bundle is a message or a batch
-                if (bundle?.Type == Bundle.BundleType.Batch)
+                if (bundleType == "batch")
                 {
                     responseBundle = new Bundle();
                     responseBundle.Type = Bundle.BundleType.BatchResponse;
@@ -278,23 +288,22 @@ namespace messaging.Controllers
 
                     // For Batch Processing: 
                     // Process each entry as an individual BaseMessage.
-                    // One invalid message should not prevent the successful submission 
-                    // of a separate, valid message in the bundle.
+                    // One invalid message should not prevent the successful submission of a separate, valid message in the bundle.
                     // Capture the each messsage's result in an entry and add to the response bundle.
-                    foreach (var entry in bundle.Entry)
+                    IList<JToken> entries = bundle["entry"].Children().ToList();
+                    foreach (var entry in entries.Select(entry => JsonConvert.SerializeObject(entry["resource"], Formatting.Indented, parseSettings)))
                     {
-                        Bundle.EntryComponent respEntry = await InsertBatchMessage(entry, jurisdictionId, vitalType, igVersion, queue);
+                        Bundle.EntryComponent respEntry = await InsertBatchMessage(jurisdictionId, vitalType, igVersion, entry, queue);
                         responseBundle.Entry.Add(respEntry);
                     }
                     return responseBundle;
                 }
                 else
                 {
-
                     IncomingMessageItem item;
                     try
                     {
-                        item = ParseIncomingMessageItem(jurisdictionId, vitalType, igVersion, bundle);
+                        item = ParseIncomingMessageItem(jurisdictionId, vitalType, igVersion, JsonConvert.SerializeObject(bundle, Formatting.Indented, parseSettings));
                         // Send a special message for extraction errors to report the error manually
                         if (item.MessageType == nameof(ExtractionErrorMessage))
                         {
@@ -325,8 +334,8 @@ namespace messaging.Controllers
                     }
                     catch (ArgumentException aEx)
                     {
-                        _logger.LogDebug($"Rejecting message with missing required field: {aEx}");
-                        return BadRequest($"Message was missing required field: {aEx.Message}");
+                        _logger.LogDebug($"Rejecting invalid message: {aEx}");
+                        return BadRequest($"The message is not valid. {aEx.Message}");
                     }
                     catch (Exception ex)
                     {
@@ -386,17 +395,13 @@ namespace messaging.Controllers
         // InsertBatchMessage handles a single message in a batch upload submission
         // Each message is handled independent of the other messages. A status code is generated for
         // each message and is returned in the response bundle
-        private async Task<Bundle.EntryComponent> InsertBatchMessage(Bundle.EntryComponent msgBundle, string jurisdictionId, string vitalType, string igVersion, IBackgroundTaskQueue queue)
+        private async Task<Bundle.EntryComponent> InsertBatchMessage(string jurisdictionId, string vitalType, string igVersion, object resource, IBackgroundTaskQueue queue)
         {
             Bundle.EntryComponent entry = new Bundle.EntryComponent();
             IncomingMessageItem item;
-
             try
             {
-                //BaseMessage message = BaseMessage.Parse<BaseMessage>((Hl7.Fhir.Model.Bundle)msgBundle.Resource);
-                // get the bundle in the bundle
-                Bundle bundle = (Hl7.Fhir.Model.Bundle)msgBundle.Resource;
-                item = ParseIncomingMessageItem(jurisdictionId, vitalType, igVersion, bundle);
+                item = ParseIncomingMessageItem(jurisdictionId, vitalType, igVersion, resource);
                 if (item.MessageType == "ExtractionErrorMessage")
                 {
                     _logger.LogDebug($"Error: Unsupported message type vrdr_extraction_error found");
@@ -435,7 +440,7 @@ namespace messaging.Controllers
                 _logger.LogDebug($"An exception occurred while parsing the incoming message: {aEx}");
                 entry.Response = new Bundle.ResponseComponent();
                 entry.Response.Status = "400";
-                entry.Response.Outcome = OperationOutcome.ForMessage($"Message was missing required field. {aEx.Message}.", OperationOutcome.IssueType.Exception);
+                entry.Response.Outcome = OperationOutcome.ForMessage($"The message is not valid. {aEx.Message}", OperationOutcome.IssueType.Exception);
                 return entry;
             }
             catch (Exception ex)
@@ -467,7 +472,7 @@ namespace messaging.Controllers
         }
 
         /// <summary>
-        /// Get the value to use for the message Source (default is SAM). ALlows override by STEVE endpoint.
+        /// Get the value to use for the message Source (default is SAM). Allows override by STEVE endpoint.
         /// </summary>
         /// <returns></returns>
         protected virtual string GetMessageSource()
@@ -476,7 +481,7 @@ namespace messaging.Controllers
         }
 
         /// <summary>
-        /// Get the value to use for the message Next Link for pagination (default is SAM). ALlows override by STEVE endpoint.
+        /// Get the value to use for the message Next Link for pagination (default is SAM). Allows override by STEVE endpoint.
         /// </summary>
         /// <returns></returns>
         protected virtual string GetNextUri()
@@ -484,10 +489,12 @@ namespace messaging.Controllers
             return (_settings.SAMS);
         }
 
-        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, string igVersion, Bundle bundle)
+        protected IncomingMessageItem ParseIncomingMessageItem(string jurisdictionId, string vitalType, string igVersion, object resource)
         {
             try
             {
+                Bundle bundle = CommonMessage.ParseGenericBundle(resource.ToString());
+
                 CommonMessage message;
                 vitalType = vitalType?.ToUpper();
                 if (_settings.BirthEnabled && !String.IsNullOrEmpty(vitalType) && vitalType.Equals("BFDR-BIRTH"))
