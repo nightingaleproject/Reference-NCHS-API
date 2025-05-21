@@ -50,6 +50,15 @@ try {
                     })
                     .AddEntityFramework();
 
+    // XXX DEBUG
+    // Print all configuration key-value pairs
+    Console.WriteLine("Application Configuration:");
+    var configuration = builder.Configuration;
+    foreach (var kvp in configuration.AsEnumerable())
+    {
+        Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+    }
+
     // ======================== Configure middleware for HTTP handling ================================
     var app = builder.Build();
 
