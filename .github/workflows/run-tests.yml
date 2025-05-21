@@ -25,10 +25,16 @@ jobs:
         dotnet-version: '6.0.100'
     - name: Install dependencies
       run: dotnet restore
+    - name: Build projects
+      run: |
+        ASPDOTNETCORE_ENVIRONMENT=Test dotnet build messaging
+        ASPDOTNETCORE_ENVIRONMENT=Test dotnet build messaging.tests
+        ASPDOTNETCORE_ENVIRONMENT=Test dotnet build status_api
+        ASPDOTNETCORE_ENVIRONMENT=Test dotnet build status_api.tests
     - name: Run database migrations
       run: |
         dotnet tool install --global dotnet-ef --version 7.0.0
-        dotnet ef database update --project messaging
-        dotnet ef database update --project status_api -- --environment Test
+        dotnet ef database update --project messaging --no-build
+        dotnet ef database update --project status_api --no-build -- --environment Test
     - name: Test
-      run: dotnet test --no-restore
+      run: dotnet test --no-build
