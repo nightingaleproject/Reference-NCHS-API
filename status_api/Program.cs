@@ -11,8 +11,10 @@ Log.Logger = new LoggerConfiguration()
                 .CreateLogger();
 
 Log.Information("Booting status_api and StatusUI");
+Console.WriteLine("DEBUGGING 1");
 
 try {
+    Console.WriteLine("DEBUGGING 2");
     var env = builder.Environment;
 
     // builder automatically loads config from appsettings.<Environment>.json and appsettings.json. See for details:
@@ -121,6 +123,8 @@ try {
 }
 catch (Exception ex)
 {
+    Console.WriteLine("DEBUGGING 4");
+
     // Handles .NET 6 logging bug: https://github.com/dotnet/runtime/issues/60600
     // Also see: https://stackoverflow.com/a/70256808
     string type = ex.GetType().Name;
@@ -130,11 +134,16 @@ catch (Exception ex)
     }
 
     Log.Fatal(ex, "Unhandled exception");
+    Console.WriteLine("DEBUGGING 5");
+    Console.WriteLine(ex);
 }
 finally
 {
+    Console.WriteLine("DEBUGGING 6");
     Log.CloseAndFlush();
 }
+
+Console.WriteLine("DEBUGGING 7");
 
 // Required for tests:
 public partial class Program { }
