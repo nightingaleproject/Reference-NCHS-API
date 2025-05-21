@@ -112,7 +112,15 @@ try {
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Application terminated unexpectedly");
+    // Handles .NET 6 logging bug: https://github.com/dotnet/runtime/issues/60600
+    // Also see: https://stackoverflow.com/a/70256808
+    string type = ex.GetType().Name;
+    if (type.Equals("StopTheHostException", StringComparison.Ordinal))
+    {
+      throw;
+    }
+
+    Log.Fatal(ex, "Unhandled exception");
 }
 finally
 {
