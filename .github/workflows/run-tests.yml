@@ -27,6 +27,7 @@ jobs:
       run: dotnet restore
     - name: Run database migrations
       run: |
+        dotnet tool install --global dotnet-ef --version 6.*
         dotnet ef database update --project messaging
         dotnet ef database update --project status_api -- --environment Test
     - name: Test
