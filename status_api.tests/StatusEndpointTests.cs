@@ -27,7 +27,6 @@ public class StatusEndpointTests :
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    /*
     [Fact]
     public async Task Get_StatusUIIndex_ReturnsOkResult()
     {
@@ -37,5 +36,4 @@ public class StatusEndpointTests :
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/html", response.Content.Headers?.ContentType?.MediaType);
     }
-    */
 }
