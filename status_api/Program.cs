@@ -4,7 +4,10 @@ using Serilog;
 using messaging.Models;
 using status_api;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args)
+                            .ConfigureAppConfiguration(
+                                
+                            );
 
 Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(builder.Configuration)
