@@ -28,10 +28,10 @@ jobs:
     - name: Build projects
       run: |
         ASPNETCORE_ENVIRONMENT=Test dotnet build
-    - name: Run database migrations
-      run: |
-        dotnet tool install --global dotnet-ef --version 7.0.0
-        dotnet ef database update --project messaging --no-build
-        dotnet ef database update --project status_api --no-build -- --environment Test
+    # - name: Run database migrations
+    #   run: |
+    #     dotnet tool install --global dotnet-ef --version 7.0.0
+    #     dotnet ef database update --project messaging --no-build
+    #     dotnet ef database update --project status_api --no-build -- --environment Test
     - name: Test
       run: dotnet test --no-build
