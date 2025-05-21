@@ -27,7 +27,7 @@ jobs:
       run: dotnet restore
     - name: Build projects
       run: |
-        ASPDOTNETCORE_ENVIRONMENT=Test dotnet build
+        ASPNETCORE_ENVIRONMENT=Test dotnet build
     - name: Run database migrations
       run: |
         dotnet tool install --global dotnet-ef --version 7.0.0
