@@ -21,7 +21,17 @@ jobs:
     - uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.100'
     - name: Install dependencies
       run: dotnet restore
+    - name: Build projects
+      run: |
+        ASPNETCORE_ENVIRONMENT=Test dotnet build
+    # - name: Run database migrations
+    #   run: |
+    #     dotnet tool install --global dotnet-ef --version 7.0.0
+    #     dotnet ef database update --project messaging --no-build
+    #     dotnet ef database update --project status_api --no-build -- --environment Test
     - name: Test
-      run: dotnet test
+      run: dotnet test --no-build

@@ -1,0 +1,150 @@
+using Microsoft.Extensions.FileProviders;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
+using messaging.Models;
+using status_api;
+
+var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Configuration)
+                .CreateLogger();
+
+Log.Information("Booting status_api and StatusUI");
+Console.WriteLine("DEBUGGING 1");
+
+try {
+    Console.WriteLine("DEBUGGING 2");
+    var env = builder.Environment;
+
+    // builder automatically loads config from appsettings.<Environment>.json and appsettings.json. See for details:
+    // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
+
+    // Fetch MSSQL DB from config ConnectionStrings' NVSSMessagingDatabase
+    var connectionString =
+        builder.Configuration.GetConnectionString("NVSSMessagingDatabase")
+            ?? throw new InvalidOperationException("Connection string 'NVSSMessagingDatabase' not found.");
+
+    builder.Host.UseSerilog(Log.Logger);
+
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseSqlServer(connectionString);
+    });
+
+    // Use options pattern to bind configuration
+    // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
+    builder.Services.Configure<AppSettings>(
+        builder.Configuration.GetSection("AppSettings")
+    );
+
+    builder.Services.AddMemoryCache();
+
+    builder.Services.AddControllers();
+
+    // Use Swagger/OpenAPI
+    // https://aka.ms/aspnetcore/swashbuckle
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+
+    builder.Services.AddMiniProfiler(options => {
+                        options.RouteBasePath = "/profiler";
+                    })
+                    .AddEntityFramework();
+
+    // XXX DEBUG
+    // Print all configuration key-value pairs
+    Console.WriteLine("Application Configuration:");
+    var configuration = builder.Configuration;
+    foreach (var kvp in configuration.AsEnumerable())
+    {
+        Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+    }
+
+    // ======================== Configure middleware for HTTP handling ================================
+    var app = builder.Build();
+
+    app.UseHttpLogging();
+    app.UseHttpsRedirection();
+
+    // Harden HTTP Headers for security
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
+        context.Response.Headers.Add("Cache-Control", "no-store");
+
+        // The StatusUI React app requires its own CSP headers
+        if (context.Request.Path.StartsWithSegments("/StatusUI"))
+        {
+            context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline';");
+        }
+        // Miniprofiler & Swagger UI fail strict CSP, so loosen it for Dev only
+        // see: https://github.com/swagger-api/swagger-ui/issues/5817
+        else if( (context.Request.Path.StartsWithSegments("/profiler") ||context.Request.Path.StartsWithSegments("/swagger"))
+                  && app.Environment.IsDevelopment() )
+        {
+            context.Response.Headers.Add("Content-Security-Policy", "Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'");
+        }
+        else
+        {
+            context.Response.Headers.Add("Content-Type", "application/json");
+            context.Response.Headers.Add("Content-Security-Policy", "default-src");
+        }
+
+        await next.Invoke();
+    });
+
+    if (app.Environment.IsDevelopment())
+    {
+        // GET /Error
+        app.UseExceptionHandler("/Error");
+        app.UseHsts();
+
+        // GET /profiler/results-index for profiling
+        app.UseMiniProfiler();
+
+        // GET /swagger for Swagger OpenAPI Docs
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseAuthorization();
+    app.MapControllers();
+
+    // GET /StatusUI/index.html renders StatusUI react app from `npm run build`
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "StatusUI")),
+        RequestPath = "/StatusUI"
+    });
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    Console.WriteLine("DEBUGGING 4");
+
+    // Handles .NET 6 logging bug: https://github.com/dotnet/runtime/issues/60600
+    // Also see: https://stackoverflow.com/a/70256808
+    string type = ex.GetType().Name;
+    if (type.Equals("StopTheHostException", StringComparison.Ordinal))
+    {
+      throw;
+    }
+
+    Log.Fatal(ex, "Unhandled exception");
+    Console.WriteLine("DEBUGGING 5");
+    Console.WriteLine(ex);
+}
+finally
+{
+    Console.WriteLine("DEBUGGING 6");
+    Log.CloseAndFlush();
+}
+
+Console.WriteLine("DEBUGGING 7");
+
+// Required for tests:
+public partial class Program { }
+
