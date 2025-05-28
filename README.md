@@ -84,6 +84,8 @@ GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=yyyy-MM-ddTHH:mm:ss.f
 
 Providing any of these three search parameters may result in multiple pages of results. To make sure you retrieve all of the pages in the HTTP response, you will need to use pagination. See pagination section for details.
 
+If any of these parameters are included in a request, the results that are returned will not be marked as retrieved.
+
 #### NCHS API GET Request message types
 The API supports GET requests to retrieve responses from NCHS, including:
 
