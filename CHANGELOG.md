@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.6.1 - 2025-05-28
+* Fix bug that was filtering out TRX messages from GET responses
+
 ### v1.6.0 - 2025-05-14
 * Add configs to enable Birth and FetalDeath separately
 * Send autoacknowledgements for FetalDeath submissions, this is a temporary feature for the June 2025 test event

@@ -77,17 +77,20 @@ namespace messaging.Controllers
                 return br;
             }
 
-            string recordType = "";
+            string recordType = ""; // can be NAT, FET, or MOR
+            string medicalCodingType = ""; // can be MED (for mortality cause of death), or CFD (for fetal cause of death)
             switch (vitalType.ToUpper())
             {
                 case "VRDR":
                     recordType = "MOR";
+                    medicalCodingType = "MED";
                     break;
                 case "BFDR-BIRTH":
                     recordType = "NAT";
                     break;
                 case "BFDR-FETALDEATH":
                     recordType = "FET";
+                    medicalCodingType = "CFD"; // TODO confirm with Veronique that this will be CFD
                     break;
             }
 
@@ -116,7 +119,7 @@ namespace messaging.Controllers
 
             // Query for outgoing messages of the requested type by jurisdiction ID. Filter by IG version. Optionally filter by certificate number and death year if those parameters are provided.
             IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
-                    && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType))
+                    && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType) || message.EventType.Equals(medicalCodingType))
                     && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
                     && (deathYear == null || message.EventYear == int.Parse(deathYear)));
 
