@@ -444,6 +444,78 @@ namespace messaging.tests
         }
 
         [Fact]
+        public async System.Threading.Tasks.Task QueryByDeathYearAndEventYear()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Create a new empty Death Record
+            DeathRecordSubmissionMessage drSub = new(new DeathRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 123,
+                DeathYear = 2020,
+                JurisdictionId = "ND"
+            };
+
+            // Submit that Death Record
+            HttpResponseMessage drSubResp = await JsonResponseHelpers.PostJsonAsync(_client, "/" + drSub.JurisdictionId + "/Bundle/VRDR/VRDR_STU3_0", drSub.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, drSubResp.StatusCode);
+            await System.Threading.Tasks.Task.Delay(1000);
+
+            // Query Death Record by deathYear
+            HttpResponseMessage vrdrByDeathYear = await _client.GetAsync("/" + drSub.JurisdictionId + "/Bundle/VRDR/VRDR_STU3_0?deathYear=" + drSub.DeathYear);
+            Bundle vrdrDeathYearBundle = await JsonResponseHelpers.ParseBundleAsync(vrdrByDeathYear);
+            Assert.Single(vrdrDeathYearBundle.Entry);
+
+            // Query Death Record by eventYear
+            HttpResponseMessage vrdrByEventYear = await _client.GetAsync("/" + drSub.JurisdictionId + "/Bundle/VRDR/VRDR_STU3_0?eventYear=" + drSub.DeathYear);
+            Bundle vrdrByEventYearBundle = await JsonResponseHelpers.ParseBundleAsync(vrdrByEventYear);
+            Assert.Single(vrdrByEventYearBundle.Entry);
+
+            // Create a new empty Fetal Death Record
+            FetalDeathRecordSubmissionMessage fdrSub = new(new FetalDeathRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 123,
+                EventYear = 2020,
+                JurisdictionId = "ND"
+            };
+
+            // Submit that Fetal Death Record
+            HttpResponseMessage fdrSubResp = await JsonResponseHelpers.PostJsonAsync(_client, "/" + fdrSub.JurisdictionId + "/Bundle/BFDR-FETALDEATH/BFDR_STU2_0", fdrSub.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, fdrSubResp.StatusCode);
+            await System.Threading.Tasks.Task.Delay(1000);
+
+            // Query Fetal Death Record by eventYear
+            HttpResponseMessage fdrByEventYear = await _client.GetAsync("/" + fdrSub.JurisdictionId + "/Bundle/BFDR-FETALDEATH/BFDR_STU2_0?eventYear=" + fdrSub.EventYear);
+            Bundle fdrByEventYearBundle = await JsonResponseHelpers.ParseBundleAsync(fdrByEventYear);
+            Assert.Single(fdrByEventYearBundle.Entry);
+
+            // Create a new empty Birth Record
+            BirthRecordSubmissionMessage brSub = new(new BirthRecord())
+            {
+                // Set missing required fields
+                MessageSource = "http://example.fhir.org",
+                CertNo = 123,
+                EventYear = 2020,
+                JurisdictionId = "ND"
+            };
+
+            // Submit that Birth Record
+            HttpResponseMessage brSubResp = await JsonResponseHelpers.PostJsonAsync(_client, "/" + brSub.JurisdictionId + "/Bundle/BFDR-BIRTH/BFDR_STU2_0", brSub.ToJson());
+            Assert.Equal(HttpStatusCode.NoContent, brSubResp.StatusCode);
+            await System.Threading.Tasks.Task.Delay(1000);
+
+            // Query Birth Record by eventYear
+            HttpResponseMessage brByEventYear = await _client.GetAsync("/" + brSub.JurisdictionId + "/Bundle/BFDR-BIRTH/BFDR_STU2_0?eventYear=" + brSub.EventYear);
+            Bundle brByEventYearBundle = await JsonResponseHelpers.ParseBundleAsync(brByEventYear);
+            Assert.Single(brByEventYearBundle.Entry);
+        }
+
+        [Fact]
         public async System.Threading.Tasks.Task UnparsableMessagesCauseAnError() {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);

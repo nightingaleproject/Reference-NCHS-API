@@ -54,6 +54,13 @@
             }
           },
           {
+            "name": "eventYear",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "deathYear",
             "in": "query",
             "schema": {
@@ -211,6 +218,13 @@
             }
           },
           {
+            "name": "eventYear",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "deathYear",
             "in": "query",
             "schema": {
@@ -362,6 +376,13 @@
           },
           {
             "name": "certificateNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventYear",
             "in": "query",
             "schema": {
               "type": "string"
@@ -548,6 +569,13 @@
             }
           },
           {
+            "name": "eventYear",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "deathYear",
             "in": "query",
             "schema": {
@@ -705,6 +733,13 @@
             }
           },
           {
+            "name": "eventYear",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "deathYear",
             "in": "query",
             "schema": {
@@ -856,6 +891,13 @@
           },
           {
             "name": "certificateNumber",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventYear",
             "in": "query",
             "schema": {
               "type": "string"

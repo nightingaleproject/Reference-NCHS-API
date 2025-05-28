@@ -35,6 +35,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: eventYear
+          in: query
+          schema:
+            type: string
         - name: deathYear
           in: query
           schema:
@@ -135,6 +139,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: eventYear
+          in: query
+          schema:
+            type: string
         - name: deathYear
           in: query
           schema:
@@ -232,6 +240,10 @@ paths:
             type: integer
             format: int32
         - name: certificateNumber
+          in: query
+          schema:
+            type: string
+        - name: eventYear
           in: query
           schema:
             type: string
@@ -349,6 +361,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: eventYear
+          in: query
+          schema:
+            type: string
         - name: deathYear
           in: query
           schema:
@@ -449,6 +465,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: eventYear
+          in: query
+          schema:
+            type: string
         - name: deathYear
           in: query
           schema:
@@ -546,6 +566,10 @@ paths:
             type: integer
             format: int32
         - name: certificateNumber
+          in: query
+          schema:
+            type: string
+        - name: eventYear
           in: query
           schema:
             type: string
