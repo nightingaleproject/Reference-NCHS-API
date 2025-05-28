@@ -73,18 +73,35 @@ which returns any message response that has not been retrieved yet
 
 #### Optional Test Receive Responses GET Parameters
 
-There are 3 optional parameters that can be included in a GET request to this endpoint. They are `_since`, `certificateNumber`, and `deathYear`
+There are 3 optional parameters that can be included in a GET request to this endpoint. These can be useful for seeing the message response history for a particular record and verifying you successfully retrieved all messages during your testing.
 
-`_since` is to retrieve all response messages since a given timestamp. It is useful for seeing ALL message responses created in a specific time window.  
+Providing any of these three search parameters may result in multiple pages of results. To make sure you retrieve all of the pages in the HTTP response, you will need to use pagination. See pagination section for details. Currently, these test parameters are only supported by the backup endpoint. If any of these parameters are included in a request, the results that are returned will not be marked as retrieved.
+
+##### `_since`
+
+`_since` will retrieve all response messages since a given timestamp. It is useful for seeing ALL message responses created in a specific time window.
+
+The timestamp should be in the following format: `yyyy-MM-ddTHH:mm:ss.fffffff`.
+
 ```
-GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=yyyy-MM-ddTHH:mm:ss.fffffff
+GET https://localhost:5001/<jurisdiction-id>/Bundle?_since=1970-01-01T00:00:00.0000000
 ```
 
-`deathYear` and `certificateNumber` can be used together or seperately to retrieve all message responses for the given set of business ids. It is useful for seeing the message response history for a particular record and verifying you successfully retrieved all messages during your testing. Currently, these test parameters are only supported by the backup endpoint.
+##### `certificateNumber`
 
-Providing any of these three search parameters may result in multiple pages of results. To make sure you retrieve all of the pages in the HTTP response, you will need to use pagination. See pagination section for details.
+`certificateNumber` will retrieve all response messages that match the given number.
 
-If any of these parameters are included in a request, the results that are returned will not be marked as retrieved.
+```
+GET https://localhost:5001/<jurisdiction-id>/Bundle?certificateNumber=123456
+```
+
+##### `eventYear`
+
+`eventYear` will retrieve all response messages that match the given event year (e.g. for death records this is the death year).
+
+```
+GET https://localhost:5001/<jurisdiction-id>/Bundle?eventYear=2018
+```
 
 #### NCHS API GET Request message types
 The API supports GET requests to retrieve responses from NCHS, including:
