@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- status_api.appsettings*.json files are included by default -->
     <Content Include="StatusUI/index.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
