@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.TestHost;
+
 namespace status_api.tests;
 
 public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFactory<TProgram> where TProgram : class
@@ -6,8 +8,12 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureAppConfiguration((context, builder) => {
-            builder.AddJsonFile("appsettings.Test.json");
+        Console.WriteLine("DEBUGGING - status_api.tests/...WebApplicationFactory - start of ConfigureWebHost");
+
+        builder.ConfigureAppConfiguration((context, builder) =>
+        {
+            builder.AddJsonFile("status_api.appsettings.json");
+            builder.AddJsonFile("status_api.appsettings.Test.json");
         });
 
         builder.UseEnvironment("Test");
@@ -25,5 +31,7 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
                 db.Database.EnsureCreated();
             }
         });
+
+        Console.WriteLine("DEBUGGING - status_api.tests/...WebApplicationFactory - end of ConfigureWebHost");
     }
 }
