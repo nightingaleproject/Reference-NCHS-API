@@ -2,9 +2,6 @@
   "AppSettings": {
     "Environment": "Development"
   },
-  "Serilog": {
-    "MinimumLevel": "Debug"
-  },
   "ConnectionStrings": {
     "NVSSMessagingDatabase": "Server=localhost;Database=nvssmessaging;User=sa;Password=yourStrong(!)Password;"
   }
