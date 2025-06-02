@@ -16,41 +16,20 @@ namespace status_api
             });
 
             try {
-                Console.WriteLine("DEBUGGING - status_api/Program.cs - start of try block");
-
                 var env = builder.Environment.EnvironmentName;
-                Console.WriteLine("DEBUGGING - status_api/Program.cs - ENV: " + env);
 
                 builder.Configuration
                         .AddJsonFile($"status_api.appsettings.json")
                         .AddJsonFile($"status_api.appsettings.{env}.json");
 
-                // if (Environment.GetEnvironmentVariable("CI")?.Equals("true", StringComparison.OrdinalIgnoreCase) ?? false)
-                // {
-                //     builder.Environment.EnvironmentName = "Test";
-                // }
-
-                // builder automatically loads config from appsettings.<Environment>.json and appsettings.json. See for details:
-                // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources
                 if (builder.Configuration == null)
                 {
                     throw new InvalidOperationException("Configuration is null");
                 }
 
-                // XXX DEBUG
-                // Print all configuration key-value pairs
-                Console.WriteLine("Application Configuration:");
-                var configuration = builder.Configuration;
-                foreach (var kvp in configuration.AsEnumerable())
-                {
-                    Console.WriteLine($"\t{kvp.Key}: {kvp.Value}");
-                }
-
                 Log.Logger = new LoggerConfiguration()
                                 .ReadFrom.Configuration(builder.Configuration)
                                 .CreateLogger();
-                Log.Information("Initialized Logger !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                Log.Fatal("Initialized Logger @@@@@@@@@@@@@@@@@@@@@@");
 
                 // Fetch MSSQL DB from config ConnectionStrings' NVSSMessagingDatabase
                 var connectionString =
@@ -146,8 +125,6 @@ namespace status_api
             }
             catch (Exception ex)
             {
-                Console.WriteLine("status_api/Program.cs - catch block start");
-
                 // Handles .NET 6 logging bug: https://github.com/dotnet/runtime/issues/60600
                 // Also see: https://stackoverflow.com/a/70256808
                 string type = ex.GetType().Name;
@@ -157,21 +134,11 @@ namespace status_api
                 }
 
                 Log.Fatal(ex, "Unhandled exception");
-                Console.WriteLine("DEBUGGING - status_api/Program.cs - catch block end");
-                Console.WriteLine(ex);
             }
             finally
             {
-                Console.WriteLine("DEBUGGING - status_api/Program.cs - finally block");
                 Log.CloseAndFlush();
             }
-
-            Console.WriteLine("DEBUGGING - status_api/Program.cs - near end of file");
         }
     }
 }
-
-
-// Required for tests:
-// public partial class Program { }
-
