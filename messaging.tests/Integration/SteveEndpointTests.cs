@@ -210,7 +210,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostWithInvalidJurisdictionGetsError()
+        public async System.Threading.Tasks.Task PostWithInvalidJurisdictionGetsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -227,7 +227,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void GetWithInvalidJurisdictionGetsError()
+        public async System.Threading.Tasks.Task GetWithInvalidJurisdictionGetsError()
         {
             string badJurisdiction = "AB";
             Assert.False(VR.IJEData.Instance.JurisdictionCodes.ContainsKey(badJurisdiction));
@@ -238,7 +238,7 @@ namespace messaging.tests
 
 
         [Fact]
-        public async void PostWithNonMatchingJurisdictionsError()
+        public async System.Threading.Tasks.Task PostWithNonMatchingJurisdictionsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -255,7 +255,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostBatchWithNonMatchingJurisdictionsError()
+        public async System.Threading.Tasks.Task PostBatchWithNonMatchingJurisdictionsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);

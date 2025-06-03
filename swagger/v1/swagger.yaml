@@ -328,7 +328,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Success
+          description: OK
   '/STEVE/{jurisdictionId}/Bundle':
     get:
       tags:
@@ -654,5 +654,5 @@ paths:
             type: string
       responses:
         '200':
-          description: Success
+          description: OK
 components: { }
