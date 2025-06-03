@@ -1,0 +1,8 @@
+{
+  "AppSettings": {
+    "Environment": "Development"
+  },
+  "ConnectionStrings": {
+    "NVSSMessagingDatabase": "Server=localhost;Database=nvssmessaging;User=sa;Password=yourStrong(!)Password;"
+  }
+}
