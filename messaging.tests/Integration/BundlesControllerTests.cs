@@ -815,28 +815,28 @@ namespace messaging.tests
         }
         
         [Fact]
-        public async void SpecifyingPageGreaterThanOneRequiresSince()
+        public async System.Threading.Tasks.Task SpecifyingPageGreaterThanOneRequiresSince()
         {
             HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?page=3");
             Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
         }
 
         [Fact]
-        public async void NegativePageInvalid()
+        public async System.Threading.Tasks.Task NegativePageInvalid()
         {
             HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?page=-2");
             Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
         }
 
         [Fact]
-        public async void NegativeCountPerPageInvalid()
+        public async System.Threading.Tasks.Task NegativeCountPerPageInvalid()
         {
             HttpResponseMessage getBundles = await JsonResponseHelpers.GetAsync(_client, "/MA/Bundle?_count=-50");
             Assert.Equal(HttpStatusCode.BadRequest, getBundles.StatusCode);
         }
 
         [Fact]
-        public async void ReturnCorrectNumberOfRecordsWithPagination()
+        public async System.Threading.Tasks.Task ReturnCorrectNumberOfRecordsWithPagination()
         {
         
           // Clear any messages in the database for a clean test
@@ -910,7 +910,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void ReturnCorrectNumberOfRecordsWithPaginationAndSince()
+        public async System.Threading.Tasks.Task ReturnCorrectNumberOfRecordsWithPaginationAndSince()
         {
           // Clear any messages in the database for a clean test
           DatabaseHelper.ResetDatabase(_context);
@@ -961,7 +961,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostWithInvalidJurisdictionGetsError()
+        public async System.Threading.Tasks.Task PostWithInvalidJurisdictionGetsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -985,7 +985,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostWithInvalidFHIRGetsError()
+        public async System.Threading.Tasks.Task PostWithInvalidFHIRGetsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1008,7 +1008,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostPreservesLocalTime()
+        public async System.Threading.Tasks.Task PostPreservesLocalTime()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1028,7 +1028,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostCatchMissingSourceEndpoint()
+        public async System.Threading.Tasks.Task PostCatchMissingSourceEndpoint()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1051,7 +1051,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostCatchMissingDestinationEndpoint()
+        public async System.Threading.Tasks.Task PostCatchMissingDestinationEndpoint()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1078,7 +1078,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostCatchNCHSIsNotDestinationEndpoint()
+        public async System.Threading.Tasks.Task PostCatchNCHSIsNotDestinationEndpoint()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1104,7 +1104,7 @@ namespace messaging.tests
 
 
         [Fact]
-        public async void PostCatchNCHSIsNotDestinationEndpointList()
+        public async System.Threading.Tasks.Task PostCatchNCHSIsNotDestinationEndpointList()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1130,7 +1130,7 @@ namespace messaging.tests
 
 
         [Fact]
-        public async void PostNCHSIsInDestinationEndpointList()
+        public async System.Threading.Tasks.Task PostNCHSIsInDestinationEndpointList()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1157,7 +1157,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostNCHSIsInDestinationEndpointListUppercase()
+        public async System.Threading.Tasks.Task PostNCHSIsInDestinationEndpointListUppercase()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1186,7 +1186,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostCatchMissingId()
+        public async System.Threading.Tasks.Task PostCatchMissingId()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1213,7 +1213,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostCatchMissingEventType()
+        public async System.Threading.Tasks.Task PostCatchMissingEventType()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1240,7 +1240,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostCatchMissingCertNo()
+        public async System.Threading.Tasks.Task PostCatchMissingCertNo()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1263,7 +1263,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostWithNonMatchingJurisdictionsError()
+        public async System.Threading.Tasks.Task PostWithNonMatchingJurisdictionsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1287,7 +1287,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostBatchWithNonMatchingJurisdictionsError()
+        public async System.Threading.Tasks.Task PostBatchWithNonMatchingJurisdictionsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1312,7 +1312,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostCatchInvalidCertNo()
+        public async System.Threading.Tasks.Task PostCatchInvalidCertNo()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1333,7 +1333,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void PostCatchInvalidEventYear()
+        public async System.Threading.Tasks.Task PostCatchInvalidEventYear()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1354,7 +1354,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void GetWithInvalidJurisdictionGetsError()
+        public async System.Threading.Tasks.Task GetWithInvalidJurisdictionGetsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1367,7 +1367,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void GetWithInvalidIGVersionReturnsError()
+        public async System.Threading.Tasks.Task GetWithInvalidIGVersionReturnsError()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
@@ -1392,7 +1392,7 @@ namespace messaging.tests
         }
 
         [Fact]
-        public async void GetWithValidIGVersionReturnsOK()
+        public async System.Threading.Tasks.Task GetWithValidIGVersionReturnsOK()
         {
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
