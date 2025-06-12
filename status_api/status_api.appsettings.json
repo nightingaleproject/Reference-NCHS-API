@@ -1,6 +1,5 @@
 {
   "AppSettings": {
-    "MaxPayloadSize" : 10000000,
     "Environment": "Generic"
   },
   "ConnectionStrings": {
