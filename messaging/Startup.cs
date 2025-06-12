@@ -12,7 +12,7 @@ using System.Reflection;
 using System.IO;
 using System;
 using Microsoft.AspNetCore.Http.Features;
-
+using Microsoft.AspNetCore.Mvc.Formatters;
 
 namespace messaging
 {
@@ -31,18 +31,19 @@ namespace messaging
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
 
             services.AddMemoryCache();
+
             services.AddMiniProfiler(options => options.RouteBasePath = "/profiler").AddEntityFramework();
+
             services.AddDbContext<ApplicationDbContext>(opt =>
                 opt.UseSqlServer(Configuration.GetConnectionString("NVSSMessagingDatabase"))
             );
-            services.AddControllers().AddNewtonsoftJson(
-                options =>
+
+            services.AddControllers()
+                .AddJsonOptions(options =>
                 {
-                    // Instruct Newtonsoft JSON parsing to just handle dates as strings to avoid the "helpful" conversion
-                    // of all DateTimeOffsets into the time zone where the API is running and instead preserve local time
-                    options.SerializerSettings.DateParseHandling = Newtonsoft.Json.DateParseHandling.None;
-                    options.SerializerSettings.Converters.Add(new BundleConverter());
+                    options.JsonSerializerOptions.Converters.Add(new BundleConverter());
                 });
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "NVSSMessaging", Version = "v1"});
@@ -50,6 +51,7 @@ namespace messaging
                 var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
             });
+
             services.AddControllers()
                 .ConfigureApiBehaviorOptions(options =>
                 {
