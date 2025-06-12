@@ -68,13 +68,8 @@ These instructions walk through the steps of installing the FHIR API on a Window
    1. Create a new sql server
    2. On your local machine in the project directory, run  `dotnet ef --project messaging migrations script` to get the full sql script including all migrations
    3. Execute the sql script on the new sql server to initialize the db 
-6. Run the IIS application
-   1. Once the app is configured and the SQL database is running, go to the IIS application and hit "start" in the right side menu
-7. Testing
-   1. Once the API is up and running, test posting a request to the endpoint
-      1. `curl -X POST https://<server-host-name>/MA/Bundle -- header "Content-Type: application/json" --data "@path\to\test\MessageSubmission.json"` 
-8. SQL Authentication
-   1. In the appsettings.json file, add `Integrated Security=SSPI;`
+6. Application Authentication
+   1. In the appsettings.json file, ensure you have `Integrated Security=SSPI;`
    2. In IIS, set the Site authentication to `Anonymous Authentication=Enabled` and `ASP.NET Impersonation=Disabled`
    3. Create a service account with Read/Write permissions for the database, ex `Domain\NVSSMsgAPI_SvcAcct`
    4. Set up impersonation at the Application Identity Pool level 
@@ -87,6 +82,11 @@ These instructions walk through the steps of installing the FHIR API on a Window
    7. Add the account from step 1 to the `Log on as a service` group
    8. Give the account from step 8.3 permissions to access the application folder
    9. Set up HSTS 
+7. Run the IIS application
+   1. Once the app is configured and the SQL database is running, go to the IIS application and hit "start" in the right side menu
+8. Testing
+   1. Once the API is up and running, test posting a request to the endpoint
+      1. `curl -X POST https://<server-host-name>/MA/Bundle -- header "Content-Type: application/json" --data "@path\to\test\MessageSubmission.json"` 
 
 ## Update Deployment Steps
 
@@ -143,3 +143,83 @@ Might get error for dotnet 6 extension when trying to access the server with the
 ## IIS resources
 1. Install .NET Core Hosting Bundle Installer to add dotnet support to IIS https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/iis/?view=aspnetcore-6.0 
 2. Configure the site in IIS https://docs.microsoft.com/en-us/aspnet/core/tutorials/publish-to-iis?view=aspnetcore-6.0&tabs=visual-studio 
+
+
+# Status UI Deployment Steps
+
+The Status UI is a separate .NET web API backend and ReactJS frontend that may be deployed alongside the
+NVSS FHIR API for messaging. The Status UI and NVSS FHIR API must connect to the same Microsoft SQL Server
+database, and should be deployed as separate entities on the IIS with separate FQDNs and separate access
+controls. The Status UI can only be deployed if the NVSS FHIR API is already deployed.
+
+To deploy the Status UI, follow the [NVSS FHIR API Deployment Steps](#NVSS-FHIR-API-Deployment-Steps),
+except replace steps 2 (Build), 5 (Setup the SQL Server), 7 (Test), and 8 (SQL Authentication) with their
+counterparts below:
+
+2. Build the project
+
+   1. Ensure you have a clone the git repo https://github.com/nightingaleproject/Reference-NCHS-API on your local machine
+   2. Checkout the tagged version you want to install
+   3. From the `status_ui/` directory, run `npm ci && npm run build` on your local machine
+   3. From the `status_api/` directory, run `dotnet publish —configuration release` on your local machine
+   4. Copy all files in status_api > bin > release > net6.0
+   5. Paste the files to a **separate** folder on Windows Server
+   6. Create and update all three appsettings and web.config files in the **separate** project folder on Windows Server
+      1. appsettings (update the database server name)
+   ```
+   {
+      "Logging": {
+         "LogLevel": {
+            "Default": "Information",
+            "Microsoft": "Warning",
+            "Microsoft.Hosting.Lifetime": "Information",
+            "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Information"
+         }
+      },
+      "ConnectionStrings": {
+         "NVSSMessagingDatabase": "Server=<db-server-name-here>.cdc.gov;Database=nvssmessaging;Integrated Security=SSPI;"
+      }
+   }
+   ```
+
+**The database ConnectionString is intentionally the same between the Status UI and NVSS FHIR API.**
+
+      2. web.config
+   ```
+   <?xml version="1.0" encoding="utf-8"?>
+   <configuration>
+     <location path="." inheritInChildApplications="false">
+       <system.webServer>
+         <handlers>
+           <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+         </handlers>
+         <aspNetCore processPath="dotnet" arguments=".\status_api.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
+           <environmentVariables>
+            <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="<environment>" />
+            <environmentVariable name="DOTNET_ENVIRONMENT" value="<environment>" />
+           </environmentVariables>
+       </system.webServer>
+     </location>
+   </configuration>
+   ```
+
+Replace `<environment>` with `Development`, `Test`, or `Production` depending on your use case. **Never deploy `Development` or `Test` on an open network.**
+
+5. Setup the SQL Server
+   1. There are no setup steps for the Status UI. The migrations and schema are all defined by the messaging project.
+6. Application Authentication
+   1. In IIS, set the Site authentication to `Anonymous Authentication=Enabled` and `ASP.NET Impersonation=Disabled`
+   2. Create a service account with Read/Write permissions for the database, ex `Domain\StatusUI_SvcAcct`
+   3. Set up impersonation at the Application Identity Pool level
+      1. Go to the pool's advanced settings
+      2. Click the Identity field
+      3. Select custom identity
+      4. Enter the credentials for the account from step 1 into the form
+   4. Add the account from step 1 to the `IIS_IUSRS` group
+   5. Add the account from step 1 to the `Log on as a service` group
+   6. Give the account from step 8.3 permissions to access the application folder
+   7. Set up HSTS
+8. Testing the app
+   1. Ensure there is already FHIR messaging data on the SQL Server, use the NVSS FHIR API to post messages if there is no data.
+   2. Navigate to `<fqdn>/StatusUI/index.html`, where `<fqdn>` is the full domain where the application was deployed.
+
