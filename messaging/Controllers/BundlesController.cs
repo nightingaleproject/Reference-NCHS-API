@@ -1,7 +1,9 @@
 using System;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Text.Json;
 using messaging.Models;
 using messaging.Services;
 using Hl7.Fhir.Model;
@@ -14,9 +16,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Hl7.Fhir.Utility;
-using System.Threading;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
 
 namespace messaging.Controllers
 {
@@ -287,16 +286,8 @@ namespace messaging.Controllers
             Bundle responseBundle = new Bundle();
             try
             {
-                // Parse as generic JSON to figure out if we have a batch or message; we will parse
-                // and validate as actual FHIR when we know what we have. This allows us to enforce
-                // strict parsing for things like batches, as we don't want to reject an entire batch
-                // if a subset of entries are invalid.
-                var parseSettings = new JsonSerializerSettings
-                {
-                    DateParseHandling = DateParseHandling.None // Leave timestamps as-is
-                };
-                JObject bundle = JsonConvert.DeserializeObject<JObject>(text.ToString(), parseSettings);
-                string bundleType = bundle["type"].ToString();
+                JsonElement bundle = (JsonElement)text;
+                string bundleType = bundle.GetProperty("type").GetString();
 
                 if (bundleType == "batch")
                 {
@@ -308,10 +299,10 @@ namespace messaging.Controllers
                     // Process each entry as an individual BaseMessage.
                     // One invalid message should not prevent the successful submission of a separate, valid message in the bundle.
                     // Capture the each messsage's result in an entry and add to the response bundle.
-                    IList<JToken> entries = bundle["entry"].Children().ToList();
-                    foreach (var entry in entries.Select(entry => JsonConvert.SerializeObject(entry["resource"], Formatting.Indented, parseSettings)))
+                    foreach (JsonElement entry in bundle.GetProperty("entry").EnumerateArray())
                     {
-                        Bundle.EntryComponent respEntry = await InsertBatchMessage(jurisdictionId, vitalType, igVersion, entry, queue);
+                        JsonElement resource = entry.GetProperty("resource");
+                        Bundle.EntryComponent respEntry = await InsertBatchMessage(jurisdictionId, vitalType, igVersion, resource.GetRawText(), queue);
                         responseBundle.Entry.Add(respEntry);
                     }
                     return responseBundle;
@@ -321,7 +312,7 @@ namespace messaging.Controllers
                     IncomingMessageItem item;
                     try
                     {
-                        item = ParseIncomingMessageItem(jurisdictionId, vitalType, igVersion, JsonConvert.SerializeObject(bundle, Formatting.Indented, parseSettings));
+                        item = ParseIncomingMessageItem(jurisdictionId, vitalType, igVersion, text.ToString());
                         // Send a special message for extraction errors to report the error manually
                         if (item.MessageType == nameof(ExtractionErrorMessage))
                         {

@@ -1,19 +1,21 @@
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using System;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace messaging
 {
   public class BundleConverter : JsonConverter<Bundle>
   {
-    public override Bundle ReadJson(JsonReader reader, Type objectType, Bundle existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override Bundle Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
       throw new NotImplementedException();
     }
-    public override void WriteJson(JsonWriter writer, Bundle value, JsonSerializer options)
+
+    public override void Write(Utf8JsonWriter writer, Bundle value, JsonSerializerOptions options)
     {
-      value.WriteTo(writer);
+      writer.WriteRawValue(value.ToJson());
     }
   }
 }

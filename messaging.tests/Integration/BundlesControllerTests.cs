@@ -1008,6 +1008,36 @@ namespace messaging.tests
         }
 
         [Fact]
+        public async System.Threading.Tasks.Task PostWithUnescapedStringGetsError()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Submit Death Record with invalid JSON
+            string unescapedString = FixtureStream("fixtures/json/DeathRecordSubmissionUnescapedString.json").ReadToEnd();
+            HttpResponseMessage unescapedStringResponse = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle", unescapedString);
+            string unescapedStringBody = await unescapedStringResponse.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.BadRequest, unescapedStringResponse.StatusCode);
+            Assert.Contains("The string should be correctly escaped.", unescapedStringBody);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task PostWithLeadingZerosGetsError()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Submit Death Record with a cert number that has leading zeros
+            string leadingZeros = FixtureStream("fixtures/json/DeathRecordSubmissionLeadingZeros.json").ReadToEnd();
+            HttpResponseMessage leadingZerosResponse = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundle", leadingZeros);
+            string leadingZerosBody = await leadingZerosResponse.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.BadRequest, leadingZerosResponse.StatusCode);
+            Assert.Contains("Invalid leading zero before", leadingZerosBody);
+        }
+
+        [Fact]
         public async System.Threading.Tasks.Task PostPreservesLocalTime()
         {
             // Clear any messages in the database for a clean test

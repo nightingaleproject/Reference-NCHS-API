@@ -141,9 +141,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": { }
-            },
             "application/json": {
               "schema": { }
             },
@@ -306,9 +303,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": { }
-            },
             "application/json": {
               "schema": { }
             },
@@ -469,9 +463,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": { }
-            },
             "application/json": {
               "schema": { }
             },
@@ -656,9 +647,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": { }
-            },
             "application/json": {
               "schema": { }
             },
@@ -821,9 +809,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": { }
-            },
             "application/json": {
               "schema": { }
             },
@@ -984,9 +969,6 @@
         ],
         "requestBody": {
           "content": {
-            "application/json-patch+json": {
-              "schema": { }
-            },
             "application/json": {
               "schema": { }
             },
