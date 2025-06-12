@@ -31,10 +31,5 @@ jobs:
     - name: Build projects
       run: |
         dotnet build
-    # - name: Run database migrations
-    #   run: |
-    #     dotnet tool install --global dotnet-ef --version 7.0.0
-    #     dotnet ef database update --project messaging --no-build
-    #     dotnet ef database update --project status_api --no-build
     - name: Test
       run: dotnet test --no-build
