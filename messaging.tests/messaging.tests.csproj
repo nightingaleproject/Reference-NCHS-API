@@ -42,5 +42,8 @@
     <None Update="fixtures/json/DeathRecordSubmissionNullValue.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/DeathRecordSubmissionUnescapedString.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="fixtures/json/DeathRecordSubmissionLeadingZeros.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="fixtures/json/AckInvalidResponseCode.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="fixtures/json/AckMA.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="fixtures/json/AckMissingCertNo.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

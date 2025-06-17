@@ -1,0 +1,49 @@
+{
+    "resourceType": "Bundle",
+    "id": "441fcfb7-4bef-482f-82ef-a60f10e65569",
+    "type": "message",
+    "timestamp": "2022-06-30T11:22:25.850232-04:00",
+    "entry": [
+        {
+            "fullUrl": "urn:uuid:81a00f8e-b63b-4b2a-9105-b5672b5a5569",
+            "resource": {
+                "resourceType": "MessageHeader",
+                "id": "b0b1b4e1-8d6e-4eda-9ca0-a8e22b9cd7f9",
+                "eventUri": "http://nchs.cdc.gov/vrdr_acknowledgement",
+                "destination": [
+                    {
+                        "endpoint": "http://nchs.cdc.gov/vrdr_submission"
+                    }
+                ],
+                "source": {
+                    "endpoint": "http://mitre.org/vrdr"
+                },
+                "response": {
+                    "identifier": "97c9808a-eb9b-462d-a0ce-4efd22aa8b1f",
+                    "code": "foo"
+                }
+            }
+        },
+        {
+            "fullUrl": "urn:uuid:2b829f06-75f0-4f9e-b46d-fcea30ae5569",
+            "resource": {
+                "resourceType": "Parameters",
+                "id": "2b829f06-75f0-4f9e-b46d-fcea30aee4v9",
+                "parameter": [
+                    {
+                        "name": "cert_no",
+                        "valueUnsignedInt": 3555
+                    },
+                    {
+                        "name": "jurisdiction_id",
+                        "valueString": "MA"
+                    },
+                    {
+                        "name": "death_year",
+                        "valueUnsignedInt": 2022
+                    }
+                ]
+            }
+        }
+    ]
+}
