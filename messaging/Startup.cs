@@ -70,14 +70,26 @@ namespace messaging
                 context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
                 context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
                 context.Response.Headers.Add("Cache-Control", "no-store");
+
                 // null check the MaxRequestBodySizeFeature, this feature is null in the dotnet test instance and will throw a null error in our testing framework
                 IHttpMaxRequestBodySizeFeature feat = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
                 if (feat != null)
                 {
                     feat.MaxRequestBodySize = Int32.Parse(Configuration.GetSection("AppSettings").GetSection("MaxPayloadSize").Value);
                 }
-                context.Response.Headers.Add("Content-Type", "application/json");
-                context.Response.Headers.Add("Content-Security-Policy", "default-src");
+
+                // Miniprofiler & Swagger UI fail strict CSP, so loosen it for Dev only
+                // see: https://github.com/swagger-api/swagger-ui/issues/5817
+                if( (context.Request.Path.StartsWithSegments("/profiler") ||context.Request.Path.StartsWithSegments("/swagger"))
+                        && env.IsDevelopment() )
+                {
+                    context.Response.Headers.Add("Content-Security-Policy", "Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'");
+                }
+                else
+                {
+                    context.Response.Headers.Add("Content-Type", "application/json");
+                    context.Response.Headers.Add("Content-Security-Policy", "default-src");
+                }
                 
                 await next.Invoke();
             });
