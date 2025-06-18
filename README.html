@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>readme</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="README_files/libs/clipboard/clipboard.min.js"></script>
+<script src="README_files/libs/quarto-html/quarto.js"></script>
+<script src="README_files/libs/quarto-html/popper.min.js"></script>
+<script src="README_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="README_files/libs/quarto-html/anchor.min.js"></script>
+<link href="README_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="README_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="README_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="README_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="README_files/libs/bootstrap/bootstrap-973236bd072d72a04ee9cd82dcc9cb29.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<p>This repository provides a description of the NVSS API exchange of mortality data between NCHS and vital records jurisdictions, along with a reference implementation. This implementation and documentation describes the server side of the API. For the client side see the <a href="https://github.com/nightingaleproject/Reference-Client-API">Reference NVSS Client API</a>.</p>
+<section id="overview" class="level1">
+<h1>Overview</h1>
+<p>NCHS is working to modernize the national collection and exchange of mortality data by developing and deploying new Application Programming Interfaces (APIs) for data exchange, implementing modern standards health like HL7’s Fast Healthcare Interoperability Resources (FHIR), and improving overall systems and processes. This repository provides a reference implementation and documentation describing the NVSS API, which supports the exchange of mortality data between NCHS and vital records jurisdictions.</p>
+<p>This reference implementation is developed for .NET using C# and implements the NCHS Messaging Infrastructure section of the <a href="http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/appendix.html#nchs-fhir-messaging-infrastructure">FHIR Messaging for NVSS</a> documentation. It leverages the <a href="https://www.nuget.org/packages/VRDR.Messaging">VRDR Messaging</a> library for parsing and constructing messages.</p>
+<p>This implementation describes the NVSS API hosted by NCHS and the compatible implementation hosted via the STEVE 2.0 system.</p>
+<p>This version of the API uses <a href="https://www.nuget.org/packages/VRDR.Messaging/4.3.0">VRDR.Messaging 4.3.0</a> and <a href="https://www.nuget.org/packages/BFDR.Messaging/1.0.0-preview.7">BFDR.Messaging 1.0.0-preview.7</a></p>
+</section>
+<section id="the-nvss-api" class="level1">
+<h1>The NVSS API</h1>
+<p>The NVSS API can be accessed by vital records jurisdictions in order to submit mortality data to NCHS and receive acknowledgments, errors, and coded data in response. An API is a set of rules that describe how two systems can communicate with each other. The NVSS API allows vital records jurisdiction mortality data systems to automate communication with NCHS in a robust and repeatable way. Automation improves timeliness of data exchange and reduces burden on vital records stakeholders.</p>
+<p>The NVSS API uses a RESTful approach. REST, or <a href="http://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm">Representational State Transfer</a>, is an architectural style that is typically implemented using internet technologies like the <a href="https://datatracker.ietf.org/doc/html/rfc2616">Hypertext Transfer Protocol (HTTP)</a> and <a href="https://datatracker.ietf.org/doc/html/rfc8259">JavaScript Object Notation (JSON)</a>. REST offers a simple stateless request-response pattern that makes building applications straightforward.</p>
+<p>The NVSS API is built using the <a href="htatp://hl7.org/fhir/">FHIR</a> standard. FHIR is a RESTful standard for the electronic exchange of health information. FHIR’s focus on health data and its basis on internet standards make it a good fit for exchanging mortality data. The fundamental building block for organizing data in FHIR is the <a href="https://www.hl7.org/fhir/resource.html">Resource</a>. A FHIR Resource is just a well-specified way to represent a single concept, like a Patient or a Condition. The NVSS API uses the <a href="https://www.hl7.org/fhir/bundle.html">Bundle</a> resource to represent and share information about mortality data in the form of <a href="https://www.hl7.org/fhir/messaging.html">FHIR Messages</a>. Jurisdictions send mortality records to NCHS and NCHS responds using <a href="http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html">Vital Records Death Reporting FHIR Messages</a>.</p>
+<section id="endpoints" class="level2">
+<h2 class="anchored" data-anchor-id="endpoints">Endpoints</h2>
+<section id="submit-death-records" class="level3">
+<h3 class="anchored" data-anchor-id="submit-death-records">Submit Death Records</h3>
+<pre><code>POST https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle</code></pre>
+<p>The API supports several types of POST interaction:</p>
+<ul>
+<li>POSTing a submission message containing a new death record, which represents the information collected on a death certificate</li>
+<li>POSTing an update message containing an updated version of an existing death record, suitable for amending previous submissions</li>
+<li>POSTing a void message voiding one or more existing death records, used to indicate that a previously submitted record is no longer valid</li>
+<li>POSTing an alias message providing decedent alias information for an existing death record, used to provide additional identifying information about a decedent</li>
+<li>POSTing an acknowledgment message acknowledging receipt of a coding response message from NCHS</li>
+<li>POSTing a batch submission, used to submit multiple messages at once, each message is processed independent of other messages in the batch, returns a batch-response with status codes for each message submitted via the original bundle, <a href="http://www.hl7.org/fhir/http.html#transaction">FHIR batch documentation</a></li>
+</ul>
+</section>
+<section id="receive-responses" class="level3">
+<h3 class="anchored" data-anchor-id="receive-responses">Receive Responses</h3>
+<pre><code>GET https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle</code></pre>
+<p>which returns any message response that has not been retrieved yet</p>
+<section id="optional-test-receive-responses-get-parameters" class="level4">
+<h4 class="anchored" data-anchor-id="optional-test-receive-responses-get-parameters">Optional Test Receive Responses GET Parameters</h4>
+<p>There are 3 optional parameters that can be included in a GET request to this endpoint. These can be useful for seeing the message response history for a particular record and verifying you successfully retrieved all messages during your testing.</p>
+<p>Providing any of these three search parameters may result in multiple pages of results. To make sure you retrieve all of the pages in the HTTP response, you will need to use pagination. See pagination section for details. Currently, these test parameters are only supported by the backup endpoint. If any of these parameters are included in a request, the results that are returned will not be marked as retrieved.</p>
+<section id="since" class="level5">
+<h5 class="anchored" data-anchor-id="since"><code>_since</code></h5>
+<p><code>_since</code> will retrieve all response messages since a given timestamp. It is useful for seeing ALL message responses created in a specific time window.</p>
+<p>The timestamp should be in the following format: <code>yyyy-MM-ddTHH:mm:ss.fffffff</code>.</p>
+<pre><code>GET https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_since=1970-01-01T00:00:00.0000000</code></pre>
+</section>
+<section id="certificatenumber" class="level5">
+<h5 class="anchored" data-anchor-id="certificatenumber"><code>certificateNumber</code></h5>
+<p><code>certificateNumber</code> will retrieve all response messages that match the given number.</p>
+<pre><code>GET https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?certificateNumber=123456</code></pre>
+</section>
+<section id="eventyear" class="level5">
+<h5 class="anchored" data-anchor-id="eventyear"><code>eventYear</code></h5>
+<p><code>eventYear</code> will retrieve all response messages that match the given event year (e.g.&nbsp;for death records this is the death year).</p>
+<pre><code>GET https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?eventYear=2018</code></pre>
+</section>
+</section>
+<section id="nchs-api-get-request-message-types" class="level4">
+<h4 class="anchored" data-anchor-id="nchs-api-get-request-message-types">NCHS API GET Request message types</h4>
+<p>The API supports GET requests to retrieve responses from NCHS, including:</p>
+<ul>
+<li>Acknowledgment messages acknowledging jurisdiction-submitted submission, update, and void messages</li>
+<li>Error messages describing problems with jurisdiction-submitted messages</li>
+<li>Coding response messages coding jurisdiction-submitted data such as cause of death, race, and ethnicity</li>
+</ul>
+<p>Messages flow from NCHS back to jurisdictions by jurisdiction systems polling the API looking for new responses. This approach of pulling responses rather than NCHS pushing responses to jurisdictions allows return messages without requiring jurisdictions to set up a listening endpoint.</p>
+</section>
+</section>
+</section>
+<section id="pagination" class="level2">
+<h2 class="anchored" data-anchor-id="pagination">Pagination</h2>
+<p>The API implements pagination. The default page size in production is set to 100. The test environment is set to 25.</p>
+<p>There are 3 optional parameters for pagination.</p>
+<ul>
+<li><code>_count</code> used to specify the number of records per page, default is 100 in prod and 25 in test</li>
+<li><code>_since</code> used to retrieve all response messages created after the <code>_since</code> datetime, <strong>for testing only</strong></li>
+<li><code>page</code> used to specify the page of data you are interested in. This parameter is only used if a <code>_since</code> datetime is provided, <strong>for testing only</strong></li>
+</ul>
+<p>If a response contains a <code>next</code> link, there is additional data to retrieve. Client side systems should parse out the <code>next</code> link and automate the next request to retrieve the next page of data. If a <code>_since</code> parameter is not provided, the <code>next</code> link will not change.</p>
+<section id="default-pagination" class="level3">
+<h3 class="anchored" data-anchor-id="default-pagination">Default Pagination</h3>
+<p>It is recommended to use the default GET request when implementing automated client systems. The default behavior is implemented as a queue. Each default request will return the next page of unretrieved messages. #### Example responses with links. 1. A default request will return the first 100 responses from the unretrieved messages queue. A default <code>next</code> link is provided.<br>
+Request<br>
+<code>GET https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle</code> Response links<br>
+<code>"link": [             {                 "relation": "next",                 "url": " https://localhost:5001/OSELS/NCHS/NVSSFHIRAPI/MA/Bundle?_count=100"             }         ]</code> 2. A default request with a specified page size of 50. This will return the first 50 responses from the unretrieved messages queue. A default <code>next</code> link is provided.<br>
+Request<br>
+<code>GET https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_count=50</code> Response links<br>
+<code>"link": [             {                 "relation": "next",                 "url": "https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_count=50"             }         ]</code></p>
+</section>
+<section id="testing-with-the-since-parameter" class="level3">
+<h3 class="anchored" data-anchor-id="testing-with-the-since-parameter">Testing with the Since Parameter</h3>
+<p>When testing, there may be a need to retrieve messages that were already pulled off the queue. The <code>_since</code> parameter allows users to request messages based on timestamp versus using a queue. The <code>_since</code> parameter is intended for testing and special cases where messages need to be retrieved a second time from NCHS. It should no be used when implementing an automated client side system.</p>
+<section id="example-responses-with-links." class="level4">
+<h4 class="anchored" data-anchor-id="example-responses-with-links.">Example responses with links.</h4>
+<ol type="1">
+<li>A timestamp based request with a specified page size of 50 records. If there are additional pages to retrieve, there will be a <code>next</code> link. Will return the first 50 responses created after the _since datetime parameter and a <code>first</code>, <code>last</code>, and <code>next</code> link if there is more data to retrieve.<br>
+Request<br>
+<code>GET https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_since=2022-06-16T10:28:01.000-05:00&amp;_count=50</code> Response links<br>
+<code>"link": [             {                 "relation": "first",                 "url": " https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_since=2022-06-16T10:28:01.000-05:00&amp;_count=50&amp;page=1"             },             {                 "relation": "last",                 "url": " https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_since=2022-06-16T10:28:01.000-05:00&amp;_count=50&amp;page=3"             },             {                 "relation": "next",                 "url": " https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_since=2022-06-16T10:28:01.000-05:00&amp;_count=50&amp;page=2"             }         ],</code></li>
+<li>The 3rd and last page of a timestamp based request with a specified page size of 50 records. If this is the last page, there will not be a <code>next</code> link. Will return the third page of 50 responses created after the _since datetime parameter and a <code>first</code>, <code>last</code> link. There is no <code>next</code> link because there is no more data to retrieve.<br>
+Request<br>
+<code>GET https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_since=2022-06-16T10:28:01.000-05:00&amp;_count=50&amp;page=3</code> Response links<br>
+<code>"link": [             {                 "relation": "first",                 "url": " https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_since=2022-06-16T10:28:01.000-05:00&amp;_count=50&amp;page=1"             },             {                 "relation": "last",                 "url": " https://localhost:5001/&lt;jurisdiction-id&gt;/Bundle?_since=2022-06-16T10:28:01.000-05:00&amp;_count=50&amp;page=3"             }         ],</code></li>
+</ol>
+</section>
+</section>
+</section>
+<section id="steve" class="level2">
+<h2 class="anchored" data-anchor-id="steve">STEVE</h2>
+<p>There are two instances of FHIR APIs meeting this specification for jurisdictions to submit mortality data. One is provided as part of the State and Territorial Exchange of Vital Events (STEVE) system, and is intended to be the primary means for jurisdictions to both submit data to NCHS and to exchange FHIR-based vital records data with other jurisdictions. The other is provided by NCHS and is intended to act as a backup channel to the STEVE FHIR API in the event of a long term outage. Both APIs implement the same specification, so moving submission to the backup NCHS API if ever needed should require only a simple configuration change. When performing testing both channels should be included to insure that the backup channel configuration is functional.</p>
+<p>Jurisdiction client implementations in a production context are expected to only use the primary STEVE FHIR API for data submission to NCHS. If both APIs are used, the following behavior should be expected:</p>
+<ul>
+<li><p><strong>Interjurisdictional Exchange</strong>: Data submitted via the STEVE API will go to NCHS and also be used for interjurisdictional exchange as configured by the submitting jurisdiction on STEVE. Data submitted via the NCHS API will only go to NCHS and will not go to other jurisdictions.</p></li>
+<li><p><strong>Duplicate Submissions</strong>: If a duplicate message is POST’d both through STEVE and directly to NCHS the second message received will be ignored by NCHS. This is based on comparing the message ID of the submission, not on the content of the message, and is the same behavior as expected when submitting two duplicate copies of a message to the same API.</p></li>
+<li><p><strong>Response Retrieval Queue</strong>: The NVSS FHIR API keeps track of which messages have been retrieved via GET requests. Subsequent GET requests will not retrieve messages that have already been retrieved from the queue. If a jurisdiction places a GET request through STEVE and subsequently places a GET request directly to NCHS, the two requests will refer to the same queue. If for any reason a client implementation needs to switch from the STEVE endpoint to the backup endpoint, it will not receive any duplicate messages when it makes the switch.</p></li>
+</ul>
+</section>
+<section id="authentication" class="level2">
+<h2 class="anchored" data-anchor-id="authentication">Authentication</h2>
+<pre><code>POST https://&lt;OAuthHost&gt;/auth/oauth/v2/token</code></pre>
+<p>Secure access to the NVSS API is provided using</p>
+<ol type="1">
+<li>encryption of all connections using the HTTPS protocol.</li>
+<li>access control of connections using the <a href="https://oauth.net/2/">OAuth (Open Authorization) 2.0</a> standard.</li>
+</ol>
+<p>OAuth 2.0 is an open standard for authorization and access delegation. OAuth is used in the following manner:</p>
+<ul>
+<li>A vital records jurisdiction representative requests an account</li>
+<li>Identity proofing is conducted on the jurisdiction representative’s request</li>
+<li>The jurisdiction representative’s account is approved and system credentials are issued</li>
+<li>Jurisdiction vital records system uses credentials to retrieve an access token</li>
+<li>Jurisdiction vital records system includes the appropriate access token for subsequent API requests</li>
+</ul>
+</section>
+</section>
+<section id="open-api-documentation" class="level1">
+<h1>Open API Documentation</h1>
+<p>To view the swagger generated Open API documentation, run the service using the instructions in <a href="https://github.com/nightingaleproject/Reference-NCHS-API#steps-to-start-the-api-in-development">Steps to start the API In Development</a> below and navigate to https://localhost:5001/swagger/index.html You can also view an always-available version of the documentation hosted on GitHub at <a href="https://nightingaleproject.github.io/Reference-NCHS-API/">NVSSMessaging Swagger</a>.</p>
+</section>
+<section id="interacting-with-the-api" class="level1">
+<h1>Interacting with the API</h1>
+<section id="requesting-an-oauth-token" class="level2">
+<h2 class="anchored" data-anchor-id="requesting-an-oauth-token">Requesting an OAuth Token</h2>
+<p>Before interacting with the API an OAuth token must be retrieved for use in subsequent requests using the <a href="https://www.oauth.com/oauth2-servers/access-tokens/password-grant/">OAuth Password Grant</a> as demonstrated by the following requests using <a href="https://curl.se/">curl</a>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Request a token using password grant</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--request</span> POST <span class="at">--url</span> <span class="st">'https://&lt;OAuthHost&gt;/auth/oauth/v2/token'</span> <span class="dt">\</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>--header <span class="st">'Content-Type: application/x-www-form-urlencoded'</span> <span class="dt">\</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>--data grant_type=password <span class="dt">\</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>--data client_id=<span class="st">'&lt;OAuthClientID&gt;'</span> <span class="dt">\</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>--data client_secret=<span class="st">'&lt;OAuthClientSecret&gt;'</span> <span class="dt">\</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>--data username=<span class="st">'&lt;Username&gt;'</span> <span class="dt">\</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>--data password=<span class="st">'&lt;Password&gt;'</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Send a request using the retrieved token</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--header</span> <span class="st">'Authorization: Bearer &lt;OAuthToken&gt;'</span> https://localhost:5001/MA/Bundle</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="sending-messages" class="level2">
+<h2 class="anchored" data-anchor-id="sending-messages">Sending Messages</h2>
+<ol type="1">
+<li>Create a FHIR Record. The standard that specifies this format can be found <a href="https://build.fhir.org/ig/HL7/vrdr/branches/Sep_2021_Connectathon/">here</a>. There are also two public library implementations available to assist in the creation of FHIR Records, <a href="https://github.com/nightingaleproject/vrdr-dotnet">VRDR-dotnet</a> and <a href="https://github.com/MortalityReporting/VRDR_javalib">VRDR_javalib</a>.</li>
+<li>Create a FHIR VRDR Message to act as an envelope for the FHIR Record created above. The standard that specifies this format can be found <a href="http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html">here</a>. The <a href="https://github.com/nightingaleproject/vrdr-dotnet/blob/master/doc/Messaging.md">VRDR-dotnet Messaging library</a> also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the <a href="https://github.com/nightingaleproject/canary">Canary</a> project has a <strong>Creating FHIR VRDR Messages</strong> option in which will create an appropriate synthetic message for POSTing to the API.</li>
+<li>Submit the message using a POST request to the <code>/&lt;JurisdictionID&gt;/Bundle</code> endpoint; the following example demonstrates the request format using <a href="https://curl.se/">curl</a>:</li>
+</ol>
+<div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--location</span> <span class="at">--request</span> POST <span class="st">'https://localhost:5001/MA/Bundle'</span> <span class="dt">\</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>--header <span class="st">'Content-Type: application/json'</span> <span class="dt">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>--header <span class="st">'Authorization: Bearer &lt;OAuthToken&gt;'</span> <span class="dt">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>--data <span class="st">"@path/to/file.json"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="3" type="1">
+<li>The API will return a 204 No Content HTTP response if everything is functioning correctly. Example Response:</li>
+</ol>
+<pre><code>&gt; POST /MA/Bundle HTTP/1.1
+&gt; Host: localhost:5001
+&gt; User-Agent: curl/7.64.1
+&gt; Accept: */*
+&gt; Content-Type: application/json
+&gt; Content-Length: 46643
+&gt; Expect: 100-continue
+&gt;
+&lt; HTTP/1.1 100 Continue
+* We are completely uploaded and fine
+&lt; HTTP/1.1 204 No Content
+&lt; Date: Wed, 17 Nov 2021 21:56:03 GMT
+&lt; Server: Kestrel</code></pre>
+<section id="sending-bulk-messages" class="level3">
+<h3 class="anchored" data-anchor-id="sending-bulk-messages">Sending Bulk Messages</h3>
+<p>Multiple messages can be sent using a single connection. When possible multiple messages should be sent per connection to increase efficiency of API use. Sending multiple messages is similar to sending a single message; the set of message is simply wrapped in a “batch” FHIR Bundle. Note that the concept of “batch” used here is different than the batch processing used with the IJE standard in that this is simply a way of sending multiple messages at once; the messages in a bulk upload will not necessarily be processed or acknowledged together. To bulk upload messages,</p>
+<ol type="1">
+<li>Create one or more FHIR Records, as described in the “Sending Messages” section above.</li>
+<li>Create FHIR VRDR Messages to act as envelopes for the FHIR Records created above, as described in the “Sending Messages” section above.</li>
+<li>Wrap the messages in a “batch” Bundle as described <a href="https://www.hl7.org/fhir/http.html#transaction">in the FHIR specification</a>; refer to the <a href="./messaging.tests/fixtures/json/BatchMessages.json">example “batch” Bundle</a> for details.</li>
+<li>Submit the “batch” Bundle of messages using a POST request to the <code>/&lt;JurisdictionID&gt;/Bundle</code> endpoint in the same way a single message can be submitted; the following example demonstrates the request format using <a href="https://curl.se/">curl</a>:</li>
+</ol>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--location</span> <span class="at">--request</span> POST <span class="st">'https://localhost:5001/MA/Bundle'</span> <span class="dt">\</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>--header <span class="st">'Content-Type: application/json'</span> <span class="dt">\</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>--header <span class="st">'Authorization: Bearer &lt;OAuthToken&gt;'</span> <span class="dt">\</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>--data <span class="st">"@path/to/file.json"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="5" type="1">
+<li>The API will return a 200 OK HTTP response if the overall bulk upload was processed correctly; this does not provide information on the status of the individual records with the batch.</li>
+<li>On a successful submission the HTTP response will contain a payload of a <code>batch-response</code> Bundle with response codes for each individual record that was submitted. The response codes appear in the same order that the records were submitted in the bulk upload. The individual response codes should each be checked to ensure that they all have a successful <code>201</code> status code:</li>
+</ol>
+<pre><code>{
+  "resourceType": "Bundle",
+  "type": "batch-response",
+  "timestamp": "2022-12-22T12:14:09.1780469-05:00",
+  "entry": [
+    {
+      "response": {
+        "status": "201"
+      }
+    },
+    {
+      "response": {
+        "status": "201"
+      }
+    },
+    {
+      "response": {
+        "status": "201"
+      }
+    }
+  ]
+}</code></pre>
+<section id="bulk-upload-batch-size" class="level4">
+<h4 class="anchored" data-anchor-id="bulk-upload-batch-size">Bulk Upload Batch Size</h4>
+<p>Bulk upload is strongly recommended to increase efficient and performant use of the API. However, for efficient use of the API batches should also not exceed 10MB in size. Given the size of a typical record his means that batch sizes from 20 to 100 records should work well.</p>
+</section>
+</section>
+</section>
+<section id="receiving-messages" class="level2">
+<h2 class="anchored" data-anchor-id="receiving-messages">Receiving Messages</h2>
+<ol type="1">
+<li>NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the <code>/&lt;JurisdictionID&gt;/Bundle</code> endpoint. The following example demonstrates the request format using <a href="https://curl.se/">curl</a>:</li>
+</ol>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--header</span> <span class="st">'Authorization: Bearer &lt;OAuthToken&gt;'</span> https://localhost:5001/MA/Bundle</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="2" type="1">
+<li>Time based filtering is also available, and can be used by providing the <a href="https://www.hl7.org/fhir/http.html">FHIR parameter</a> <code>_since</code> as a filter. The best practice is to use time based filtering whenever retrieving messages. Always keep track of the last time polling was performed and use that timestamp to filter results in order to only retrieve messages that have not previously been processed.</li>
+</ol>
+<div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--header</span> <span class="st">'Authorization: Bearer &lt;OAuthToken&gt;'</span> <span class="st">"https://localhost:5001/MA/Bundle?_since=2021-10-21T17:21:41.492893-04:00"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="3" type="1">
+<li>These requests return a 200 Response header with a body containing a <a href="https://www.hl7.org/fhir/bundle.html">FHIR Bundle</a> of type ‘searchset’ containing a list of FHIR Messages. These messages can be either ACK, Error, or Coding Responses. Example Response:</li>
+</ol>
+<pre><code>&gt; GET /MA/Bundle HTTP/1.1
+&gt; Host: localhost:5001
+&gt; User-Agent: curl/7.64.1
+&gt; Accept: */*
+&gt;
+&lt; HTTP/1.1 200 OK
+&lt; Date: Wed, 17 Nov 2021 21:58:21 GMT
+&lt; Content-Type: application/json; charset=utf-8
+&lt; Server: Kestrel
+&lt; Content-Length: 2213
+
+{
+  "resourceType": "Bundle",
+  "type": "searchset",
+  "timestamp": "2021-11-17T16:58:22.091838-05:00",
+  "entry": [{
+    "fullUrl": "urn:uuid:d4d597b3-2634-412f-b41d-0017ad4cfb15",
+    "resource": {
+      "resourceType": "Bundle",
+      "id": "e6752e31-799c-4732-82e7-85ba967a4779",
+      "type": "message",
+      "timestamp": "2021-11-17T16:55:55.090601-05:00",
+      "entry": [{
+        "fullUrl": "urn:uuid:d4d597b3-2634-412f-b41d-0017ad4cfb15",
+        "resource": {
+          "resourceType": "MessageHeader",
+          "id": "d4d597b3-2634-412f-b41d-0017ad4cfb15",
+          "eventUri": "http://nchs.cdc.gov/vrdr_acknowledgement",
+          "destination": [{
+            "endpoint": "https://example.com/jurisdiction/message/endpoint"
+          }],
+          "source": {
+            "endpoint": "http://nchs.cdc.gov/vrdr_submission"
+          },
+          "response": {
+            "identifier": "1eba0dc0-9d5a-48ec-9536-67e56d7fa130",
+            "code": "ok"
+          },
+          "focus": [{
+            "reference": "urn:uuid:f753e87e-5058-47a4-83f7-a1d8375f5e44"
+          }]
+        }
+      }, {
+        "fullUrl": "urn:uuid:f753e87e-5058-47a4-83f7-a1d8375f5e44",
+        "resource": {
+          "resourceType": "Parameters",
+          "id": "f753e87e-5058-47a4-83f7-a1d8375f5e44",
+          "parameter": [{
+            "name": "cert_no",
+            "valueUnsignedInt": 365483
+          }, {
+            "name": "state_auxiliary_id",
+            "valueString": "650014"
+          }, {
+            "name": "jurisdiction_id",
+            "valueString": "MA"
+          }, {
+            "name": "death_year",
+            "valueUnsignedInt": 2021
+          }]
+        }
+      }]
+    }
+  }, {
+    "fullUrl": "urn:uuid:9e553c61-8510-416f-984b-f5b70d9ce4fd",
+    "resource": {
+      "resourceType": "Bundle",
+      "id": "85a7e61d-578a-4e4a-ae84-6b6f402f9048",
+      "type": "message",
+      "timestamp": "2021-11-17T16:56:03.736701-05:00",
+      "entry": [{
+        "fullUrl": "urn:uuid:9e553c61-8510-416f-984b-f5b70d9ce4fd",
+        "resource": {
+          "resourceType": "MessageHeader",
+          "id": "9e553c61-8510-416f-984b-f5b70d9ce4fd",
+          "eventUri": "http://nchs.cdc.gov/vrdr_acknowledgement",
+          "destination": [{
+            "endpoint": "https://example.com/jurisdiction/message/endpoint"
+          }],
+          "source": {
+            "endpoint": "http://nchs.cdc.gov/vrdr_submission"
+          },
+          "response": {
+            "identifier": "1eba0dc0-9d5a-48ec-9536-67e56d7fa130",
+            "code": "ok"
+          },
+          "focus": [{
+            "reference": "urn:uuid:03890087-4891-4802-a2cf-68c1d895f762"
+          }]
+        }
+      }, {
+        "fullUrl": "urn:uuid:03890087-4891-4802-a2cf-68c1d895f762",
+        "resource": {
+          "resourceType": "Parameters",
+          "id": "03890087-4891-4802-a2cf-68c1d895f762",
+          "parameter": [{
+            "name": "cert_no",
+            "valueUnsignedInt": 365483
+          }, {
+            "name": "state_auxiliary_id",
+            "valueString": "650014"
+          }, {
+            "name": "jurisdiction_id",
+            "valueString": "MA"
+          }, {
+            "name": "death_year",
+            "valueUnsignedInt": 2021
+          }]
+        }
+      }]
+    }
+  }]
+}</code></pre>
+</section>
+<section id="http-error-responses" class="level2">
+<h2 class="anchored" data-anchor-id="http-error-responses">Http Error Responses</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 41%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Endpoint</th>
+<th>Http Response Code</th>
+<th>Common Fixes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>POST /token (SAMS)</td>
+<td>400 - Bad Request</td>
+<td>Check all required parameters are present in the token request</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>401 - Unauthorized, invalid_request</td>
+<td>Check the username and password credentials are correct</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>401 - Unauthorized, invalid_client</td>
+<td>Check the client id and client secret are correct</td>
+</tr>
+<tr class="even">
+<td>POST /Bundle</td>
+<td>400 - Bad Request</td>
+<td>Check the body of the request is valid VRDR Message. If using pagination, check the parameters are valid.</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>500 - Internal Server Error, Authorization Failure (SAMS)</td>
+<td>Refresh expired token</td>
+</tr>
+<tr class="even">
+<td></td>
+<td>500 - Internal Server Error</td>
+<td>Report issue on Zulip</td>
+</tr>
+<tr class="odd">
+<td></td>
+<td>501 - Not implemented</td>
+<td>Check the url is correct</td>
+</tr>
+<tr class="even">
+<td>GET /Bundle</td>
+<td>500 - Internal Server Error, Authorization Failure (SAMS)</td>
+<td>Refresh expired token</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="status-ui" class="level1">
+<h1>Status UI</h1>
+<p>This repository also provides a Status UI dashboard for analyzing messages recieved by the NVSS FHIR API. The Status UI and Status API backend that powers it is designed to run as a separate ASP.NET application, on a separate domain or subdomain, with a separate set of access controls. It must hook in to the same Microsoft SQL Server database to work. See the <a href="status_api/README.md">Status API README.md</a> for a quick start. See <a href="DeployementSteps.md#Status-UI-Deployment-Steps">DeploymentSteps.md</a> for a deployment guide.</p>
+<figure class="figure">
+<img src="StatusUIScreenshot.png" alt="A status dashboard showing FHIR messages by source, event type, and jurisdiction since a user-specified datetime." class="figure-img">
+<figcaption align="center">
+A screenshot of the Status UI.
+</figcaption>
+</figure>
+</section>
+<section id="api-developer-documentation" class="level1">
+<h1>API Developer Documentation</h1>
+<p>This section documents information useful for developers of the API itself and is not relevant to users of the API or developers of systems that use the API.</p>
+<section id="version-updates" class="level2">
+<h2 class="anchored" data-anchor-id="version-updates">Version Updates</h2>
+<ol type="1">
+<li>Update the CHANGELOG.md</li>
+<li>Update <code>NVSSAPI_CapStmt.fsh</code> to use the new version number</li>
+<li>Regenerate the fsh file so CapabilityStatement-NVSS-API-CS.json includes the new version number</li>
+</ol>
+</section>
+<section id="steps-to-start-the-api-in-development" class="level2">
+<h2 class="anchored" data-anchor-id="steps-to-start-the-api-in-development">Steps to start the API In Development</h2>
+<p>See <a href="GettingStarted.md">GettingStarted.md</a>.</p>
+</section>
+<section id="deploying-in-production" class="level2">
+<h2 class="anchored" data-anchor-id="deploying-in-production">Deploying in Production</h2>
+<p>See <a href="DeploymentSteps.md">DeploymentSteps.md</a>.</p>
+</section>
+<section id="logging" class="level2">
+<h2 class="anchored" data-anchor-id="logging">Logging</h2>
+<p>The application uses Serilog as the third party log provider. Serilog replaces .NET standard Logging and can be configured in the appsettings.json file.</p>
+<section id="logging-sinks" class="level3">
+<h3 class="anchored" data-anchor-id="logging-sinks">Logging Sinks</h3>
+<p>Serilog supports a variety of sinks to write your logs to. The default configuration writes the logs to the console and to a file. A new file is created each day and files are deleted after 31 days by default. These default configurations can be overwritten in the appsettings.json file. Serilog’s provided sinks are listed <a href="https://github.com/serilog/serilog/wiki/Provided-Sinks">here</a>. Splunk, S3, and DBs are among the many options provided by serilog. To change the sink configuration, update the “Using” and “WriteTo” configuration fields in the example below.</p>
+<pre><code>  "Serilog": {
+    "Using": [
+      "Serilog.Sinks.ApplicationInsights", "Serilog.Sinks.File"
+    ],
+    "WriteTo": [
+      { "Name": "Console" },
+      { "Name": "File", "Args": { "path": "Logs/log.txt", "rollingInterval": "Day"} }
+    ],
+    ...
+  }</code></pre>
+</section>
+<section id="turn-off-logging" class="level3">
+<h3 class="anchored" data-anchor-id="turn-off-logging">Turn Off Logging</h3>
+<p>To turn off logging to a sink, remove the <code>WriteTo</code> configuration for the sink you wish to remove. Ex. below will only write to the console.</p>
+<pre><code>  "Serilog": {
+    "Using": [
+      "Serilog.Sinks.ApplicationInsights"
+    ],
+    "WriteTo": [
+      { "Name": "Console" }
+    ],
+    ...
+  }</code></pre>
+</section>
+<section id="debug-logging" class="level3">
+<h3 class="anchored" data-anchor-id="debug-logging">Debug Logging</h3>
+<p>To turn on debug logging, update the log level from <code>Information</code> to <code>Debug</code> in appsettings.json, see example below</p>
+<pre><code>  "Serilog": {
+    ...
+    "MinimumLevel": {
+      "Default": "Debug",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.Hosting.Lifetime": "Information",
+        "System": "Information",
+        "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Debug"
+      }
+    }
+  },</code></pre>
+</section>
+<section id="logging-to-file" class="level3">
+<h3 class="anchored" data-anchor-id="logging-to-file">Logging to File</h3>
+<p>To save logs to a file, uncomment the line below in Startup.cs</p>
+<pre><code>loggerFactory.AddFile("logs/nvssmessaging-{Date}.txt");</code></pre>
+<p>and this package reference in messaging.csproj</p>
+<pre><code>&lt;PackageReference Include="Serilog.Extensions.Logging.File" Version="2.0.0"/&gt;</code></pre>
+</section>
+</section>
+</section>
+<section id="license" class="level1">
+<h1>License</h1>
+<p>Copyright 2021 The MITRE Corporation</p>
+<p>Licensed under the Apache License, Version 2.0 (the “License”); you may not use this file except in compliance with the License. You may obtain a copy of the License at</p>
+<pre><code>http://www.apache.org/licenses/LICENSE-2.0</code></pre>
+<p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

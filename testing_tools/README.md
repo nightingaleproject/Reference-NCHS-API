@@ -2,6 +2,10 @@
 
 This directory includes some simple tools for testing the API while doing development. There are two main tools:
 
+## Dependencies
+
+- [Ruby 3](https://www.ruby-lang.org/en/downloads/)
+
 ## exercise_local_api.rb
 
 This tool sends a repeated series of simple void messages to the local API endpoint. It takes two optional arguments:
@@ -19,11 +23,13 @@ Usage:
 ruby exercise_local_api.rb <messages-per-minute> <number-of-jurisdictions>
 ```
 
+After running it for as many minutes as you want, exit the program with SIGINT (Ctrl-C).
+
 ## fake_queue_process.rb
 
 This tool connects directly to the local development database docker instance and marks messages as having been processed, moving the `ProcessedStatus` from `QUEUED` to `PROCESSED` and updating `UpdatedDate` on a FIFO basis. Does not actually process messages, just marks them as processed.
 
-When using this too it's recommended that the `AckAndIJEConversion` setting in appsettings.Development.json be set to `false`.
+When using this too it's recommended that the `AckAndIJEConversion` setting in `messaging/appsettings.Development.json` be set to `false`.
 
 This tool requires the `tiny_tds` gem to be installed:
 
