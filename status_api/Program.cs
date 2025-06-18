@@ -18,12 +18,8 @@ namespace status_api
             try {
                 var env = builder.Environment.EnvironmentName;
 
-		/*
                 builder.Configuration
-                        .AddJsonFile($"status_api.appsettings.json, optional: true")
-                        .AddJsonFile($"status_api.appsettings.{env}.json");
-		*/
-                builder.Configuration
+                        .AddJsonFile($"status_api.appsettings.json", optional: true)
                         .AddJsonFile($"status_api.appsettings.{env}.json");
 		
                 if (builder.Configuration == null)

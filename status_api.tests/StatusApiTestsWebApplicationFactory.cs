@@ -8,7 +8,7 @@ public class StatusApiTestsWebApplicationFactory<TProgram> : WebApplicationFacto
     {
         builder.ConfigureAppConfiguration((context, builder) =>
         {
-// builder.AddJsonFile("status_api.appsettings.json, optional: true");
+            builder.AddJsonFile("status_api.appsettings.json", optional: true);
             builder.AddJsonFile("status_api.appsettings.Test.json");
         });
 
