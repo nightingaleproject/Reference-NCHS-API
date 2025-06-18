@@ -1,4 +1,4 @@
-# NVSS API Status UI
+# NVSS Status UI (Frontend only)
 
 This subdirectory contains a simple single page Status UI, built with React, that displays information pulled from the NVSS API Status API.
 

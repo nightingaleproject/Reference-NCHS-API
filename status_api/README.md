@@ -1,4 +1,4 @@
-# NVSS API Status App (API and UI Build)
+# NVSS Status UI (Frontend and Backend Status API)
 
 ## Dependencies
  - .NET Core 6.100
@@ -6,16 +6,11 @@
 
 ## Quick Start
 
-1. The status_api uses models, migrations, and database from `messaging`. Follow its [README](../README.md) to get started
-and run a few API calls to populate its database.
+1. This `status_api` project uses the models, migrations, and database from the NVSS FHIR API `messaging` project. If `messaging` is not already setup, see [the top-level GettingStarted.md](../GettingStarted.md). You can use [Canary](https://canary.fhir.nvss.cdc.gov/) to generate sample messages or run our [exercise_local_api.rb testing tool](../testing_tools/README.md) to populate the database.
 
-2. Go to the `status_ui/` folder and build the frontend:
+2. Optional: the frontend is compiled into `status_api/StatusUI` and checked into git from its source at `status_ui`. If you want to rebuild the frontend follow its [README](../status_ui/README.md).
 
-```shell
-npm install
-npm run build
-```
-3. Launch Status App, which serves a status backend and frontend. From `status_api/` folder run:
+3. Launch `status_api`, which serves both the backend and frontend; from `status_api/` folder run:
 
 ```shell
 dotnet run
