@@ -1573,6 +1573,34 @@ namespace messaging.tests
             Assert.Empty(bundle.Entry);
         }
 
+        [Fact]
+        public async System.Threading.Tasks.Task PostWithInvalidAckReturnsError()
+        {
+            // Clear any messages in the database for a clean test
+            DatabaseHelper.ResetDatabase(_context);
+
+            // Submit ACK with the wrong jurisdiction
+            string ackMA = FixtureStream("fixtures/json/AckMA.json").ReadToEnd();
+            HttpResponseMessage ackMAResponse = await JsonResponseHelpers.PostJsonAsync(_client, $"/UT/Bundles", ackMA);
+            string ackMABody = await ackMAResponse.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.BadRequest, ackMAResponse.StatusCode);
+            Assert.Contains("Message jurisdiction ID MA must match the URL parameter jurisdiction ID UT", ackMABody);
+
+            // Submit ACK with missing cert number
+            string ackMissingCertNo = FixtureStream("fixtures/json/AckMissingCertNo.json").ReadToEnd();
+            HttpResponseMessage ackMissingCertNoResponse = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundles", ackMissingCertNo);
+            string ackMissingCertNoBody = await ackMissingCertNoResponse.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.BadRequest, ackMissingCertNoResponse.StatusCode);
+            Assert.Contains("Message certificate number cannot be null", ackMissingCertNoBody);
+
+            // Submit ACK with invalid response code
+            string ackInvalidResponseCode = FixtureStream("fixtures/json/AckInvalidResponseCode.json").ReadToEnd();
+            HttpResponseMessage ackInvalidResponseCodeResponse = await JsonResponseHelpers.PostJsonAsync(_client, $"/MA/Bundles", ackInvalidResponseCode);
+            string ackInvalidResponseCodeBody = await ackInvalidResponseCodeResponse.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.BadRequest, ackInvalidResponseCodeResponse.StatusCode);
+            Assert.Contains("'foo' is not a valid value for enumeration 'ResponseType'", ackInvalidResponseCodeBody);
+        }
+
         // TODO create test that sends a VRDR message to the BFDR endpoint and vv, should return an error in both cases
 
         public static StreamReader FixtureStream(string filePath)
