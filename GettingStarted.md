@@ -74,9 +74,8 @@ dotnet test
 
 ## Next Steps
 
-In any order:
-
+ - Checkout our [Testing Tools](testing_tools/README.md) to quickly populate the FHIR API database with content suitable for exercising the software.
+ - Launch the [Status UI](status_api/README.md) to get a NVSS FHIR messages status dashboard.
  - Use the [Canary Testing Framework](https://canary.fhir.nvss.cdc.gov/) to generate sample FHIR messages.
  - Try the [Postman Collections](https://github.com/nightingaleproject/Reference-NCHS-API/tree/main/examples/README.md) provided, but disregard authentication and use `https://127.0.0.1:5001/` as the base URL.
- - Launch the [StatusUI](status_api/README.md) to get a NVSS FHIR messages status dashboard.
- - Checkout our [Testing Tools](testing_tools/README.md) for probing the NVSS FHIR API.
+
