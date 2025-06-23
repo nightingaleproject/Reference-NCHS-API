@@ -272,6 +272,7 @@ curl --request POST --url 'https://<OAuthHost>/auth/oauth/v2/token' \
 --data grant_type=password \
 --data client_id='<OAuthClientID>' \
 --data client_secret='<OAuthClientSecret>' \
+--data scope='openid profile email' \
 --data username='<Username>' \
 --data password='<Password>'
 
