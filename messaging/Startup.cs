@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using messaging.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.FileProviders;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
@@ -66,17 +67,30 @@ namespace messaging
             app.UseHttpsRedirection();
             app.Use(async (context, next) =>
             {
-                context.Response.Headers.Add("Content-Type", "application/json");
                 context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
                 context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
                 context.Response.Headers.Add("Cache-Control", "no-store");
-                context.Response.Headers.Add("Content-Security-Policy", "default-src");
+
                 // null check the MaxRequestBodySizeFeature, this feature is null in the dotnet test instance and will throw a null error in our testing framework
                 IHttpMaxRequestBodySizeFeature feat = context.Features.Get<IHttpMaxRequestBodySizeFeature>();
                 if (feat != null)
                 {
                     feat.MaxRequestBodySize = Int32.Parse(Configuration.GetSection("AppSettings").GetSection("MaxPayloadSize").Value);
                 }
+
+                // Miniprofiler & Swagger UI fail strict CSP, so loosen it for Dev only
+                // see: https://github.com/swagger-api/swagger-ui/issues/5817
+                if( (context.Request.Path.StartsWithSegments("/profiler") ||context.Request.Path.StartsWithSegments("/swagger"))
+                        && env.IsDevelopment() )
+                {
+                    context.Response.Headers.Add("Content-Security-Policy", "Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'");
+                }
+                else
+                {
+                    context.Response.Headers.Add("Content-Type", "application/json");
+                    context.Response.Headers.Add("Content-Security-Policy", "default-src");
+                }
+                
                 await next.Invoke();
             });
             if (env.IsDevelopment())

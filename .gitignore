@@ -3,7 +3,9 @@ bin/
 results*
 jmeter.log
 appsettings.json
+status_api.appsettings.json
 .vs
 **.csproj.user
 messaging/logs
 .DS_store
+status_api/Logs

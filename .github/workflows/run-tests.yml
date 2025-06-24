@@ -17,11 +17,19 @@ jobs:
         ports:
           - "1433:1433"
     runs-on: ubuntu-latest
+    env:
+      DOTNET_ENVIRONMENT: Test
+      DOTNET_HOST_FACTORY_RESOLVER_DEFAULT_TIMEOUT_IN_SECONDS: 30
     steps:
     - uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.100'
     - name: Install dependencies
       run: dotnet restore
+    - name: Build projects
+      run: |
+        dotnet build
     - name: Test
-      run: dotnet test
+      run: dotnet test --no-build

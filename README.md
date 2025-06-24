@@ -487,7 +487,7 @@ Example Response:
   }]
 }
 ```
-# Http Error Responses
+## Http Error Responses
 |Endpoint     |Http Response Code|Common Fixes|
 |-------------|------------------|------------|
 |POST /token (SAMS) | 400 - Bad Request| Check all required parameters are present in the token request|
@@ -499,7 +499,14 @@ Example Response:
 |             | 501 - Not implemented| Check the url is correct|
 |GET /Bundle  | 500 - Internal Server Error, Authorization Failure (SAMS)| Refresh expired token|
 
+# Status UI
 
+This repository also provides a Status UI dashboard for analyzing messages recieved by the NVSS FHIR API. The Status UI and Status API backend that powers it is designed to run as a separate ASP.NET application, on a separate domain or subdomain, with a separate set of access controls. It must hook in to the same Microsoft SQL Server database to work. See the [Status API README.md](status_api/README.md) for a quick start. See [DeploymentSteps.md](DeployementSteps.md#Status-UI-Deployment-Steps) for a guide on hosting the service.
+
+<figure>
+  <img src="StatusUIScreenshot.png" alt="A status dashboard showing FHIR messages by source, event type, and jurisdiction since a user-specified datetime." style="max-width:100%; height:auto; border:1px solid black;">
+  <figcaption align="center">A screenshot of the Status UI.</figcaption>
+</figure>
 
 # API Developer Documentation
 

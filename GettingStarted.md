@@ -25,14 +25,18 @@ dotnet tool install --global dotnet-ef --version 7
 
 8. Launch MSSQL database server in the background via Docker:
 ```
-docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 -d mcr.microsoft.com/mssql/server
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=yourStrong(!)Password" -p 1433:1433 -d mcr.microsoft.com/mssql/server
 ```
  - Optional: run `docker ps` to check working Docker services.
+ - Note: On an Apple silicon Mac you may need to add `--platform=linux/amd64` to the docker run command above.
+ - Warning: Based on your shell special characters may need to be escaped or avoided.
 
 9. Load the database migrations:
 ```
 dotnet ef --project messaging database update
 ```
+
+ - Note: To reset the database you can use `dotnet ef --project messaging database drop` followed by `dotnet ef --project messaging database update`
 
 10. Run the server with the command below. It may ask you for a system password when generating a developer certificate.
 ```
@@ -57,4 +61,21 @@ Building...
 dotnet dev-certs https --trust
 ```
 
-12. To confirm the server is running properly, visit <https://127.0.0.1:5001/swagger/v1/swagger.json>, where you should get a JSON file and see `StatusCode: 200` in the server logs. Authentication and authorization are disabled in development mode. You can view the [REST API documentation](https://nightingaleproject.github.io/Reference-NCHS-API/#/) on GitHub Pages, and use the [Canary Testing Framework](https://canary.ctex-inc.com/) to generate sample FHIR messages. You can also use the [Postman Collections](https://github.com/nightingaleproject/Reference-NCHS-API/tree/766-getting-started-guide/examples) provided, but disregard authentication and use `https://127.0.0.1:5001/` as the base URL.
+12. To confirm the server is running properly, visit <https://127.0.0.1:5001/swagger/v1/swagger.json>, where you should get a JSON file and see `StatusCode: 200` in the server logs. Authentication and authorization are disabled in development mode. You can view the [REST API documentation](https://nightingaleproject.github.io/Reference-NCHS-API/#/) on GitHub Pages or <http://localhost:5001/swagger/index.html>.
+
+
+## Run Messaging Tests
+
+From `messaging` directory with MSSQL database already running, run:
+
+```shell
+dotnet test
+```
+
+## Next Steps
+
+ - Checkout our [Testing Tools](testing_tools/README.md) to quickly populate the FHIR API database with content suitable for exercising the software.
+ - Launch the [Status UI](status_api/README.md) to get a NVSS FHIR messages status dashboard.
+ - Use the [Canary Testing Framework](https://canary.fhir.nvss.cdc.gov/) to generate sample FHIR messages.
+ - Try the [Postman Collections](https://github.com/nightingaleproject/Reference-NCHS-API/tree/main/examples/README.md) provided, but disregard authentication and use `https://127.0.0.1:5001/` as the base URL.
+
