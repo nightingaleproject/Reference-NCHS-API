@@ -7,6 +7,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import utc from 'dayjs/plugin/utc';
+import { Version } from './Version.jsx';
 import './App.css'
 
 // Extend dayjs with needed plugins
@@ -166,6 +167,7 @@ function App() {
         }}
       />
 
+      <Version />
     </Container>
   )
 }

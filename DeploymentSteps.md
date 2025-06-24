@@ -152,9 +152,9 @@ NVSS FHIR API for messaging. The Status UI and NVSS FHIR API must connect to the
 database, and should be deployed as separate entities on the IIS with separate FQDNs and separate access
 controls. The Status UI can only be deployed if the NVSS FHIR API is already deployed.
 
-To deploy the Status UI, follow the [NVSS FHIR API Deployment Steps](#NVSS-FHIR-API-Deployment-Steps),
-except replace steps 2 (Build), 5 (Setup the SQL Server), 7 (Test), and 8 (SQL Authentication) with their
-counterparts below:
+To deploy the Status UI, first **bump the version in status_ui/src/Version.jsx**, then follow the
+[NVSS FHIR API Deployment Steps](#NVSS-FHIR-API-Deployment-Steps), except replace steps 2 (Build),
+5 (Setup the SQL Server), 7 (Test), and 8 (SQL Authentication) with their counterparts below:
 
 2. Build the project
 
