@@ -8,7 +8,7 @@ namespace messaging.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            var createProcedure = "CREATE PROCEDURE [dbo].[SelectNewOutgoingMessageOrdered] @JurisdictionId char(2), @EventType char(3) = NULL, @Count int AS BEGIN SET NOCOUNT ON; SELECT * FROM OutgoingMessageItems WHERE JurisdictionId = @JurisdictionId AND EventType = (CASE WHEN @EventType IS NOT NULL THEN @EventType ELSE EventType END) AND RetrievedAt IS NULL ORDER BY CreatedDate OFFSET 0 ROWS FETCH NEXT @Count ROWS ONLY END;";
+            var createProcedure = "CREATE PROCEDURE [dbo].[SelectNewOutgoingMessageOrdered] @JurisdictionId char(2), @EventType char(3) = NULL, @IGVersion char(20) = NULL, @Count int AS BEGIN SET NOCOUNT ON; SELECT * FROM OutgoingMessageItems WHERE JurisdictionId = @JurisdictionId AND EventType = (CASE WHEN @EventType IS NOT NULL THEN @EventType ELSE EventType END) AND IGVersion = @IGVersion AND RetrievedAt IS NULL ORDER BY CreatedDate OFFSET 0 ROWS FETCH NEXT @Count ROWS ONLY END;";
             migrationBuilder.Sql(createProcedure);
         }
 
