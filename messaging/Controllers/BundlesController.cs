@@ -131,7 +131,8 @@ namespace messaging.Controllers
             }
 
             // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
-            // TODO: we could use the since param earlier so if we are only getting new respones, we don't select and have to handle thousands of other records
+            // TODO: we should use the since param earlier so if we are only getting new respones, we don't select and have to handle thousands of other records
+            //IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={eventYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}").AsEnumerable();
             try
             {
                 // intialize count and the query result
@@ -143,10 +144,10 @@ namespace messaging.Controllers
                 {
                     // Here we handle case where no debug params are provided, operate as a queue
                     // First get the total count of messages so we can include the total in the response
-                    var countMsg = _context.Database.SqlQuery<int>($"EXEC CountNewOutgoingMessages @JurisdictionId={jurisdictionId}, @EventType={recordType}").ToList();
+                    var countMsg = _context.Database.SqlQuery<int>($"EXEC CountNewOutgoingMessages @JurisdictionId={jurisdictionId}, @EventType={recordType}, @IGVersion={igVersion}").ToList();
                     totalMessageCount = countMsg.FirstOrDefault();
                     // Now select the outgoing messages from the queue, select up to the page size
-                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageOrdered @JurisdictionId={jurisdictionId}, @EventType={recordType}, @Count={_count}");
+                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageOrdered @JurisdictionId={jurisdictionId}, @EventType={recordType}, @IGVersion={igVersion},  @Count={_count}");
                 }
                 else
                 {
@@ -154,10 +155,10 @@ namespace messaging.Controllers
                     // We need to account for paging, calculate the number of messages to skip
                     int numToSkip = (page - 1) * _count;
                     // First get the total count of messages so we can include the total in the response
-                    var countMsg = _context.Database.SqlQuery<int>($"EXEC CountNewOutgoingMessagesWithParams @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}").ToList();
+                    var countMsg = _context.Database.SqlQuery<int>($"EXEC CountNewOutgoingMessagesWithParams @JurisdictionId={jurisdictionId}, @EventYear={eventYear}, @IGVersion={igVersion}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}").ToList();
                     totalMessageCount = countMsg.FirstOrDefault();
                     // Now select the outgoing messages based on the params provided, select up to the page size
-                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={deathYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}, @Skip={numToSkip}, @Count={_count}");
+                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={eventYear}, @IGVersion={igVersion}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}, @Skip={numToSkip}, @Count={_count}");
                 }
 
                 // Convert to list to execute the query, capture the result for re-use
@@ -627,7 +628,7 @@ namespace messaging.Controllers
 
         protected async System.Threading.Tasks.Task SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
         {
-            var messageResult = _context.IncomingMessageItems.FromSqlInterpolated($"EXEC CreateIncomingMessageItem @Message={item.Message}, @MessageId={item.MessageId}, @Source={item.Source}, @JurisdictionId={item.JurisdictionId}, @MessageType={item.MessageType}, @CertificateNumber={item.CertificateNumber}, @CreatedDate=null, @UpdatedDate=null, @ProcessedStatus='QUEUED', @EventType={item.EventType}, @EventYear={item.EventYear}").AsEnumerable();
+            var messageResult = _context.IncomingMessageItems.FromSqlInterpolated($"EXEC CreateIncomingMessageItem @Message={item.Message}, @MessageId={item.MessageId}, @Source={item.Source}, @JurisdictionId={item.JurisdictionId}, @MessageType={item.MessageType}, @CertificateNumber={item.CertificateNumber}, @CreatedDate=null, @UpdatedDate=null, @ProcessedStatus='QUEUED', @EventType={item.EventType}, @IGVersion={item.IGVersion}, @EventYear={item.EventYear}").AsEnumerable();
             IncomingMessageItem insertedItem = messageResult.First();
             // TODO it could be faster if instead we just retrieve the scope id and set item.Id manually to the returned scope id
 
