@@ -164,61 +164,64 @@ then follow
    4. Copy all files in status_api > bin > release > net6.0
    5. Paste the files to a **separate** folder on Windows Server
    6. Create and update all three appsettings and web.config files in the **separate** project folder on Windows Server
-      1. appsettings (update `<db-server-name-here>` below)
-         ```
-         {
-            "Serilog": {
-               "Using": [
-                  "Serilog.Sinks.ApplicationInsights", "Serilog.Sinks.File"
-               ],
-               "WriteTo": [
-                  { "Name": "Console" },
-                  { "Name": "File", "Args": { "path": "Logs/status-app-log.txt", "rollingInterval": "Day" } }
-               ],
-               "MinimumLevel": {
-                  "Default": "Debug",
-                  "Override": {
-                     "Microsoft": "Warning",
-                     "Microsoft.Hosting.Lifetime": "Information",
-                     "System": "Information",
-                     "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Debug"
-                  }
-               },
-               "Destructure": [
-                  { "Name": "ToMaximumDepth", "Args": { "maximumDestructuringDepth": 4 } },
-                  { "Name": "ToMaximumStringLength", "Args": { "maximumStringLength": 100 } },
-                  { "Name": "ToMaximumCollectionCount", "Args": { "maximumCollectionCount": 10 } }
-               ],
-               "Properties": {
-                  "Application": "NVSS-Status-App"
-               }
-            },
-            "ConnectionStrings": {
-               "NVSSMessagingDatabase": "Server=<db-server-name-here>.cdc.gov;Database=NVSSMESSAGING;Integrated Security=SSPI;"
-            }
+
+##### appsettings (update `<db-server-name-here>` below)
+
+```
+{
+   "Serilog": {
+      "Using": [
+         "Serilog.Sinks.ApplicationInsights", "Serilog.Sinks.File"
+      ],
+      "WriteTo": [
+         { "Name": "Console" },
+         { "Name": "File", "Args": { "path": "Logs/status-app-log.txt", "rollingInterval": "Day" } }
+      ],
+      "MinimumLevel": {
+         "Default": "Debug",
+         "Override": {
+            "Microsoft": "Warning",
+            "Microsoft.Hosting.Lifetime": "Information",
+            "System": "Information",
+            "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Debug"
          }
-         ```
+      },
+      "Destructure": [
+         { "Name": "ToMaximumDepth", "Args": { "maximumDestructuringDepth": 4 } },
+         { "Name": "ToMaximumStringLength", "Args": { "maximumStringLength": 100 } },
+         { "Name": "ToMaximumCollectionCount", "Args": { "maximumCollectionCount": 10 } }
+      ],
+      "Properties": {
+         "Application": "NVSS-Status-App"
+      }
+   },
+   "ConnectionStrings": {
+      "NVSSMessagingDatabase": "Server=<db-server-name-here>.cdc.gov;Database=NVSSMESSAGING;Integrated Security=SSPI;"
+   }
+}
+```
 
 **The database ConnectionString is intentionally the same between the Status UI and NVSS FHIR API.**
 
-      2. web.config
-         ```
-         <?xml version="1.0" encoding="utf-8"?>
-         <configuration>
-            <location path="." inheritInChildApplications="false">
-               <system.webServer>
-                  <handlers>
-                  <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
-                  </handlers>
-                  <aspNetCore processPath="dotnet" arguments=".\status_api.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
-                  <environmentVariables>
-                     <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="<environment>" />
-                     <environmentVariable name="DOTNET_ENVIRONMENT" value="<environment>" />
-                  </environmentVariables>
-               </system.webServer>
-            </location>
-         </configuration>
-         ```
+##### web.config
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+   <location path="." inheritInChildApplications="false">
+      <system.webServer>
+         <handlers>
+         <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+         </handlers>
+         <aspNetCore processPath="dotnet" arguments=".\status_api.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
+         <environmentVariables>
+            <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="<environment>" />
+            <environmentVariable name="DOTNET_ENVIRONMENT" value="<environment>" />
+         </environmentVariables>
+      </system.webServer>
+   </location>
+</configuration>
+```
 
 Replace `<environment>` with `Development`, `Test`, or `Production` depending on your use case. **Never deploy `Development` or `Test` on an open network.**
 
@@ -247,8 +250,11 @@ If its not the first deployment of Status UI and you are updating it:
 2. Put up a release PR for that version, and merge it to main.
 3. Create a git tag without a git release. You can do this on your CLI, i.e:
 ```
-git tag -a status-ui-v1.2.3 -m "Status UI Release v1.2.3"
-git push origin status-ui-v1.2.3
+git tag -a status-ui-vX.X.X -m "Status UI Release vX.X.X"
+```
+
+```
+git push origin status-ui-vX.X.X
 ```
 4. Follow the steps from [FHIR API update deployment](#update-deployment-steps), but name the deployment and backup
 folders `NVSS-STATUS-<ENV>-vX.X.X` and use the appsettings and webconfig for Status UI. Remember that the Status UI
