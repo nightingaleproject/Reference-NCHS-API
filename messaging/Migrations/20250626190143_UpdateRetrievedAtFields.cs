@@ -4,8 +4,10 @@
 
 namespace messaging.Migrations
 {
-    public partial class UpdateRetrievedAtField : Migration
+    /// <inheritdoc />
+    public partial class UpdateRetrievedAtFields : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             var createProcedure = "CREATE PROCEDURE [dbo].[UpdateOutgoingMessagesRetrievedAt] @Id int, @RetrievedAt datetime AS BEGIN SET NOCOUNT ON UPDATE OutgoingMessageItems SET RetrievedAt = @RetrievedAt WHERE Id = @Id END";

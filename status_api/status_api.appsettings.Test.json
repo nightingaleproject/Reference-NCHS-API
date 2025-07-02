@@ -20,6 +20,6 @@
     }
   },
   "ConnectionStrings": {
-    "NVSSMessagingDatabase": "Server=localhost;Database=nvssstatusapitest;User=sa;Password=yourStrong(!)Password;"
+    "NVSSMessagingDatabase": "Server=localhost;Database=nvssmessaging;User=sa;Password=yourStrong(!)Password1;TrustServerCertificate=True;"
   }
 }
