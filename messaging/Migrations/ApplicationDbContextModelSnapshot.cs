@@ -17,10 +17,10 @@ namespace messaging.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.1")
+                .HasAnnotation("ProductVersion", "7.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("messaging.Models.IJEItem", b =>
                 {
@@ -28,7 +28,7 @@ namespace messaging.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("IJE")
                         .HasColumnType("nvarchar(max)");
@@ -47,30 +47,30 @@ namespace messaging.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("CertificateNumber")
                         .HasMaxLength(6)
-                        .HasColumnType("CHAR(6)");
+                        .HasColumnType("CHAR");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("EventType")
                         .HasMaxLength(3)
-                        .HasColumnType("CHAR(3)");
+                        .HasColumnType("CHAR");
 
                     b.Property<long?>("EventYear")
                         .HasColumnType("bigint");
 
                     b.Property<string>("IGVersion")
                         .HasMaxLength(20)
-                        .HasColumnType("CHAR(20)");
+                        .HasColumnType("CHAR");
 
                     b.Property<string>("JurisdictionId")
                         .IsRequired()
                         .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
+                        .HasColumnType("CHAR");
 
                     b.Property<string>("Message")
                         .HasColumnType("nvarchar(max)");
@@ -86,12 +86,12 @@ namespace messaging.Migrations
                     b.Property<string>("ProcessedStatus")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("CHAR(10)");
+                        .HasColumnType("CHAR");
 
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(3)
-                        .HasColumnType("CHAR(3)");
+                        .HasColumnType("CHAR");
 
                     b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("datetime2");
@@ -107,7 +107,7 @@ namespace messaging.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -115,7 +115,7 @@ namespace messaging.Migrations
                     b.Property<string>("JurisdictionId")
                         .IsRequired()
                         .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
+                        .HasColumnType("CHAR");
 
                     b.Property<string>("MessageId")
                         .IsRequired()
@@ -148,30 +148,30 @@ namespace messaging.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("CertificateNumber")
                         .HasMaxLength(6)
-                        .HasColumnType("CHAR(6)");
+                        .HasColumnType("CHAR");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("EventType")
                         .HasMaxLength(3)
-                        .HasColumnType("CHAR(3)");
+                        .HasColumnType("CHAR");
 
                     b.Property<long?>("EventYear")
                         .HasColumnType("bigint");
 
                     b.Property<string>("IGVersion")
                         .HasMaxLength(20)
-                        .HasColumnType("CHAR(20)");
+                        .HasColumnType("CHAR");
 
                     b.Property<string>("JurisdictionId")
                         .IsRequired()
                         .HasMaxLength(2)
-                        .HasColumnType("CHAR(2)");
+                        .HasColumnType("CHAR");
 
                     b.Property<string>("Message")
                         .IsRequired()
