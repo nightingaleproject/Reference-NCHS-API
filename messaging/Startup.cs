@@ -68,7 +68,6 @@ namespace messaging
             app.Use(async (context, next) =>
             {
                 context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
-                context.Response.Headers.Add("X-XSS-Protection", "1;mode=block");
                 context.Response.Headers.Add("Cache-Control", "no-store");
 
                 // null check the MaxRequestBodySizeFeature, this feature is null in the dotnet test instance and will throw a null error in our testing framework

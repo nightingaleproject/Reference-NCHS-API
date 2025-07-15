@@ -511,6 +511,30 @@
         }
       }
     },
+    "/{jurisdictionId}/privacy-policy": {
+      "get": {
+        "tags": [
+          "PrivacyPolicy"
+        ],
+        "parameters": [
+          {
+            "name": "jurisdictionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "maxLength": 2,
+              "minLength": 2,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/STEVE/{jurisdictionId}/Bundle": {
       "get": {
         "tags": [
