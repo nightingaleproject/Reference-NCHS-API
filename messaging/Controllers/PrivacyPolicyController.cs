@@ -43,11 +43,11 @@ namespace messaging.Controllers
                 {
                     using (StreamReader r = new StreamReader(stream))
                     {
-                        // the capability statement is approximately 1 kb
+                        // the privacy policy is approximately 1 kb, increase the char[] if the final privacy policy is longer
                         char[] buffer = new char[2000];
                         int size = r.ReadBlock(buffer, 0, 2000);
-                        string str = new string(buffer);
-                        return Ok(str);
+                        string str = new string(buffer, 0, size);
+                        return Content(str, "application/json");
                     }
 
                 }
