@@ -1,0 +1,10 @@
+[
+  {
+    "outputFile": "CapabilityStatement-NVSS-API-CS.json",
+    "fshName": "NVSS-API-CS",
+    "fshType": "Instance",
+    "fshFile": "NVSSAPI_CapStmt.fsh",
+    "startLine": 1,
+    "endLine": 28
+  }
+]

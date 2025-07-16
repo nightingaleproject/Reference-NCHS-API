@@ -1,11 +1,11 @@
 Instance: NVSS-API-CS
 InstanceOf: CapabilityStatement
 Usage: #definition
-* version = "1.5.0"
+* version = "1.7.0-preview"
 * name = "NVSS_API"
 * title = "NVSS API Server Capability Statement"
 * status = #draft
-* date = "2025-03-21"
+* date = "2025-07-16"
 * publisher = "NCHS"
 * kind = #instance
 * implementation.description = "NVSS API Server"
