@@ -22,39 +22,39 @@ These instructions walk through the steps of installing the FHIR API on a Window
    4. Copy all files in messaging > bin > release > net6.0
    5. Paste the files to a folder on the new Windows Server
    6. Create and update all three appsettings and web.config files in the project folder on the new server
-      1. appsettings (update the database server name)
-   ```
-   {
-      "Logging": {
-         "LogLevel": {
-            "Default": "Information",
-            "Microsoft": "Warning",
-            "Microsoft.Hosting.Lifetime": "Information",
-            "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Information"
+      1. appsettings (update `<db-server-name-here>` below)
+         ```
+         {
+            "Logging": {
+               "LogLevel": {
+                  "Default": "Information",
+                  "Microsoft": "Warning",
+                  "Microsoft.Hosting.Lifetime": "Information",
+                  "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Information"
+               }
+            },
+            "ConnectionStrings": {
+               "NVSSMessagingDatabase": "Server=<db-server-name-here>.cdc.gov;Database=nvssmessaging;Integrated Security=SSPI;"
+            }
          }
-      },
-      "ConnectionStrings": {
-         "NVSSMessagingDatabase": "Server=<db-server-name-here>.cdc.gov;Database=nvssmessaging;Integrated Security=SSPI;"
-      }
-   }
-   ``` 
-      2. web.config
-   ```
-   <?xml version="1.0" encoding="utf-8"?>
-   <configuration>
-     <location path="." inheritInChildApplications="false">
-       <system.webServer>
-         <handlers>
-           <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
-         </handlers>
-         <aspNetCore processPath="dotnet" arguments=".\messaging.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
-           <environmentVariables>
-            <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="<environment>" />
-           </environmentVariables>
-       </system.webServer>
-     </location>
-   </configuration>      
-   ```
+         ``` 
+      2. web.config (update `<environment>` below)
+         ```
+         <?xml version="1.0" encoding="utf-8"?>
+         <configuration>
+            <location path="." inheritInChildApplications="false">
+               <system.webServer>
+                  <handlers>
+                  <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+                  </handlers>
+                  <aspNetCore processPath="dotnet" arguments=".\messaging.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
+                  <environmentVariables>
+                     <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="<environment>" />
+                  </environmentVariables>
+               </system.webServer>
+            </location>
+         </configuration>      
+         ```
 3. Install certificates
    1. If you plan to run multiple apps on the same machine (ex. Test and Dev) request DNS names for each
    2. Request an external certificate
@@ -152,56 +152,76 @@ NVSS FHIR API for messaging. The Status UI and NVSS FHIR API must connect to the
 database, and should be deployed as separate entities on the IIS with separate FQDNs and separate access
 controls. The Status UI can only be deployed if the NVSS FHIR API is already deployed.
 
-To deploy the Status UI, first **bump the version in status_ui/src/Version.jsx**, then follow the
-[NVSS FHIR API Deployment Steps](#NVSS-FHIR-API-Deployment-Steps), except replace steps 2 (Build),
+then follow
+[NVSS FHIR API Deployment Steps](#NVSS-FHIR-API-Deployment-Steps) above, except replace steps 2 (Build),
 5 (Setup the SQL Server), 7 (Test), and 8 (SQL Authentication) with their counterparts below:
 
 2. Build the project
 
    1. Ensure you have a clone the git repo https://github.com/nightingaleproject/Reference-NCHS-API on your local machine
    2. Checkout the tagged version you want to install
-   3. From the `status_ui/` directory, run `npm ci && npm run build` on your local machine
    3. From the `status_api/` directory, run `dotnet publish —configuration release` on your local machine
    4. Copy all files in status_api > bin > release > net6.0
    5. Paste the files to a **separate** folder on Windows Server
    6. Create and update all three appsettings and web.config files in the **separate** project folder on Windows Server
-      1. appsettings (update the database server name)
-   ```
-   {
-      "Logging": {
-         "LogLevel": {
-            "Default": "Information",
+
+##### appsettings (update `<db-server-name-here>` below)
+
+```
+{
+   "Serilog": {
+      "Using": [
+         "Serilog.Sinks.ApplicationInsights", "Serilog.Sinks.File"
+      ],
+      "WriteTo": [
+         { "Name": "Console" },
+         { "Name": "File", "Args": { "path": "Logs/status-app-log.txt", "rollingInterval": "Day" } }
+      ],
+      "MinimumLevel": {
+         "Default": "Debug",
+         "Override": {
             "Microsoft": "Warning",
             "Microsoft.Hosting.Lifetime": "Information",
-            "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Information"
+            "System": "Information",
+            "Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware": "Debug"
          }
       },
-      "ConnectionStrings": {
-         "NVSSMessagingDatabase": "Server=<db-server-name-here>.cdc.gov;Database=nvssmessaging;Integrated Security=SSPI;"
+      "Destructure": [
+         { "Name": "ToMaximumDepth", "Args": { "maximumDestructuringDepth": 4 } },
+         { "Name": "ToMaximumStringLength", "Args": { "maximumStringLength": 100 } },
+         { "Name": "ToMaximumCollectionCount", "Args": { "maximumCollectionCount": 10 } }
+      ],
+      "Properties": {
+         "Application": "NVSS-Status-App"
       }
+   },
+   "ConnectionStrings": {
+      "NVSSMessagingDatabase": "Server=<db-server-name-here>.cdc.gov;Database=NVSSMESSAGING;Integrated Security=SSPI;"
    }
-   ```
+}
+```
 
 **The database ConnectionString is intentionally the same between the Status UI and NVSS FHIR API.**
 
-      2. web.config
-   ```
-   <?xml version="1.0" encoding="utf-8"?>
-   <configuration>
-     <location path="." inheritInChildApplications="false">
-       <system.webServer>
+##### web.config
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+   <location path="." inheritInChildApplications="false">
+      <system.webServer>
          <handlers>
-           <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+         <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
          </handlers>
          <aspNetCore processPath="dotnet" arguments=".\status_api.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
-           <environmentVariables>
+         <environmentVariables>
             <environmentVariable name="ASPNETCORE_ENVIRONMENT" value="<environment>" />
             <environmentVariable name="DOTNET_ENVIRONMENT" value="<environment>" />
-           </environmentVariables>
-       </system.webServer>
-     </location>
-   </configuration>
-   ```
+         </environmentVariables>
+      </system.webServer>
+   </location>
+</configuration>
+```
 
 Replace `<environment>` with `Development`, `Test`, or `Production` depending on your use case. **Never deploy `Development` or `Test` on an open network.**
 
@@ -223,3 +243,20 @@ Replace `<environment>` with `Development`, `Test`, or `Production` depending on
    1. Ensure there is already FHIR messaging data on the SQL Server, use the NVSS FHIR API to post messages if there is no data.
    2. Navigate to `<fqdn>/StatusUI/index.html`, where `<fqdn>` is the full domain where the application was deployed.
 
+## Updating
+
+If its not the first deployment of Status UI and you are updating it:
+1. **Bump the version in status_ui/src/Version.jsx** using [semantic versioning practices](https://semver.org).
+2. Put up a release PR for that version, and merge it to main.
+3. Create a git tag without a git release. You can do this on your CLI, i.e:
+```
+git tag -a status-ui-vX.X.X -m "Status UI Release vX.X.X"
+```
+
+```
+git push origin status-ui-vX.X.X
+```
+4. Follow the steps from [FHIR API update deployment](#update-deployment-steps), but name the deployment and backup
+folders `NVSS-STATUS-<ENV>-vX.X.X` and use the appsettings and webconfig for Status UI. Remember that the Status UI
+relies on the same database schema as messaging, so the two deployments need to be in sync, and any required database
+updates should be applied by updating the messaging application.
