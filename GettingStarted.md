@@ -25,7 +25,7 @@ dotnet tool install --global dotnet-ef --version 7
 
 8. Launch MSSQL database server in the background via Docker:
 ```
-docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=yourStrong(!)Password" -p 1433:1433 -d mcr.microsoft.com/mssql/server
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=yourStrong(!)Password" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
 ```
  - Optional: run `docker ps` to check working Docker services.
  - Note: On an Apple silicon Mac you may need to add `--platform=linux/amd64` to the docker run command above.
