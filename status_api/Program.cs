@@ -121,6 +121,9 @@ namespace status_api
                     RequestPath = "/StatusUI"
                 });
 
+                // GET / (root)
+                app.MapGet("/", () => Results.Redirect("/StatusUI/index.html"));
+
                 app.Run();
             }
             catch (Exception ex)
