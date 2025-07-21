@@ -32,7 +32,7 @@
     <Content Include="StatusUI/assets/index-uSXOUBRu.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="StatusUI/assets/index-BEXAk3f1.js">
+    <Content Include="StatusUI/assets/index-_Ng_H7FI.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
