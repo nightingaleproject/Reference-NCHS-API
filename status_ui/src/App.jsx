@@ -102,7 +102,7 @@ function App() {
         <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 2 }}>
           <Typography variant="h5" >Since</Typography>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateTimePicker value={since} onChange={(newDateTime) => setSince(newDateTime)} />
+            <DateTimePicker label="Fetch data since date picker" value={since} onChange={(newDateTime) => setSince(newDateTime)} />
           </LocalizationProvider>
         </Stack>
       </Box>
