@@ -279,7 +279,7 @@ curl --request POST --url 'https://<OAuthHost>/auth/oauth/v2/token' \
 curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundle
 ```
 
-## Sending Messages
+## Sending Messages - Death Record
 
 1. Create a FHIR Record. The standard that specifies this format can be found [here](https://build.fhir.org/ig/HL7/vrdr/branches/Sep_2021_Connectathon/). There are also two public library implementations available to assist in the creation of FHIR Records, [VRDR-dotnet](https://github.com/nightingaleproject/vrdr-dotnet) and [VRDR_javalib](https://github.com/MortalityReporting/VRDR_javalib).
 2. Create a FHIR VRDR Message to act as an envelope for the FHIR Record created above. The standard that specifies this format can be found [here](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html). The [VRDR-dotnet Messaging library](https://github.com/nightingaleproject/vrdr-dotnet/blob/master/doc/Messaging.md) also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the [Canary](https://github.com/nightingaleproject/canary) project has a **Creating FHIR VRDR Messages** option in which will create an appropriate synthetic message for POSTing to the API.
@@ -290,7 +290,7 @@ curl --location --request POST 'https://localhost:5001/MA/Bundle' \
 --header 'Authorization: Bearer <OAuthToken>' \
 --data "@path/to/file.json"
 ```
-3. The API will return a 204 No Content HTTP response if everything is functioning correctly.
+4. The API will return a 204 No Content HTTP response if everything is functioning correctly.
 Example Response:
 ```
 > POST /MA/Bundle HTTP/1.1
@@ -360,6 +360,35 @@ curl --location --request POST 'https://localhost:5001/MA/Bundle' \
 Bulk upload is strongly recommended to increase efficient and performant use of the API. However,
 for efficient use of the API batches should also not exceed 10MB in size. Given the size of a
 typical record his means that batch sizes from 20 to 100 records should work well.
+
+## Sending Messages - Birth and Fetal Death Records
+
+1. Create a FHIR Record. The standard that specifies this format can be found [here](https://build.fhir.org/ig/HL7/fhir-bfdr/). The [vital-records-dotnet](https://github.com/nightingaleproject/vital-records-dotnet) public library implementation is available to assist in the creation of FHIR records.
+2. Create a FHIR VRDR Message to act as an envelope for the FHIR Record created above. The standard that specifies this format can be found [here](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html). The [VRDR-dotnet Messaging library](https://github.com/nightingaleproject/vrdr-dotnet/blob/master/doc/Messaging.md) also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the [Canary](https://github.com/nightingaleproject/vital-records-dotnet/tree/main/projects/Canary) project has **Creating FHIR BFDR Birth Messages** and **Creating FHIR BFDR Fetal Death Messages** options, which will create appropriate synthetic messages for POSTing to the API.
+3. Submit the message using a POST request to the `/<JurisdictionID>/Bundle` endpoint; the following example demonstrates the request format using [curl](https://curl.se/):
+```bash
+curl --location --request POST 'https://localhost:5001/MA/Bundle' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <OAuthToken>' \
+--data "@path/to/file.json"
+```
+4. The API will return a 204 No Content HTTP response if everything is functioning correctly.
+Example Response:
+```
+> POST /MA/Bundle HTTP/1.1
+> Host: localhost:5001
+> User-Agent: curl/7.64.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 46643
+> Expect: 100-continue
+>
+< HTTP/1.1 100 Continue
+* We are completely uploaded and fine
+< HTTP/1.1 204 No Content
+< Date: Wed, 17 Nov 2021 21:56:03 GMT
+< Server: Kestrel
+```
 
 ## Receiving Messages
 1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the `/<JurisdictionID>/Bundle` endpoint. The following example demonstrates the request format using [curl](https://curl.se/):
