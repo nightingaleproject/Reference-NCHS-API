@@ -428,7 +428,6 @@ namespace messaging.tests
                 DeathYear = 2024,
                 JurisdictionId = "HI"
             };
-
             // Submit that Death Record
             HttpResponseMessage createSubmissionMessage = await JsonResponseHelpers.PostJsonAsync(_client, "/" + recordSubmission.JurisdictionId + "/Bundle/VRDR/VRDR_STU3_0", recordSubmission.ToJson());
             Assert.Equal(HttpStatusCode.NoContent, createSubmissionMessage.StatusCode);
@@ -616,7 +615,7 @@ namespace messaging.tests
 
         [Fact]
         public async System.Threading.Tasks.Task UpdateBirthMessagesAreSuccessfullyAcknowledged()
-        {
+        {   
             // Clear any messages in the database for a clean test
             DatabaseHelper.ResetDatabase(_context);
 
