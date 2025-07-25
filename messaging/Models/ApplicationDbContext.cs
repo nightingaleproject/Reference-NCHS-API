@@ -18,6 +18,9 @@ namespace messaging.Models
         public DbSet<OutgoingMessageItem> OutgoingMessageItems { get; set; }
         public DbSet<IJEItem> IJEItems { get; set; }
 
+				// View-like non-entity model for stored procedures; does not have a real SQL table
+				public DbSet<StatusOverallResults> StatusOverallResults { get; set; }
+				
         public override int SaveChanges()
         {
             AddTimestamps();
@@ -48,5 +51,14 @@ namespace messaging.Models
                 }
             }
         }
+
+				protected override void OnModelCreating(ModelBuilder modelBuilder) {
+						base.OnModelCreating(modelBuilder);
+						modelBuilder.Entity<IncomingMessageItem>().HasKey(m => m.Id);
+						modelBuilder.Entity<IncomingMessageLog>().HasKey(l => l.Id);
+						modelBuilder.Entity<OutgoingMessageItem>().HasKey(m => m.Id);
+
+						modelBuilder.Entity<StatusOverallResults>().HasNoKey();
+				}
     }
 }
