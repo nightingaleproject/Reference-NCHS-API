@@ -35,46 +35,6 @@ namespace status_api.Controllers
 										.FromSqlInterpolated($"EXEC GetOverallStatusWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
 										.AsEnumerable<StatusOverallResults>()
 										.FirstOrDefault();
-								
-								Console.WriteLine("==========================");
-								Console.WriteLine(overallResults);
-								Console.WriteLine("==========================");
-								
-                // // Get overall statistics across all jurisdictions
-                // var overallResults = _context.IncomingMessageItems
-                //     .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
-                //     .GroupBy(message => 1) // Group by a constant to get overall results
-                //     .Select(group => new {
-                //         // Look up total number of processed and queued messages
-                //         ProcessedCount = group.Count(message => message.ProcessedStatus == "PROCESSED"),
-                //         QueuedCount = group.Count(message => message.ProcessedStatus == "QUEUED"),
-                //         // Look up oldest and newest queued messages
-                //         OldestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
-                //                             .OrderBy(message => message.CreatedDate)
-                //                             .Select(message => message.CreatedDate)
-                //                             .FirstOrDefault(),
-                //         NewestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
-                //                             .OrderByDescending(message => message.CreatedDate)
-                //                             .Select(message => message.CreatedDate)
-                //                             .FirstOrDefault(),
-                //         // Look up the most recently processed message
-                //         LatestProcessed = group.Where(message => message.ProcessedStatus == "PROCESSED")
-                //                                .OrderByDescending(message => message.UpdatedDate)
-                //                                .Select(message => message.UpdatedDate)
-                //                                .FirstOrDefault(),
-                //         // How many message have we processed in the past 5 minutes and 1 hour?
-                //         // Note that we make the assumption that UpdatedDate will be when state was changed to PROCESSED
-                //         ProcessedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
-                //                                                            message.UpdatedDate >= fiveMinutesAgo),
-                //         ProcessedCountOneHour = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
-                //                                                        message.UpdatedDate >= oneHourAgo),
-                //         // How many messages have we queued in the past 5 minutes and 1 hour?
-                //         QueuedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "QUEUED" &&
-                //                                                         message.CreatedDate >= fiveMinutesAgo),
-                //         QueuedCountOneHour = group.Count(message => message.ProcessedStatus == "QUEUED" &&
-                //                                                     message.CreatedDate >= oneHourAgo),
-                //         })
-                //     .FirstOrDefault();
 
                 // Now do the above grouped by source
                 var sourceResults = _context.IncomingMessageItems
@@ -174,15 +134,15 @@ namespace status_api.Controllers
                 var result = new
                 {
                     ApiEnvironment,
-                    ProcessedCount = overallResults?.ProcessedCount, //?? 0,
-                    QueuedCount = overallResults?.QueuedCount, //?? 0,
-                    OldestQueued = overallResults?.OldestQueued, //?? DateTime.MinValue,
-                    NewestQueued = overallResults?.NewestQueued, //?? DateTime.MinValue,
-                    LatestProcessed = overallResults?.LatestProcessed, //?? DateTime.MinValue,
-                    ProcessedCountFiveMinutes = overallResults?.ProcessedCountFiveMinutes, //?? 0,
-                    ProcessedCountOneHour = overallResults?.ProcessedCountOneHour, //?? 0,
-                    QueuedCountFiveMinutes = overallResults?.QueuedCountFiveMinutes, //?? 0,
-                    QueuedCountOneHour = overallResults?.QueuedCountOneHour, //?? 0,
+                    ProcessedCount = overallResults?.ProcessedCount,
+                    QueuedCount = overallResults?.QueuedCount,
+                    OldestQueued = overallResults?.OldestQueued,
+                    NewestQueued = overallResults?.NewestQueued,
+                    LatestProcessed = overallResults?.LatestProcessed,
+                    ProcessedCountFiveMinutes = overallResults?.ProcessedCountFiveMinutes,
+                    ProcessedCountOneHour = overallResults?.ProcessedCountOneHour,
+                    QueuedCountFiveMinutes = overallResults?.QueuedCountFiveMinutes,
+                    QueuedCountOneHour = overallResults?.QueuedCountOneHour,
                     sourceResults,
                     eventTypeResults,
                     jurisdictionResults
