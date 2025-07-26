@@ -41,12 +41,20 @@ namespace status_api.Controllers
 										.FromSqlInterpolated($"EXEC GetStatusBySourceResultsWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
 										.ToList<StatusResultsBySource>();
 
-                // Now do the above grouped by source
-                // var sourceResults = _context.IncomingMessageItems
+								var eventTypeResults = _context.StatusResultsByEventType
+										.FromSqlInterpolated($"EXEC GetStatusResultsByEventTypeWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
+										.ToList<StatusResultsByEventType>();
+
+								var jurisdictionResults = _context.StatusResultsByJurisdictionId
+										.FromSqlInterpolated($"EXEC GetStatusResultsByEventTypeWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
+										.ToList<StatusResultsByJurisdictionId>();
+								
+                // Now do the above grouped by EventType
+                // var eventTypeResults = _context.IncomingMessageItems
                 //     .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
-                //     .GroupBy(message => message.Source)
+                //     .GroupBy(message => message.EventType)
                 //     .Select(group => new {
-                //         Source = group.Key,
+                //         EventType = group.Key,
                 //         ProcessedCount = group.Count(message => message.ProcessedStatus == "PROCESSED"),
                 //         QueuedCount = group.Count(message => message.ProcessedStatus == "QUEUED"),
                 //         OldestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
@@ -72,67 +80,36 @@ namespace status_api.Controllers
                 //         })
                 //     .ToList();
 
-                // Now do the above grouped by EventType
-                var eventTypeResults = _context.IncomingMessageItems
-                    .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
-                    .GroupBy(message => message.EventType)
-                    .Select(group => new {
-                        EventType = group.Key,
-                        ProcessedCount = group.Count(message => message.ProcessedStatus == "PROCESSED"),
-                        QueuedCount = group.Count(message => message.ProcessedStatus == "QUEUED"),
-                        OldestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
-                                            .OrderBy(message => message.CreatedDate)
-                                            .Select(message => message.CreatedDate)
-                                            .FirstOrDefault(),
-                        NewestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
-                                            .OrderByDescending(message => message.CreatedDate)
-                                            .Select(message => message.CreatedDate)
-                                            .FirstOrDefault(),
-                        LatestProcessed = group.Where(message => message.ProcessedStatus == "PROCESSED")
-                                               .OrderByDescending(message => message.UpdatedDate)
-                                               .Select(message => message.UpdatedDate)
-                                               .FirstOrDefault(),
-                        ProcessedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
-                                                                           message.UpdatedDate >= fiveMinutesAgo),
-                        ProcessedCountOneHour = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
-                                                                       message.UpdatedDate >= oneHourAgo),
-                        QueuedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "QUEUED" &&
-                                                                        message.CreatedDate >= fiveMinutesAgo),
-                        QueuedCountOneHour = group.Count(message => message.ProcessedStatus == "QUEUED" &&
-                                                                    message.CreatedDate >= oneHourAgo),
-                        })
-                    .ToList();
-
-                // Now do the above grouped by jurisdiction
-                var jurisdictionResults = _context.IncomingMessageItems
-                    .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
-                    .GroupBy(message => message.JurisdictionId)
-                    .Select(group => new {
-                        JurisdictionId = group.Key,
-                        ProcessedCount = group.Count(message => message.ProcessedStatus == "PROCESSED"),
-                        QueuedCount = group.Count(message => message.ProcessedStatus == "QUEUED"),
-                        OldestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
-                                            .OrderBy(message => message.CreatedDate)
-                                            .Select(message => message.CreatedDate)
-                                            .FirstOrDefault(),
-                        NewestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
-                                            .OrderByDescending(message => message.CreatedDate)
-                                            .Select(message => message.CreatedDate)
-                                            .FirstOrDefault(),
-                        LatestProcessed = group.Where(message => message.ProcessedStatus == "PROCESSED")
-                                               .OrderByDescending(message => message.UpdatedDate)
-                                               .Select(message => message.UpdatedDate)
-                                               .FirstOrDefault(),
-                        ProcessedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
-                                                                           message.UpdatedDate >= fiveMinutesAgo),
-                        ProcessedCountOneHour = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
-                                                                       message.UpdatedDate >= oneHourAgo),
-                        QueuedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "QUEUED" &&
-                                                                        message.CreatedDate >= fiveMinutesAgo),
-                        QueuedCountOneHour = group.Count(message => message.ProcessedStatus == "QUEUED" &&
-                                                                    message.CreatedDate >= oneHourAgo),
-                        })
-                    .ToList();
+                // // Now do the above grouped by jurisdiction
+                // var jurisdictionResults = _context.IncomingMessageItems
+                //     .Where(message => message.CreatedDate >= _since) // Only include messages as specified using _since
+                //     .GroupBy(message => message.JurisdictionId)
+                //     .Select(group => new {
+                //         JurisdictionId = group.Key,
+                //         ProcessedCount = group.Count(message => message.ProcessedStatus == "PROCESSED"),
+                //         QueuedCount = group.Count(message => message.ProcessedStatus == "QUEUED"),
+                //         OldestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
+                //                             .OrderBy(message => message.CreatedDate)
+                //                             .Select(message => message.CreatedDate)
+                //                             .FirstOrDefault(),
+                //         NewestQueued = group.Where(message => message.ProcessedStatus == "QUEUED")
+                //                             .OrderByDescending(message => message.CreatedDate)
+                //                             .Select(message => message.CreatedDate)
+                //                             .FirstOrDefault(),
+                //         LatestProcessed = group.Where(message => message.ProcessedStatus == "PROCESSED")
+                //                                .OrderByDescending(message => message.UpdatedDate)
+                //                                .Select(message => message.UpdatedDate)
+                //                                .FirstOrDefault(),
+                //         ProcessedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
+                //                                                            message.UpdatedDate >= fiveMinutesAgo),
+                //         ProcessedCountOneHour = group.Count(message => message.ProcessedStatus == "PROCESSED" &&
+                //                                                        message.UpdatedDate >= oneHourAgo),
+                //         QueuedCountFiveMinutes = group.Count(message => message.ProcessedStatus == "QUEUED" &&
+                //                                                         message.CreatedDate >= fiveMinutesAgo),
+                //         QueuedCountOneHour = group.Count(message => message.ProcessedStatus == "QUEUED" &&
+                //                                                     message.CreatedDate >= oneHourAgo),
+                //         })
+                //     .ToList();
 
                 string ApiEnvironment = _settings.Environment ?? "environment not set in appsettings";
 
