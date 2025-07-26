@@ -10,8 +10,8 @@ namespace messaging.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-						var createGetOverallStatusWithParamsProcedure = @"
-CREATE PROCEDURE [dbo].[GetOverallStatusWithParams]
+						string createGetStatusOverallResultsWithParamsProcedure = @"
+CREATE PROCEDURE [dbo].[GetStatusOverallResultsWithParams]
     @Since datetime2(7),
     @FiveMinutesAgo datetime2(7),
     @OneHourAgo datetime2(7)
@@ -64,16 +64,64 @@ GROUP BY [t].[Key]
 
 END
 ";
-				    migrationBuilder.Sql(createGetOverallStatusWithParamsProcedure);
+
+						string createGetStatusBySourceResultsWithParamsProcedure = @"
+CREATE PROCEDURE [dbo].[GetStatusBySourceResultsWithParams]
+    @Since datetime2(7),
+    @FiveMinutesAgo datetime2(7),
+    @OneHourAgo datetime2(7)
+AS
+BEGIN
+
+SELECT [i].[Source], COUNT(CASE
+    WHEN [i].[ProcessedStatus] = 'PROCESSED' THEN 1
+END) AS [ProcessedCount], COUNT(CASE
+    WHEN [i].[ProcessedStatus] = 'QUEUED' THEN 1
+END) AS [QueuedCount], COALESCE((
+    SELECT TOP(1) [i0].[CreatedDate]
+    FROM [IncomingMessageItems] AS [i0]
+    WHERE [i0].[CreatedDate] >= @Since AND [i].[Source] = [i0].[Source] AND [i0].[ProcessedStatus] = 'QUEUED'
+    ORDER BY [i0].[CreatedDate]), '0001-01-01T00:00:00.0000000') AS [OldestQueued], COALESCE((
+    SELECT TOP(1) [i1].[CreatedDate]
+    FROM [IncomingMessageItems] AS [i1]
+    WHERE [i1].[CreatedDate] >= @Since AND [i].[Source] = [i1].[Source] AND [i1].[ProcessedStatus] = 'QUEUED'
+    ORDER BY [i1].[CreatedDate] DESC), '0001-01-01T00:00:00.0000000') AS [NewestQueued], COALESCE((
+    SELECT TOP(1) [i2].[UpdatedDate]
+    FROM [IncomingMessageItems] AS [i2]
+    WHERE [i2].[CreatedDate] >= @Since AND [i].[Source] = [i2].[Source] AND [i2].[ProcessedStatus] = 'PROCESSED'
+    ORDER BY [i2].[UpdatedDate] DESC), '0001-01-01T00:00:00.0000000') AS [LatestProcessed], COUNT(CASE
+    WHEN [i].[ProcessedStatus] = 'PROCESSED' AND [i].[UpdatedDate] >= @FiveMinutesAgo THEN 1
+END) AS [ProcessedCountFiveMinutes], COUNT(CASE
+    WHEN [i].[ProcessedStatus] = 'PROCESSED' AND [i].[UpdatedDate] >= @OneHourAgo THEN 1
+END) AS [ProcessedCountOneHour], COUNT(CASE
+    WHEN [i].[ProcessedStatus] = 'QUEUED' AND [i].[CreatedDate] >= @FiveMinutesAgo THEN 1
+END) AS [QueuedCountFiveMinutes], COUNT(CASE
+    WHEN [i].[ProcessedStatus] = 'QUEUED' AND [i].[CreatedDate] >= @OneHourAgo THEN 1
+END) AS [QueuedCountOneHour]
+FROM [IncomingMessageItems] AS [i]
+WHERE [i].[CreatedDate] >= @Since
+GROUP BY [i].[Source]
+
+END
+";
+
+						string[] procedures = {
+								createGetStatusOverallResultsWithParamsProcedure,
+								createGetStatusBySourceResultsWithParamsProcedure
+						};
+						foreach(string procedure in procedures)
+						{
+								migrationBuilder.Sql(procedure);
+						}
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-						string[] procedureNames = {"GetOverallStatusWithParams"};
+						string[] procedureNames = {"GetStatusOverallResultsWithParams"};
 						foreach(string procedureName in procedureNames)
 						{
-								var dropProcedure = $"DROP PROCEDURE [dbo].[{procedureName}]";
+								string dropProcedure = $"DROP PROCEDURE [dbo].[{procedureName}]";
 								migrationBuilder.Sql(dropProcedure);
 						}
         }
