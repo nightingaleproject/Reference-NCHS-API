@@ -19,7 +19,7 @@ namespace messaging.Models
         public DbSet<IJEItem> IJEItems { get; set; }
 
 				// View-like non-entity model for stored procedures; does not have a real SQL table
-				public DbSet<StatusOverallResults> StatusOverallResults { get; set; }
+				public DbSet<StatusResults> StatusResults { get; set; }
 				
         public override int SaveChanges()
         {
@@ -58,7 +58,15 @@ namespace messaging.Models
 						modelBuilder.Entity<IncomingMessageLog>().HasKey(l => l.Id);
 						modelBuilder.Entity<OutgoingMessageItem>().HasKey(m => m.Id);
 
-						modelBuilder.Entity<StatusOverallResults>().HasNoKey();
+						modelBuilder.Entity<StatusResults>(e => {
+								e.Property(sr => sr.Source)
+										.HasDefaultValue(""); //.HasColumnName("Source").IsRequired(false);
+								e.Property(sr => sr.EventType)
+										.HasDefaultValue(""); //ColumnName("EventType").IsRequired(false);
+								e.Property(sr => sr.JurisdictionId)
+										.HasDefaultValue(""); //.HasColumnName("JurisdictionId").IsRequired(false);
+								e.HasNoKey();
+						});
 				}
     }
 }
