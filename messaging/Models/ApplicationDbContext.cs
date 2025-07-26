@@ -18,10 +18,13 @@ namespace messaging.Models
         public DbSet<OutgoingMessageItem> OutgoingMessageItems { get; set; }
         public DbSet<IJEItem> IJEItems { get; set; }
 
-				// View-like non-entity model for stored procedures; does not have a real SQL table
+				// View-like non-entity models for stored procedures; they do NOT have a real SQL table
 				public DbSet<StatusResults> StatusResults { get; set; }
-				
-        public override int SaveChanges()
+				public DbSet<StatusResultsBySource> StatusResultsBySource { get; set; }
+				public DbSet<StatusResultsByEventType> StatusResultsByEventType { get; set; }
+				public DbSet<StatusResultsByJurisdictionId> StatusResultsByJurisdictionId { get; set; }
+
+				public override int SaveChanges()
         {
             AddTimestamps();
             return base.SaveChanges();
@@ -58,15 +61,10 @@ namespace messaging.Models
 						modelBuilder.Entity<IncomingMessageLog>().HasKey(l => l.Id);
 						modelBuilder.Entity<OutgoingMessageItem>().HasKey(m => m.Id);
 
-						modelBuilder.Entity<StatusResults>(e => {
-								e.Property(sr => sr.Source)
-										.HasDefaultValue(""); //.HasColumnName("Source").IsRequired(false);
-								e.Property(sr => sr.EventType)
-										.HasDefaultValue(""); //ColumnName("EventType").IsRequired(false);
-								e.Property(sr => sr.JurisdictionId)
-										.HasDefaultValue(""); //.HasColumnName("JurisdictionId").IsRequired(false);
-								e.HasNoKey();
-						});
+						modelBuilder.Entity<StatusResults>().HasNoKey();
+						modelBuilder.Entity<StatusResultsBySource>().HasNoKey();
+						modelBuilder.Entity<StatusResultsByEventType>().HasNoKey();
+						modelBuilder.Entity<StatusResultsByJurisdictionId>().HasNoKey();
 				}
     }
 }

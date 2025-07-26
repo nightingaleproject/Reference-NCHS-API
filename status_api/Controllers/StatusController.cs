@@ -37,9 +37,9 @@ namespace status_api.Controllers
 									  .FirstOrDefault();
 
 								
-								var sourceResults = _context.StatusResults
-										.FromSqlInterpolated($"EXEC GetStatusBySourceResultsWithParams @Since={_since} @FiveMinutesAgo={fiveMinutesAgo} @OneHourAgo={oneHourAgo}")
-										.ToList<StatusResults>();
+								var sourceResults = _context.StatusResultsBySource
+										.FromSqlInterpolated($"EXEC GetStatusBySourceResultsWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
+										.ToList<StatusResultsBySource>();
 
                 // Now do the above grouped by source
                 // var sourceResults = _context.IncomingMessageItems

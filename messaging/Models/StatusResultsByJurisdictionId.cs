@@ -3,8 +3,10 @@ using System;
 
 namespace messaging.Models
 {
-		public class StatusResults
+		public class StatusResultsByJurisdictionId
 		{
+				public string JurisdictionId { get; set; }
+
 				public int ProcessedCount { get; set; } = 0;
 				public int QueuedCount { get; set; } = 0;
 				public DateTime OldestQueued { get; set; } = DateTime.MinValue;
