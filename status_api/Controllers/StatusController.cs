@@ -46,7 +46,7 @@ namespace status_api.Controllers
 										.ToList<StatusResultsByEventType>();
 
 								var jurisdictionResults = _context.StatusResultsByJurisdictionId
-										.FromSqlInterpolated($"EXEC GetStatusResultsByEventTypeWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
+										.FromSqlInterpolated($"EXEC GetStatusResultsByJurisdictionIdWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
 										.ToList<StatusResultsByJurisdictionId>();
 								
                 // Now do the above grouped by EventType
