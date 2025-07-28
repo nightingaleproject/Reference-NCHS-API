@@ -35,7 +35,6 @@ namespace status_api.Controllers
 										.FromSqlInterpolated($"EXEC GetStatusOverallResultsWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
 										.AsEnumerable<StatusResults>()
 									  .FirstOrDefault();
-
 								
 								var sourceResults = _context.StatusResultsBySource
 										.FromSqlInterpolated($"EXEC GetStatusBySourceResultsWithParams @Since={_since}, @FiveMinutesAgo={fiveMinutesAgo}, @OneHourAgo={oneHourAgo}")
