@@ -279,7 +279,7 @@ curl --request POST --url 'https://<OAuthHost>/auth/oauth/v2/token' \
 curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundle
 ```
 
-## Sending Messages
+## Sending Messages - Death Record
 
 1. Create a FHIR Record. The standard that specifies this format can be found [here](https://build.fhir.org/ig/HL7/vrdr/branches/Sep_2021_Connectathon/). There are also two public library implementations available to assist in the creation of FHIR Records, [VRDR-dotnet](https://github.com/nightingaleproject/vrdr-dotnet) and [VRDR_javalib](https://github.com/MortalityReporting/VRDR_javalib).
 2. Create a FHIR VRDR Message to act as an envelope for the FHIR Record created above. The standard that specifies this format can be found [here](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html). The [VRDR-dotnet Messaging library](https://github.com/nightingaleproject/vrdr-dotnet/blob/master/doc/Messaging.md) also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the [Canary](https://github.com/nightingaleproject/canary) project has a **Creating FHIR VRDR Messages** option in which will create an appropriate synthetic message for POSTing to the API.
@@ -290,7 +290,7 @@ curl --location --request POST 'https://localhost:5001/MA/Bundle' \
 --header 'Authorization: Bearer <OAuthToken>' \
 --data "@path/to/file.json"
 ```
-3. The API will return a 204 No Content HTTP response if everything is functioning correctly.
+4. The API will return a 204 No Content HTTP response if everything is functioning correctly.
 Example Response:
 ```
 > POST /MA/Bundle HTTP/1.1
@@ -308,7 +308,7 @@ Example Response:
 < Server: Kestrel
 ```
 
-### Sending Bulk Messages
+### Sending Bulk VRDR Messages
 
 Multiple messages can be sent using a single connection. When possible multiple messages should be
 sent per connection to increase efficiency of API use. Sending multiple messages is similar to
@@ -361,17 +361,96 @@ Bulk upload is strongly recommended to increase efficient and performant use of 
 for efficient use of the API batches should also not exceed 10MB in size. Given the size of a
 typical record his means that batch sizes from 20 to 100 records should work well.
 
+## Sending Messages - Birth and Fetal Death Records
+
+1. Create a FHIR Record. The standard that specifies this format can be found [here](https://build.fhir.org/ig/HL7/fhir-bfdr/). The [vital-records-dotnet](https://github.com/nightingaleproject/vital-records-dotnet) public library implementation is available to assist in the creation of FHIR records.
+2. Create a FHIR BFDR Message to act as an envelope for the FHIR Record created above. The standard that specifies this format can be found [here](http://build.fhir.org/ig/nightingaleproject/vital_records_fhir_messaging_ig/branches/main/index.html). The [BFDR Messaging library](https://github.com/nightingaleproject/vital-records-dotnet/tree/main/projects/BFDR.Messaging) also supports creating FHIR Messages from an existing Record. If you wish to generate synthetic messages for testing, the [Canary](https://github.com/nightingaleproject/vital-records-dotnet/tree/main/projects/Canary) project has **Creating FHIR BFDR Birth Messages** and **Creating FHIR BFDR Fetal Death Messages** options, which will create appropriate synthetic messages for POSTing to the API.
+3. Submit the message using a POST request to the `/<JurisdictionID>/Bundle/BFDR-BIRTH/BFDR_STU2_0` endpoint (for messages containing birth records) or the `/<JurisdictionID>/Bundle/BFDR-FETALDEATH/BFDR_STU2_0` endpoint (for messages containing fetal death records); the following examples demonstrate the request format using [curl](https://curl.se/):
+
+Example request for message containing a birth record:
+```bash
+curl --location --request POST 'https://localhost:5001/MA/Bundle/BFDR-BIRTH/BFDR_STU2_0' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <OAuthToken>' \
+--data "@path/to/file.json"
+```
+Example request for message containing a fetal death record:
+```bash
+curl --location --request POST 'https://localhost:5001/MA/Bundle/BFDR-FETALDEATH/BFDR_STU2_0' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <OAuthToken>' \
+--data "@path/to/file.json"
+```
+
+4. The API will return a 204 No Content HTTP response if everything is functioning correctly.
+
+Example response when posting a message containing a birth record:
+```
+> POST /MA/Bundle/BFDR-BIRTH/BFDR_STU2_0 HTTP/1.1
+> Host: localhost:5001
+> User-Agent: curl/7.64.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 46643
+> Expect: 100-continue
+>
+< HTTP/1.1 100 Continue
+* We are completely uploaded and fine
+< HTTP/1.1 204 No Content
+< Date: Wed, 17 Nov 2021 21:56:03 GMT
+< Server: Kestrel
+```
+
+Example response when posting a message containing a fetal death record:
+```
+> POST /MA/Bundle/BFDR-FETALDEATH/BFDR_STU2_0 HTTP/1.1
+> Host: localhost:5001
+> User-Agent: curl/7.64.1
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 46643
+> Expect: 100-continue
+>
+< HTTP/1.1 100 Continue
+* We are completely uploaded and fine
+< HTTP/1.1 204 No Content
+< Date: Wed, 17 Nov 2021 21:56:03 GMT
+< Server: Kestrel
+```
+
+### Sending Bulk BFDR Messages
+
+The method for sending multiple messages containing birth records or fetal death records is similar to the method described in [Sending Bulk VRDR Messages](#sending-bulk-vrdr-messages). Multiple messages are created as described in the [Sending Messages - Birth and Fetal Death Records](#sending-messages---birth-and-fetal-death-records) section above. For a batch of messages containing birth records, submit the Bundle using a POST request to `/<JurisdictionID>/Bundle/BFDR-BIRTH/BFDR_STU2_0`. For a batch of messages containing fetal death records, submit the Bundle using a POST request to `/<JurisdictionID>/Bundle/BFDR-FETALDEATH/BFDR_STU2_0`.
+
 ## Receiving Messages
-1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the `/<JurisdictionID>/Bundle` endpoint. The following example demonstrates the request format using [curl](https://curl.se/):
+1. NCHS returns messages to the jurisdiction by offering a message retrieval interface that can be polled rather than sending messages to a jurisdiction endpoint. The API provides an endpoint to retrieve a bundle of messages from NCHS: response messages can be retrieved using a GET request to the appropriate URL:
+* `/<JurisdictionID>/Bundle` endpoint for responses to messages containing death records.
+* `/<JurisdictionID>/Bundle/BFDR-BIRTH/BFDR_STU2_0` endpoint for responses to messages containing birth records.
+* `/<JurisdictionID>/Bundle/BFDR-FETALDEATH/BFDR_STU2_0` endpoint for responses to messages containing fetal death records.
+
+The following examples demonstrate the request format using [curl](https://curl.se/):
+
+Example request for messages returned by NCHS when the message submitted to NCHS contained a death record:
 ```bash
 curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundle
 ```
+
+Example request for messages returned by NCHS when the message submitted to NCHS contained a birth record:
+```bash
+curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundle/BFDR-BIRTH/BFDR_STU2_0
+```
+
+Example request for messages returned by NCHS when the message submitted to NCHS contained a fetal death record:
+```bash
+curl --header 'Authorization: Bearer <OAuthToken>' https://localhost:5001/MA/Bundle/BFDR-FETALDEATH/BFDR_STU2_0
+```
+
 2. Time based filtering is also available, and can be used by providing the [FHIR parameter](https://www.hl7.org/fhir/http.html) `_since` as a filter. The best practice is to use time based filtering whenever retrieving messages. Always keep track of the last time polling was performed and use that timestamp to filter results in order to only retrieve messages that have not previously been processed.
 ```bash
 curl --header 'Authorization: Bearer <OAuthToken>' "https://localhost:5001/MA/Bundle?_since=2021-10-21T17:21:41.492893-04:00"
 ```
 3. These requests return a 200 Response header with a body containing a [FHIR Bundle](https://www.hl7.org/fhir/bundle.html) of type 'searchset' containing a list of FHIR Messages. These messages can be either ACK, Error, or Coding Responses.
-Example Response:
+Example response to GET request to API endpoint for death record messages:
 ```
 > GET /MA/Bundle HTTP/1.1
 > Host: localhost:5001
@@ -497,7 +576,12 @@ Example Response:
 |             | 500 - Internal Server Error, Authorization Failure (SAMS)| Refresh expired token|
 |             | 500 - Internal Server Error| Report issue on Zulip|
 |             | 501 - Not implemented| Check the url is correct|
-|GET /Bundle  | 500 - Internal Server Error, Authorization Failure (SAMS)| Refresh expired token|
+|POST /Bundle/BFDR-BIRTH/BFDR_STU2_0 or /Bundle/BFDR-FETALDEATH/BFDR_STU2_0 | 400 - Bad Request| Check the body of the request is valid BFDR Message. If using pagination, check the parameters are valid.|
+|             | 500 - Internal Server Error, Authorization Failure (SAMS)| Refresh expired token|
+|             | 500 - Internal Server Error| Report issue on Zulip|
+|             | 501 - Not implemented| Check the url is correct|
+|GET /Bundle, /Bundle/BFDR-BIRTH/BFDR_STU2_0, or /Bundle/BFDR-FETALDEATH/BFDR_STU2_0 | 500 - Internal Server Error, Authorization Failure (SAMS)| Refresh expired token|
+
 
 # Status UI
 
