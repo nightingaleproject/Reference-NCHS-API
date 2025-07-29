@@ -510,7 +510,7 @@ This repository also provides a Status UI dashboard for analyzing messages recie
 
 # API Developer Documentation
 
-This section documents information useful for developers of the API itself and is not relevant to users of the API or developers of systems that use the API.
+This section documents information useful for developers of the API itself and is not relevant to users of the API or developers of systems that use the API. Please also refer to the [contribution guide](CONTRIBUTING.md) and [code of conduct](CODE-OF-CONDUCT.md).
 
 ## Version Updates
 
