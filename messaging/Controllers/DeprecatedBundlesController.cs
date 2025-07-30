@@ -14,14 +14,9 @@ namespace messaging.Controllers
     [Route("{jurisdictionId:length(2)}/Bundles")] // Historical endpoint for backwards compatibility
     [Produces("application/json")]
     [ApiController]
-    public class DeprecatedBundlesController : ControllerBase
+    public class DeprecatedBundlesController : BundleController
     {
-        private readonly BundleController bundleController;
-
-        public DeprecatedBundlesController(ILogger<BundleController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
-        {
-            bundleController = new BundleController(logger, context, services, settings);
-        }
+        public DeprecatedBundlesController(ILogger<BundleController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings) : base(logger, context, services, settings) { }
 
         /// <summary>
         /// (Deprecated) Retrieves outgoing messages for the jurisdiction.
@@ -35,9 +30,9 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, int _count, string certificateNumber, string eventYear, string deathYear, DateTime _since = default(DateTime), int page = 1, string vitalType = "VRDR", string igVersion = "VRDR_STU2_2")
+        public override async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string eventYear, string deathYear, DateTime _since = default(DateTime), int page = 1)
         {
-            return await bundleController.GetOutgoingMessageItems(jurisdictionId, vitalType, igVersion, _count, certificateNumber, eventYear, deathYear, _since, page);
+            return await base.GetOutgoingMessageItems(jurisdictionId, vitalType, igVersion, _count, certificateNumber, eventYear, deathYear, _since, page);
         }
 
         // POST: Bundles
@@ -70,9 +65,9 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> PostIncomingMessageItem(string jurisdictionId, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue, string vitalType = "VRDR", string igVersion = "VRDR_STU2_2")
+        public override async Task<ActionResult<Bundle>> PostIncomingMessageItem(string jurisdictionId, string vitalType, string igVersion, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
-            return await bundleController.PostIncomingMessageItem(jurisdictionId, vitalType, igVersion, text, queue);
+            return await base.PostIncomingMessageItem(jurisdictionId, vitalType, igVersion, text, queue);
         }
     }
 }
