@@ -11,6 +11,8 @@ This md goes over the update process for when TEST (and eventually PROD) updates
   - stored procedures for all database interactions
   - a privacy policy endpoint
 
+Since v1.7.0 updates the urls, this folder also includes an updated draft Birth and Fetal Death Test Plans for when v1.7.0 is used at an NCHS Hosted Test Event.
+
 # Instructions
 When NCHS updates TEST to v1.7.0 there are three database updates that need to occur in this order. The same steps should be followed when v1.7.0 is deployed to PROD.
 1. Work with OCIO to execute the SQL script on the test DB to add the new IGVersion column to the IncomingMessageItems and OutgoingMessageItems tables.
