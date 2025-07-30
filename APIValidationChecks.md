@@ -25,6 +25,10 @@ Validation for the following URL parameters: `jurisdictionId`
 |-----|:------:|----------------|--------|
 | 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
 | 400 | `jurisdictionId` | `if !messageJurisdictionId.Equals(urlParamJurisdictionId)` | Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}. |
+| 404 | `vitalType` | `regex(^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$)` |  Invalid url, the vitalType must either be blank or VRDR, BFDR-BIRTH, or BFDR-FETALDEATH |
+| 400 | `vitalType` | the message must be parsable as the provided vitalType |  Invalid message, not parsable as a <vitalType> message |
+| 400 | `igVersion` | must either be blank or match the enabled IG versions, ex. `VRDR_STU2_2` or `BFDR_STU2_0` |  bad request: Invalid url path provided |
+| 400 | `igVersion` | if provided, must match the message PayloadVersionId |  bad request: url param igVersion did not match the message header PayloadVersionId |
 
 ## Parsing Validation
 
@@ -44,11 +48,12 @@ Validates the required message headers are provided: `MessageSource`, `MessageDe
 | 400 | `if String.IsNullOrWhiteSpace(message.GetType().Name)` | bad request: Message was missing required field: {aEx.Message} |
 | 400 | `if message.CertNo == null` | bad request: Message was missing required field: {aEx.Message} |
 
+
 ## Message Type Validation
 Validates the message is not `ExtractionErrorMessage` messages since NCHS does not support them.  
 Validates the certificate number is no more than 6 characters.  
-Validates the message Event Type is a valid type accepted at NCHS: `DeathRecordSubmissionMessage`, `DeathRecordUpdateMessage`, `DeathRecordVoidMessage`, `DeathRecordAliasMessage`, or `AcknowledgementMessage`.  
-Validates the Destination Endpoint includes a valid nchs endpoint, this check is case insensitive: `http://nchs.cdc.gov/vrdr_acknowledgement`, `http://nchs.cdc.gov/vrdr_alias`, `http://nchs.cdc.gov/vrdr_causeofdeath_coding`, `http://nchs.cdc.gov/vrdr_causeofdeath_coding_update`, `http://nchs.cdc.gov/vrdr_demographics_coding`, `http://nchs.cdc.gov/vrdr_demographics_coding_update`, `http://nchs.cdc.gov/vrdr_extraction_error`, `http://nchs.cdc.gov/vrdr_status`, `http://nchs.cdc.gov/vrdr_submission`, `http://nchs.cdc.gov/vrdr_submission_update`, `http://nchs.cdc.gov/vrdr_submission_void`
+Validates the message Event Type is a valid type accepted at NCHS: `DeathRecordSubmissionMessage`, `BirthRecordSubmissionMessage`, `FetalDeathRecordSubmissionMessage`, `DeathRecordUpdateMessage`, `BirthRecordUpdateMessage`, `FetalDeathRecordUpdateMessage`, `DeathRecordVoidMessage`,`BirthRecordVoidMessage`, `FetalDeathRecordVoidMessage`, `DeathRecordAliasMessage`, `AcknowledgementMessage`, `BirthRecordAcknowledgementMessage`, or `FetalDeathRecordAcknowledgementMessage`.  
+Validates the Destination Endpoint includes a valid nchs endpoint, this check is case insensitive: `http://nchs.cdc.gov/vrdr_acknowledgement`, `http://nchs.cdc.gov/vrdr_alias`, `http://nchs.cdc.gov/vrdr_causeofdeath_coding`, `http://nchs.cdc.gov/vrdr_causeofdeath_coding_update`, `http://nchs.cdc.gov/vrdr_demographics_coding`, `http://nchs.cdc.gov/vrdr_demographics_coding_update`, `http://nchs.cdc.gov/vrdr_extraction_error`, `http://nchs.cdc.gov/vrdr_status`, `http://nchs.cdc.gov/vrdr_submission`, `http://nchs.cdc.gov/vrdr_submission_update`, `http://nchs.cdc.gov/vrdr_submission_void`, `http://nchs.cdc.gov/birth_acknowledgement`, `http://nchs.cdc.gov/fd_acknowledgement`, `http://nchs.cdc.gov/fd_causeofdeath_coding`, `http://nchs.cdc.gov/fd_causeofdeath_coding_update`, `http://nchs.cdc.gov/birth_demographics_coding`, `http://nchs.cdc.gov/fd_demographics_coding`, `http://nchs.cdc.gov/birth_demographics_coding_update`, `http://nchs.cdc.gov/fd_demographics_coding_update`, `http://nchs.cdc.gov/birth_extraction_error`, `http://nchs.cdc.gov/fd_extraction_error`,`http://nchs.cdc.gov/birth_status`, `http://nchs.cdc.gov/fd_status`, `http://nchs.cdc.gov/birth_submission`, `http://nchs.cdc.gov/fd_submission`, `http://nchs.cdc.gov/birth_submission_update`, `http://nchs.cdc.gov/fd_submission_update`,`http://nchs.cdc.gov/birth_submission_void`, `http://nchs.cdc.gov/fd_submission_void`
 
 | Error Response Code | Validation Check | Error Message |
 |-----|----------------|--------|

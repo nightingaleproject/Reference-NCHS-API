@@ -1,5 +1,18 @@
 ## Changelog
 
+### v1.7.0 - 2025-07-30
+* Update the API to use stored procedures for all database interactions
+* Add IGVersion column to the DB to support multiple IG versions in the future
+* Update URLS to use the payload version IG, ex. BFDR_STU2_0 instead of v2.0
+* Don't mark outgoing messages as Retrieved if a query parameter was used like `_since`
+* Refactor the StatusUI into a separate .NET project to simplify deployments
+* Remove headers flagged by NCHS security scan
+* Add placeholder for a privacy policy
+* Update APIValidationChecks to include the vitalType and igVersion validation
+
+### v1.6.1 - 2025-05-28
+* Fix GET request to include coding responses (TRX messages)
+
 ### v1.6.0 - 2025-04-08
 * Add support for multiple IG Versions (BFDR v2.0, VRDR v2.2 & v3.0) at the new /vitalType/igVersion endpoint
 * Add support for VRDR library v5.0.0 and VR Messaging Common Messages while maintaining backwards compatibilty
