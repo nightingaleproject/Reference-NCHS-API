@@ -23,7 +23,6 @@ using Microsoft.EntityFrameworkCore;
 namespace messaging.Controllers
 {
     [Route("{jurisdictionId:length(2)}/Bundle")]
-    [Route("{jurisdictionId:length(2)}/Bundle/{vitalType:regex(^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$)}/{igVersion}")]
     [Produces("application/json")]
     [ApiController]
     public class BundleController : ControllerBase
