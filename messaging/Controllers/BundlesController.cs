@@ -16,6 +16,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Hl7.Fhir.Utility;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Threading;
+using Microsoft.EntityFrameworkCore;
 
 namespace messaging.Controllers
 {
@@ -116,44 +119,50 @@ namespace messaging.Controllers
                 { "jurisdictionId", jurisdictionId },
                 { "_count", _count }
             };
-            if (certificateNumber != null) {
+            if (certificateNumber != null)
+            {
                 // Pad left with leading zeros if not a 6-digit certificate number.
                 certificateNumber = certificateNumber.PadLeft(6, '0');
                 searchParamValues.Add("certificateNumber", certificateNumber);
             }
-
             if (eventYear != null)
             {
                 searchParamValues.Add("eventYear", eventYear);
             }
 
-            // Query for outgoing messages of the requested type by jurisdiction ID. Filter by IG version. Optionally filter by certificate number and death year if those parameters are provided.
-            IQueryable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.Where(message => message.JurisdictionId == jurisdictionId
-                    && (String.IsNullOrEmpty(recordType) || message.EventType.Equals(recordType) || message.EventType.Equals(medicalCodingType))
-                    && igVersion.Equals(message.IGVersion)
-                    && (certificateNumber == null || message.CertificateNumber.Equals(certificateNumber))
-                    && (eventYear == null || message.EventYear == int.Parse(eventYear)));
-
+            // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
+            // TODO: we could use the since param earlier so if we are only getting new respones, we don't select and have to handle thousands of other records
             try
             {
-                // Further scope the search to either unretrieved messages (or all since a specific time)
-                // TODO only allow the since param in development
-                // if _since is the default value, then apply the retrieved at logic unless certificate number or death year are provided
+                // intialize count and the query result
+                int totalMessageCount = 0;
+                IQueryable<OutgoingMessageItem> outgoingMessagesQuery = null;
+
+
                 if (!additionalParamsProvided)
                 {
-                    outgoingMessagesQuery = ExcludeRetrieved(outgoingMessagesQuery);
+                    // Here we handle case where no debug params are provided, operate as a queue
+                    // First get the total count of messages so we can include the total in the response
+                    var countMsg = _context.Database.SqlQuery<int>($"EXEC CountNewOutgoingMessages @JurisdictionId={jurisdictionId}, @EventType={recordType}, @IGVersion={igVersion}").ToList();
+                    totalMessageCount = countMsg.FirstOrDefault();
+                    // Now select the outgoing messages from the queue, select up to the page size
+                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageOrdered @JurisdictionId={jurisdictionId}, @EventType={recordType}, @IGVersion={igVersion},  @Count={_count}");
                 }
-                if (_since != default(DateTime))
+                else
                 {
-                    outgoingMessagesQuery = outgoingMessagesQuery.Where(message => message.CreatedDate >= _since);
+                    // Here we handle the case where debug params are provided
+                    // We need to account for paging, calculate the number of messages to skip
+                    int numToSkip = (page - 1) * _count;
+                    // First get the total count of messages so we can include the total in the response
+                    var countMsg = _context.Database.SqlQuery<int>($"EXEC CountNewOutgoingMessagesWithParams @JurisdictionId={jurisdictionId}, @EventYear={eventYear}, @IGVersion={igVersion}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}").ToList();
+                    totalMessageCount = countMsg.FirstOrDefault();
+                    // Now select the outgoing messages based on the params provided, select up to the page size
+                    outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectOutgoingMessageItemsWithParamsPaging @JurisdictionId={jurisdictionId}, @EventYear={eventYear}, @IGVersion={igVersion}, @CertificateNumber={certificateNumber}, @EventType={recordType}, @Since={_since}, @Skip={numToSkip}, @Count={_count}");
                 }
-
-                int totalMessageCount = outgoingMessagesQuery.Count();
 
                 // Convert to list to execute the query, capture the result for re-use
-                int numToSkip = (page - 1) * _count;
-                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.OrderBy((message) => message.CreatedDate).Skip(numToSkip).Take(_count);
-
+                IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.ToList();
+                
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
                 IEnumerable<System.Threading.Tasks.Task<VR.CommonMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => CommonMessage.ParseGenericMessage(message.Message, true)));
@@ -162,7 +171,7 @@ namespace messaging.Controllers
                 Bundle responseBundle = new Bundle();
                 responseBundle.Type = Bundle.BundleType.Searchset;
                 responseBundle.Timestamp = DateTime.Now;
-                // Note that total is total number of matching results, not number being returned (outgoingMessages.Count)
+                // Note that total is total number of matching results, not number being returned
                 responseBundle.Total = totalMessageCount;
                 // For the usual use case (unread only), the "next" page is just a repeated request.
                 // But when using since, we have to actually track pages
@@ -183,7 +192,7 @@ namespace messaging.Controllers
                     searchParamValues.Add("page", 1);
                     responseBundle.FirstLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
                     // take the total number of the original selected messages, round up, and divide by the count to get the total number of pages
-                    int lastPage = (outgoingMessagesQuery.Count() + (_count - 1)) / _count;
+                    int lastPage = (outgoingMessages.Count() + (_count - 1)) / _count;
                     searchParamValues.Remove("page");
                     searchParamValues.Add("page", lastPage);
                     responseBundle.LastLink = new Uri(baseUrl + Url.Action("GetOutgoingMessageItems", searchParamValues));
@@ -212,8 +221,6 @@ namespace messaging.Controllers
                 {
                     responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
                 }
-
-                _context.SaveChanges();
                 return responseBundle;
             }
             catch (Exception ex)
@@ -223,19 +230,11 @@ namespace messaging.Controllers
             }
         }
 
-        // Allows overriding by STEVE controller to filter off different field
-        /// <summary>
-        /// Applies a filter (e.g. calls Where) to reduce the source to unretrieved messages. Should NOT iterate result set/execute query
-        /// </summary>
-        protected virtual IQueryable<OutgoingMessageItem> ExcludeRetrieved(IQueryable<OutgoingMessageItem> source)
-        {
-            return source.Where(message => message.RetrievedAt == null);
-        }
-
         // Allows overriding by STEVE controller to mark different field
         protected virtual void MarkAsRetrieved(OutgoingMessageItem omi, DateTime retrieved)
         {
             omi.RetrievedAt = retrieved;
+            _context.Database.ExecuteSqlInterpolated($"EXEC UpdateOutgoingMessagesRetrievedAt @Id={omi.Id}, @RetrievedAt={omi.RetrievedAt}");
         }
 
         // POST: Bundles
@@ -375,7 +374,8 @@ namespace messaging.Controllers
             }
         }
 
-        private bool ValidateJurisdictionId(string messageJurisdictionId, string urlParamJurisdictionId) {
+        private bool ValidateJurisdictionId(string messageJurisdictionId, string urlParamJurisdictionId)
+        {
             if (messageJurisdictionId == null)
             {
                 _logger.LogError("Rejecting request without a jurisdiction ID in submission.");
@@ -600,7 +600,7 @@ namespace messaging.Controllers
                 throw new ArgumentException($"Message Payload Version {message.PayloadVersionId} must match the URL parameter IG Version {igVersion}.");
             }
             IncomingMessageItem item = new IncomingMessageItem();
-            item.Message = message.ToJSON(); 
+            item.Message = message.ToJSON();
             item.MessageId = message.MessageId;
             item.MessageType = message.GetType().Name;
             item.JurisdictionId = jurisdictionId;
@@ -618,7 +618,7 @@ namespace messaging.Controllers
             uint certNo = (uint)message.CertNo;
             string certNoFmt = certNo.ToString("D6");
             item.CertificateNumber = certNoFmt;
-            
+
             item.EventType = getEventType(message);
 
             return item;
@@ -626,19 +626,20 @@ namespace messaging.Controllers
 
         protected async System.Threading.Tasks.Task SaveIncomingMessageItem(IncomingMessageItem item, IBackgroundTaskQueue queue)
         {
-            await _context.IncomingMessageItems.AddAsync(item);
-            await _context.SaveChangesAsync();
+            var messageResult = _context.IncomingMessageItems.FromSqlInterpolated($"EXEC CreateIncomingMessageItem @Message={item.Message}, @MessageId={item.MessageId}, @Source={item.Source}, @JurisdictionId={item.JurisdictionId}, @MessageType={item.MessageType}, @CertificateNumber={item.CertificateNumber}, @CreatedDate=null, @UpdatedDate=null, @ProcessedStatus='QUEUED', @EventType={item.EventType}, @IGVersion={item.IGVersion}, @EventYear={item.EventYear}").AsEnumerable();
+            IncomingMessageItem insertedItem = messageResult.First();
+            // TODO it could be faster if instead we just retrieve the scope id and set item.Id manually to the returned scope id
 
             // Queue Natality messages for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on" for testing
             // For the June 2025 test event, enable auto responses for Fetal death message types only
             if (_settings.AckAndIJEConversion || ( _settings.FetalDeathEnabled && item.EventType == "FET"))
             {
-                queue.QueueConvertToIJE(item.Id);
+                queue.QueueConvertToIJE(insertedItem.Id);
             }
             // If we are in test mode, give the worker thread 1 extra second to insert the outgoing message, this helps our tests avoid race condition failures
             if (_settings.AckAndIJEConversion)
             {
-                Thread.Sleep(new TimeSpan(0,0,1));
+                Thread.Sleep(new TimeSpan(0, 0, 1));
             }
         }
 
@@ -662,7 +663,7 @@ namespace messaging.Controllers
                     return "MOR";
                 case "http://nchs.cdc.gov/birth_submission":
                 case "http://nchs.cdc.gov/birth_acknowledgement":
-                case "http://nchs.cdc.gov/birth_submission_update": 
+                case "http://nchs.cdc.gov/birth_submission_update":
                 case "http://nchs.cdc.gov/birth_demographics_coding":
                 case "http://nchs.cdc.gov/birth_extraction_error":
                 case "http://nchs.cdc.gov/birth_status":
@@ -704,7 +705,7 @@ namespace messaging.Controllers
                     case "http://nchs.cdc.gov/vrdr_submission_update":
                     case "http://nchs.cdc.gov/vrdr_submission_void":
                     case "http://nchs.cdc.gov/bfdr_submission":
-                    case "http://nchs.cdc.gov/bfdr_acknowledgement": 
+                    case "http://nchs.cdc.gov/bfdr_acknowledgement":
                     case "http://nchs.cdc.gov/bfdr_demographics_coding":
                     case "http://nchs.cdc.gov/bfdr_extraction_error":
                     case "http://nchs.cdc.gov/bfdr_status":
@@ -835,6 +836,11 @@ namespace messaging.Controllers
                 return _settings.SupportedVRDRIGVersions.Contains(igVersion);
             }
             return false;
+        }
+
+        public class IntReturn
+        {
+            public int Value { get; set; }
         }
     }
 }

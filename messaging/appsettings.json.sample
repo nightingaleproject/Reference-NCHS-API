@@ -7,6 +7,13 @@
     "STEVE" : "https://ingress.devfhir.steve.naphsis.us",
     "PageCount" : 100,
     "MaxPayloadSize" : 10000000,
+    "SupportedBFDRIGVersions": [
+      "BFDR_STU2_0"
+    ],
+    "SupportedVRDRIGVersions": [
+      "VRDR_STU3_0",
+      "VRDR_STU2_2"
+    ],
     "Environment": "Development"
   },
   "Serilog": {
