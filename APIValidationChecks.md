@@ -25,7 +25,7 @@ Validation for the following URL parameters: `jurisdictionId`
 |-----|:------:|----------------|--------|
 | 400 | `jurisdictionId` | `if !VRDR.MortalityData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId)` | bad request: Invalid jurisdiction ID |
 | 400 | `jurisdictionId` | `if !messageJurisdictionId.Equals(urlParamJurisdictionId)` | Message jurisdiction ID {message.JurisdictionId} must match the URL parameter jurisdiction ID {jurisdictionId}. |
-| 404 | `vitalType` | `regex(^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$)` |  Invalid url, the vitalType must either be blank or VRDR, BFDR-BIRTH, or BFDR-FETALDEATH |
+| 404 | `vitalType` | must be blank or match `VRDR`, `BFDR-BIRTH`, or `BFDR-FETALDEATH` |  Invalid url, the vitalType must either be blank or VRDR, BFDR-BIRTH, or BFDR-FETALDEATH |
 | 400 | `vitalType` | the message must be parsable as the provided vitalType |  Invalid message, not parsable as a <vitalType> message |
 | 400 | `igVersion` | must either be blank or match the enabled IG versions, ex. `VRDR_STU2_2` or `BFDR_STU2_0` |  bad request: Invalid url path provided |
 | 400 | `igVersion` | if provided, must match the message PayloadVersionId |  bad request: url param igVersion did not match the message header PayloadVersionId |
