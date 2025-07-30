@@ -16,8 +16,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Hl7.Fhir.Utility;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Threading;
 using Microsoft.EntityFrameworkCore;
 
 namespace messaging.Controllers
@@ -161,7 +159,7 @@ namespace messaging.Controllers
 
                 // Convert to list to execute the query, capture the result for re-use
                 IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.ToList();
-                
+
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
                 IEnumerable<System.Threading.Tasks.Task<VR.CommonMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => CommonMessage.ParseGenericMessage(message.Message, true)));
