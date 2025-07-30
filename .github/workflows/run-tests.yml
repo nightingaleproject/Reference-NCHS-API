@@ -12,7 +12,7 @@ jobs:
       sql.data:
         image: mcr.microsoft.com/mssql/server
         env:
-          SA_PASSWORD: yourStrong(!)Password
+          SA_PASSWORD: yourStrong(!)Password1
           ACCEPT_EULA: Y
         ports:
           - "1433:1433"
@@ -31,5 +31,11 @@ jobs:
     - name: Build projects
       run: |
         dotnet build
+    - name: Install dotnet ef
+      run: |
+          dotnet tool install --global dotnet-ef --version 7.0.0
+          dotnet tool restore
+    - name: Apply migrations
+      run: dotnet ef --project messaging database update
     - name: Test
       run: dotnet test --no-build
