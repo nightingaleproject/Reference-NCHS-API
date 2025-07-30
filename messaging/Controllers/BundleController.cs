@@ -26,14 +26,14 @@ namespace messaging.Controllers
     [Route("{jurisdictionId:length(2)}/Bundle/{vitalType:regex(^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$)}/{igVersion}")]
     [Produces("application/json")]
     [ApiController]
-    public class BundlesController : ControllerBase
+    public class BundleController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider Services;
         protected readonly AppSettings _settings;
-        protected readonly ILogger<BundlesController> _logger;
+        protected readonly ILogger<BundleController> _logger;
 
-        public BundlesController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
+        public BundleController(ILogger<BundleController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
             _context = context;
             Services = services;

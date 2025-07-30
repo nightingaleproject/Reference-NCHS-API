@@ -10,10 +10,10 @@ namespace messaging.Controllers
     [Route("STEVE/{jurisdictionId:length(2)}/Bundle/{vitalType:regex(^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$)}/{igVersion}")]
     [Route("STEVE/{jurisdictionId:length(2)}/Bundles")] // Historical endpoint for backwards compatibility
     [ApiController]
-    public class SteveController : BundlesController
+    public class SteveController : BundleController
     {
 
-        public SteveController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings) : base(logger, context, services, settings) { }
+        public SteveController(ILogger<BundleController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings) : base(logger, context, services, settings) { }
 
         protected override string GetMessageSource()
         {

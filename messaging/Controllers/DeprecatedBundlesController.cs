@@ -16,11 +16,11 @@ namespace messaging.Controllers
     [ApiController]
     public class DeprecatedBundlesController : ControllerBase
     {
-        private readonly BundlesController bundlesController;
+        private readonly BundleController bundlesController;
 
-        public DeprecatedBundlesController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
+        public DeprecatedBundlesController(ILogger<BundleController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
-            bundlesController = new BundlesController(logger, context, services, settings);
+            bundlesController = new BundleController(logger, context, services, settings);
         }
 
         /// <summary>
