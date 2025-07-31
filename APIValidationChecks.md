@@ -1,5 +1,5 @@
 # Summary
-This file documents the API's validation checks along with the returned error codes and messages.
+This file documents the API's validation checks along with the returned error codes and messages. Updates to this document must be shared with the Ruvos team so the STEVE API validation aligns with the NVSS FHIR API. Ruvos PoC: Linda Min <lmin@ruvos.com>
 
 # Get Requests
 
