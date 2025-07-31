@@ -16,25 +16,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Hl7.Fhir.Utility;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Threading;
 using Microsoft.EntityFrameworkCore;
 
 namespace messaging.Controllers
 {
     [Route("{jurisdictionId:length(2)}/Bundle")]
-    [Route("{jurisdictionId:length(2)}/Bundle/{vitalType:regex(^(VRDR|BFDR-BIRTH|BFDR-FETALDEATH)$)}/{igVersion}")]
-    [Route("{jurisdictionId:length(2)}/Bundles")] // Historical endpoint for backwards compatibility
     [Produces("application/json")]
     [ApiController]
-    public class BundlesController : ControllerBase
+    public class BundleController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IServiceProvider Services;
         protected readonly AppSettings _settings;
-        protected readonly ILogger<BundlesController> _logger;
+        protected readonly ILogger<BundleController> _logger;
 
-        public BundlesController(ILogger<BundlesController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
+        public BundleController(ILogger<BundleController> logger, ApplicationDbContext context, IServiceProvider services, IOptions<AppSettings> settings)
         {
             _context = context;
             Services = services;
@@ -43,7 +39,7 @@ namespace messaging.Controllers
         }
 
         /// <summary>
-        /// Retrieves outgoing messages for the jurisdiction
+        /// Retrieves outgoing messages for the jurisdiction.
         /// If the optional Certificate Number and Death year parameters are provided, retrieves all messages in history that match those given business ids.
         /// </summary>
         /// <returns>A Bundle of FHIR messages</returns>
@@ -54,7 +50,7 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string eventYear, string deathYear, DateTime _since = default(DateTime), int page = 1)
+        public virtual async Task<ActionResult<Bundle>> GetOutgoingMessageItems(string jurisdictionId, string vitalType, string igVersion, int _count, string certificateNumber, string eventYear, string deathYear, DateTime _since = default(DateTime), int page = 1)
         {
             if (eventYear == null && deathYear != null)
             {
@@ -102,7 +98,7 @@ namespace messaging.Controllers
                     break;
                 case "BFDR-FETALDEATH":
                     recordType = "FET";
-                    medicalCodingType = "CFD"; 
+                    medicalCodingType = "CFD";
                     break;
             }
 
@@ -163,7 +159,7 @@ namespace messaging.Controllers
 
                 // Convert to list to execute the query, capture the result for re-use
                 IEnumerable<OutgoingMessageItem> outgoingMessages = outgoingMessagesQuery.ToList();
-                
+
                 // This uses the general FHIR parser and then sees if the json is a Bundle of BaseMessage Type
                 // this will improve performance and prevent vague failures on the server, clients will be responsible for identifying incorrect messages
                 IEnumerable<System.Threading.Tasks.Task<VR.CommonMessage>> messageTasks = outgoingMessages.Select(message => System.Threading.Tasks.Task.Run(() => CommonMessage.ParseGenericMessage(message.Message, true)));
@@ -242,7 +238,7 @@ namespace messaging.Controllers
         // POST: Bundles
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         /// <summary>
-        /// Submits a FHIR message to the API for processing
+        /// Submits a FHIR message to the API for processing.
         /// </summary>
         /// <returns>If a single FHIR Message was submitted, nothing is returned. If a batch Bundle was submitted, a batch response is returned.</returns>
         /// <remarks>
@@ -269,7 +265,7 @@ namespace messaging.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<Bundle>> PostIncomingMessageItem(string jurisdictionId, string vitalType, string igVersion, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
+        public virtual async Task<ActionResult<Bundle>> PostIncomingMessageItem(string jurisdictionId, string vitalType, string igVersion, [FromBody] object text, [FromServices] IBackgroundTaskQueue queue)
         {
             if (!VR.IJEData.Instance.JurisdictionCodes.ContainsKey(jurisdictionId))
             {
@@ -296,7 +292,7 @@ namespace messaging.Controllers
                     responseBundle.Type = Bundle.BundleType.BatchResponse;
                     responseBundle.Timestamp = DateTime.Now;
 
-                    // For Batch Processing: 
+                    // For Batch Processing:
                     // Process each entry as an individual BaseMessage.
                     // One invalid message should not prevent the successful submission of a separate, valid message in the bundle.
                     // Capture the each messsage's result in an entry and add to the response bundle.
@@ -533,13 +529,13 @@ namespace messaging.Controllers
             {
                 throw mrx;
             }
-            catch (BFDR.MessageParseException mpex) 
-            { 
+            catch (BFDR.MessageParseException mpex)
+            {
                 _logger.LogDebug($"The message could not be parsed as a BFDR message. {mpex}");
                 throw new ArgumentException($"Failed to parse input as a BFDR message, message type unrecognized.");
             }
-            catch (VRDR.MessageParseException mpex) 
-            { 
+            catch (VRDR.MessageParseException mpex)
+            {
                 _logger.LogDebug($"The message could not be parsed as a VRDR message. {mpex}");
                 throw new ArgumentException($"Failed to parse input as a VRDR message, message type unrecognized.");
             }
@@ -673,7 +669,7 @@ namespace messaging.Controllers
                     return "NAT";
                 case "http://nchs.cdc.gov/fd_submission":
                 case "http://nchs.cdc.gov/fd_acknowledgement":
-                case "http://nchs.cdc.gov/fd_submission_update": 
+                case "http://nchs.cdc.gov/fd_submission_update":
                 case "http://nchs.cdc.gov/fd_demographics_coding":
                 case "http://nchs.cdc.gov/fd_extraction_error":
                 case "http://nchs.cdc.gov/fd_status":
@@ -746,7 +742,7 @@ namespace messaging.Controllers
             {
                 case "BirthRecordSubmissionMessage":
                 case "BirthRecordUpdateMessage":
-                case "BirthRecordAcknowledgementMessage": 
+                case "BirthRecordAcknowledgementMessage":
                 case "BirthRecordVoidMessage":
                     return true;
                 default:
@@ -763,7 +759,7 @@ namespace messaging.Controllers
             {
                 case "FetalDeathRecordSubmissionMessage":
                 case "FetalDeathRecordUpdateMessage":
-                case "FetalDeathRecordAcknowledgementMessage": 
+                case "FetalDeathRecordAcknowledgementMessage":
                 case "FetalDeathRecordVoidMessage":
                     return true;
                 default:
