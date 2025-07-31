@@ -106,7 +106,7 @@ These instructions walk through the steps of installing the FHIR API on a Window
 11. If you are applying migrations, complete the following steps. Otherwise skip to step 12.
     1. From your local machine, connect to the dev server database in visual studio code using server explorer
        1. Select Microsoft SQL Server
-       2. server name: `dstv-infc-1900.cdc.gov`, `dsdv-infc-1900.cdc.gov`
+       2. server name: `<db-server>.cdc.gov`
        3. database name: `NVSSMESSAGING`
        4. Paste the SQL code from step 4.1 in a new query and run to apply the migration
 12. Before you update the API, double check what the current version is by navigating to the metadata endpoint, ex. for test is `https://test.astv-nvss-api.cdc.gov/MA/metadata`. The API version will be specified in the json response.
