@@ -1,5 +1,3 @@
-Build started...
-Build succeeded.
 BEGIN TRANSACTION;
 GO
 
