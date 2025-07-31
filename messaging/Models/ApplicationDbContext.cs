@@ -18,7 +18,13 @@ namespace messaging.Models
         public DbSet<OutgoingMessageItem> OutgoingMessageItems { get; set; }
         public DbSet<IJEItem> IJEItems { get; set; }
 
-        public override int SaveChanges()
+				// View-like non-entity models for stored procedures; they do NOT have a real SQL table
+				public DbSet<StatusResults> StatusResults { get; set; }
+				public DbSet<StatusResultsBySource> StatusResultsBySource { get; set; }
+				public DbSet<StatusResultsByEventType> StatusResultsByEventType { get; set; }
+				public DbSet<StatusResultsByJurisdictionId> StatusResultsByJurisdictionId { get; set; }
+
+				public override int SaveChanges()
         {
             AddTimestamps();
             return base.SaveChanges();
@@ -48,5 +54,17 @@ namespace messaging.Models
                 }
             }
         }
+
+				protected override void OnModelCreating(ModelBuilder modelBuilder) {
+						base.OnModelCreating(modelBuilder);
+						modelBuilder.Entity<IncomingMessageItem>().HasKey(m => m.Id);
+						modelBuilder.Entity<IncomingMessageLog>().HasKey(l => l.Id);
+						modelBuilder.Entity<OutgoingMessageItem>().HasKey(m => m.Id);
+
+						modelBuilder.Entity<StatusResults>().HasNoKey();
+						modelBuilder.Entity<StatusResultsBySource>().HasNoKey();
+						modelBuilder.Entity<StatusResultsByEventType>().HasNoKey();
+						modelBuilder.Entity<StatusResultsByJurisdictionId>().HasNoKey();
+				}
     }
 }

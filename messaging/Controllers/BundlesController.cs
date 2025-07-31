@@ -131,7 +131,8 @@ namespace messaging.Controllers
             }
 
             // Query for outgoing messages by jurisdiction ID. Filter by certificate number and death year if those parameters are provided.
-            // TODO: we could use the since param earlier so if we are only getting new respones, we don't select and have to handle thousands of other records
+            // TODO: we should use the since param earlier so if we are only getting new respones, we don't select and have to handle thousands of other records
+            //IEnumerable<OutgoingMessageItem> outgoingMessagesQuery = _context.OutgoingMessageItems.FromSqlInterpolated($"EXEC SelectNewOutgoingMessageItemsWithParams @JurisdictionId={jurisdictionId}, @EventYear={eventYear}, @CertificateNumber={certificateNumber}, @EventType={recordType}").AsEnumerable();
             try
             {
                 // intialize count and the query result
@@ -221,6 +222,7 @@ namespace messaging.Controllers
                 {
                     responseBundle.AddResourceEntry((Bundle)message, "urn:uuid:" + message.MessageId);
                 }
+
                 return responseBundle;
             }
             catch (Exception ex)

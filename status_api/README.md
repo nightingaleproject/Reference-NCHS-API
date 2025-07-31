@@ -29,7 +29,7 @@ dotnet run
 
 ## Testing
 
-1. Create the test database for the first run and anytime there is a new migration. From `status_api/` run:
+1. Create the test database for the first run and anytime there is a new migration. From `messaging/` run:
 
 ```shell
 dotnet ef database update -- --environment Test

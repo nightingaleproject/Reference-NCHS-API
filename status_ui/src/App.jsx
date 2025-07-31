@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Box, Typography, Paper, Button, CircularProgress, Stack } from '@mui/material';
+import { Alert, Container, Box, Typography, Button, CircularProgress, Stack } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -23,9 +23,11 @@ function App() {
   const [fetching, setFetching] = useState(false);
   const [lastFetch, setLastFetch] = useState();
   const [lastFetchDisplay, setLastFetchDisplay] = useState();
+  const [fetchError, setFetchError] = useState(null);
 
   const fetchData = (since) => {
     setFetching(true);
+    setFetchError(null);
     const baseUrl = '/api/v1';
     const statusUrl = since ? `${baseUrl}/status?_since=${since.toISOString()}` : `${baseUrl}/status`;
     fetch(statusUrl).then((result) => {
@@ -34,7 +36,8 @@ function App() {
       setStatusData(json);
       setLastFetch(dayjs());
     }).catch((e) => {
-      console.log(e);
+      console.error(e);
+      setFetchError("Backend fetch to Status API failed.");
     }).finally(() => {
       setFetching(false);
     });
@@ -106,7 +109,16 @@ function App() {
           </LocalizationProvider>
         </Stack>
       </Box>
-      
+
+      { fetchError ? (
+        <>
+          <Alert severity="error" sx={{ marginBottom: 2 }}>
+            {fetchError}
+          </Alert>
+	</>
+        ) : <></>
+      }
+	
       <DataGrid
         sx={{ width: '100%', mb: 3 }}
         rows={allJurisdictionRows}
