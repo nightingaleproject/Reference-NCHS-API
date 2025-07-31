@@ -57,3 +57,8 @@ When TEST and PROD are updated to v1.7.0, the appsetting config files in also ne
 Once the appsettings files are updated, restart the TEST or PROD API server. 
 
 Note that if things break and you need to roll back to v1.6.1, you may need to remove the IGVersion column from the IncomingMessageItems and OutgoingMessageItems table to prevent errors. The stored procedures can be removed if you wish, but should not impact v1.6.1 from running.   
+
+# Status UI
+Version 1.0.1 of the status api, includes stored procedures. This version of the 1.0.1 status api is deployed in DEV as of July 31, 2025. The stored procedures were added to the DEV database using the [status-api-stored-procedures.sql](./status-api-stored-procedures.sql) script in this folder. 
+
+AFTER the TEST database and NVSS FHIR API are updated to v1.7.0 with the steps above, the status api can also be deployed in TEST. First, run the [status-api-stored-procedures.sql](./status-api-stored-procedures.sql) script from this folder on the TEST DB. Make sure the service account linked to the TEST status api in IIS has execute permissions on the test database. Then follow the deployment instructions for the status api in the [DeploymentSteps.md](../DeploymentSteps.md), the status api instructions are at the bottom of the file. 
