@@ -14,8 +14,8 @@
     <PackageReference Include="MiniProfiler.EntityFrameworkCore" Version="4.3.8" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
     <PackageReference Include="VRDR.Messaging" Version="5.1.0-preview.1" />
-    <PackageReference Include="BFDR.Messaging" Version="1.0.0-preview.13" />
-    <PackageReference Include="VitalRecord.Messaging" Version="1.0.0-preview.8" />
+    <PackageReference Include="BFDR.Messaging" Version="1.0.0-preview.14" />
+    <PackageReference Include="VitalRecord.Messaging" Version="1.0.0-preview.9" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.4.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="6.1.0" />
