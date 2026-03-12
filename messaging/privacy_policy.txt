@@ -1,1 +1,12 @@
-Privacy Policy will be provided here in future version.
+The NVSS-API web application programming interface (api) is committed to maintaining privacy and protecting personally identifiable information (PII).
+With respect to the collection, use and disclosure of PII, the NVSS-API web api complies with all applicable federal laws.
+Personal Information
+This web api will not collect any information about you that is not already known (i.e. Name, UserID, User Group, Email Address).
+Non-Personal Information Collected Automatically
+This web api will not automatically collect any information such as your user id, date/time of each operation and logging of all activities performed.
+"Cookies" - Information Placed Automatically on Your Computer
+We may store some information on your computer in the form of a "Cookie" to automatically recognize you the next time you visit. Cookies help us to provide you with a user-friendly experience.
+Security
+ITB takes precautions to prevent malicious attacks and misuse of protected data. There are 2 layers of authentication used to ensure that only approved personnel have access to this system: OAuth (Open Authorization) 2.0, Secure Access Management Services.
+Questions and Comments
+If you have any questions or comments about this web api and this Privacy Policy, contact ITB.

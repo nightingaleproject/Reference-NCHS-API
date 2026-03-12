@@ -634,7 +634,9 @@ namespace messaging.Controllers
 
             // Queue Natality messages for auto responses while Natality is in dev, and queue all messages if AckAndIJEConversion is "on" for testing
             // For the June 2025 test event, enable auto responses for Fetal death message types only
-            if (_settings.AckAndIJEConversion || ( _settings.FetalDeathEnabled && item.EventType == "FET"))
+            // Switched off auto responses for Fetal death message types only after February 2026 test event
+            // ( || _settings.FetalDeathEnabled && item.EventType == "FET")
+            if (_settings.AckAndIJEConversion)
             {
                 queue.QueueConvertToIJE(insertedItem.Id);
             }
